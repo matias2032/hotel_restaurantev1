@@ -89,11 +89,11 @@ class UsuarioService {
     );
   }
 
-Future<PerfilModel> alterarStatusPerfil({
+Future<PerfilModel> alterarAtivoPerfil({
   required int idPerfil,
-  required bool status,
+  required bool ativo,
 }) async {
-  final uri = Uri.parse(ApiConfig.perfilStatusUrl(idPerfil, status));
+  final uri = Uri.parse(ApiConfig.perfilAtivoUrl(idPerfil, ativo));
 
   final response = await _client
       .patch(uri, headers: ApiConfig.defaultHeaders)
@@ -103,6 +103,20 @@ Future<PerfilModel> alterarStatusPerfil({
 
   return PerfilModel.fromJson(
     jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>,
+  );
+}
+
+Future<PerfilModel> activarPerfil(int idPerfil) {
+  return alterarAtivoPerfil(
+    idPerfil: idPerfil,
+    ativo: true,
+  );
+}
+
+Future<PerfilModel> desactivarPerfil(int idPerfil) {
+  return alterarAtivoPerfil(
+    idPerfil: idPerfil,
+    ativo: false,
   );
 }
 
@@ -203,11 +217,11 @@ Future<PerfilModel> alterarStatusPerfil({
     );
   }
 
-Future<UsuarioModel> alterarStatusUsuario({
+Future<UsuarioModel> alterarAtivoUsuario({
   required int idUsuario,
-  required bool status,
+  required bool ativo,
 }) async {
-  final uri = Uri.parse(ApiConfig.usuarioStatusUrl(idUsuario, status));
+  final uri = Uri.parse(ApiConfig.usuarioAtivoUrl(idUsuario, ativo));
 
   final response = await _client
       .patch(uri, headers: ApiConfig.defaultHeaders)

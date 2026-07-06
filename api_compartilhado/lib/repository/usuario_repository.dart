@@ -36,14 +36,22 @@ class UsuarioRepository {
     );
   }
 
-Future<PerfilModel> alterarStatusPerfil({
+Future<PerfilModel> alterarAtivoPerfil({
   required int idPerfil,
-  required bool status,
+  required bool ativo,
 }) {
-  return service.alterarStatusPerfil(
+  return service.alterarAtivoPerfil(
     idPerfil: idPerfil,
-    status: status,
+    ativo: ativo,
   );
+}
+
+Future<PerfilModel> activarPerfil(int idPerfil) {
+  return service.activarPerfil(idPerfil);
+}
+
+Future<PerfilModel> desactivarPerfil(int idPerfil) {
+  return service.desactivarPerfil(idPerfil);
 }
 
   // ─────────────────────────────────────────────────────────────
@@ -86,13 +94,13 @@ Future<PerfilModel> alterarStatusPerfil({
     );
   }
 
-Future<UsuarioModel> alterarStatusUsuario({
+Future<UsuarioModel> alterarAtivoUsuario({
   required int idUsuario,
-  required bool status,
+  required bool ativo,
 }) {
-  return service.alterarStatusUsuario(
+  return service.alterarAtivoUsuario(
     idUsuario: idUsuario,
-    status: status,
+    ativo: ativo,
   );
 }
 

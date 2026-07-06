@@ -11,6 +11,6 @@ public record PerfilRequestDTO(
 
         String descricao,
 
-        Boolean status
+        Boolean ativo
 ) {
 }

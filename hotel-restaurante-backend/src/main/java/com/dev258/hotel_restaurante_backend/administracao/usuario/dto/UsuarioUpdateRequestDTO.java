@@ -24,6 +24,6 @@ public record UsuarioUpdateRequestDTO(
         @Size(max = 30, message = "O telefone deve ter no máximo 30 caracteres")
         String telefone,
 
-        Boolean status
+        Boolean ativo
 ) {
 }

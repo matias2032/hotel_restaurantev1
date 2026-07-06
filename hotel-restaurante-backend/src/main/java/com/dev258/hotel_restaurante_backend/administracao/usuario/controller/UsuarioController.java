@@ -50,13 +50,13 @@ public class UsuarioController {
         return usuarioService.editarPerfil(idPerfil, dto);
     }
 
-    @PatchMapping("/perfis/{idPerfil}/status")
-    public PerfilResponseDTO alterarStatusPerfil(
-            @PathVariable Long idPerfil,
-            @RequestParam Boolean status
-    ) {
-        return usuarioService.alterarStatusPerfil(idPerfil, status);
-    }
+@PatchMapping("/perfis/{idPerfil}/ativo")
+public PerfilResponseDTO alterarAtivoPerfil(
+        @PathVariable Long idPerfil,
+        @RequestParam Boolean ativo
+) {
+    return usuarioService.alterarAtivoPerfil(idPerfil, ativo);
+}
 
     // =========================================================
     // USUÁRIOS
@@ -97,13 +97,13 @@ public class UsuarioController {
         return usuarioService.editarUsuario(idUsuario, dto);
     }
 
-    @PatchMapping("/{idUsuario}/status")
-    public UsuarioResponseDTO alterarStatusUsuario(
-            @PathVariable Long idUsuario,
-            @RequestParam Boolean status
-    ) {
-        return usuarioService.alterarStatusUsuario(idUsuario, status);
-    }
+@PatchMapping("/{idUsuario}/ativo")
+public UsuarioResponseDTO alterarAtivoUsuario(
+        @PathVariable Long idUsuario,
+        @RequestParam Boolean ativo
+) {
+    return usuarioService.alterarAtivoUsuario(idUsuario, ativo);
+}
 
     @PatchMapping("/{idUsuario}/senha")
     @ResponseStatus(HttpStatus.NO_CONTENT)

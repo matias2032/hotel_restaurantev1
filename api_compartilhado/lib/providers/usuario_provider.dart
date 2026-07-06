@@ -71,18 +71,32 @@ class UsuarioProvider extends ChangeNotifier {
     return editado;
   }
 
-Future<void> alterarStatusPerfil({
+Future<void> alterarAtivoPerfil({
   required int idPerfil,
-  required bool status,
+  required bool ativo,
 }) async {
   await _executar(() async {
-    await repository.alterarStatusPerfil(
+    await repository.alterarAtivoPerfil(
       idPerfil: idPerfil,
-      status: status,
+      ativo: ativo,
     );
 
-    _perfis = await repository.listarPerfis(somenteAtivos: true);
+_perfis = await repository.listarPerfis(somenteAtivos: false);
   });
+}
+
+Future<void> activarPerfil(int idPerfil) async {
+  await alterarAtivoPerfil(
+    idPerfil: idPerfil,
+    ativo: true,
+  );
+}
+
+Future<void> desactivarPerfil(int idPerfil) async {
+  await alterarAtivoPerfil(
+    idPerfil: idPerfil,
+    ativo: false,
+  );
 }
 
   // ─────────────────────────────────────────────────────────────
@@ -159,28 +173,28 @@ Future<void> alterarStatusPerfil({
   }
 
 Future<void> activarUsuario(int idUsuario) async {
-  await alterarStatusUsuario(
+  await alterarAtivoUsuario(
     idUsuario: idUsuario,
-    status: true,
+    ativo: true,
   );
 }
 
 Future<void> desactivarUsuario(int idUsuario) async {
-  await alterarStatusUsuario(
+  await alterarAtivoUsuario(
     idUsuario: idUsuario,
-    status: false,
+    ativo: false,
   );
 }
 
 
-Future<void> alterarStatusUsuario({
+Future<void> alterarAtivoUsuario({
   required int idUsuario,
-  required bool status,
+  required bool ativo,
 }) async {
   await _executar(() async {
-    final actualizado = await repository.alterarStatusUsuario(
+    final actualizado = await repository.alterarAtivoUsuario(
       idUsuario: idUsuario,
-      status: status,
+      ativo: ativo,
     );
 
     _usuarios = _usuarios
@@ -192,7 +206,6 @@ Future<void> alterarStatusUsuario({
     }
   });
 }
-
   Future<void> alterarSenha({
     required int idUsuario,
     required String senhaActual,
@@ -242,14 +255,14 @@ Future<void> eliminarUsuario(int idUsuario) async {
     _usuarios = _usuarios
         .map(
           (u) => u.idUsuario == idUsuario
-              ? u.copyWith(status: false)
+              ? u.copyWith(ativo: false)
               : u,
         )
         .toList();
 
     if (_usuarioSelecionado?.idUsuario == idUsuario) {
       _usuarioSelecionado =
-          _usuarioSelecionado!.copyWith(status: false);
+          _usuarioSelecionado!.copyWith(ativo: false);
     }
   });
 }

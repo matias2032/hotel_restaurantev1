@@ -89,7 +89,7 @@ class _UsuarioListScreenState extends State<UsuarioListScreen> {
   }
 
   bool _isActivo(UsuarioModel usuario) {
-    return usuario.status;
+    return usuario.ativo;
   }
 
   String _nomePerfil(UsuarioModel usuario) {
@@ -513,7 +513,7 @@ class _Body extends StatelessWidget {
         icon: Icons.person_search_rounded,
         title: 'Nenhum usuário encontrado',
         message:
-            'Não existem usuários para os filtros seleccionados. Administradores ficam ocultos nesta tela.',
+            'Não existem usuários para os filtros seleccionados.',
         actionLabel: 'Recarregar',
         onAction: onRefresh,
       );
@@ -585,7 +585,7 @@ class _UsuarioCard extends StatelessWidget {
     required this.onResetSenha,
   });
 
-  bool get _activo => usuario.status;
+  bool get _activo => usuario.ativo;
 
   String get _perfil => usuario.perfil?.nomePerfil ?? 'Sem perfil';
 

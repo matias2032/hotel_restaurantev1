@@ -40,11 +40,11 @@ public class UsuarioEntity {
     @Column(name = "senha_hash", nullable = false, length = 255)
     private String senhaHash;
 
-    @Column(name = "primeira_senha", nullable = false)
-    private Boolean primeiraSenha = true;
+@Column(name = "ativo", nullable = false)
+private Boolean ativo = true;
 
-    @Column(name = "status", nullable = false)
-    private Boolean status = true;
+@Column(name = "primeira_senha", nullable = false)
+private Boolean primeiraSenha = true;
 
     @Column(name = "ultimo_login_at")
     private LocalDateTime ultimoLoginAt;
@@ -64,12 +64,14 @@ public class UsuarioEntity {
         if (updatedAt == null) {
             updatedAt = agora;
         }
-        if (status == null) {
-            status = true;
-        }
+
         if (primeiraSenha == null) {
             primeiraSenha = true;
         }
+
+    if (ativo == null) {
+    ativo = true;
+}
     }
 
     @PreUpdate

@@ -51,7 +51,7 @@ class _UsuarioDetalhesScreenState extends State<UsuarioDetalhesScreen> {
   }
 
   bool get _activo {
-  return _usuario?.status ?? false;
+  return _usuario?.ativo ?? false;
 }
 
   String get _nomePerfil {

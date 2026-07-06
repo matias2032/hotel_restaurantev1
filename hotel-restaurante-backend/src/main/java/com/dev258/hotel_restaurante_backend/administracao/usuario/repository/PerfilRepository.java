@@ -9,6 +9,8 @@ import java.util.Optional;
 public interface PerfilRepository extends JpaRepository<PerfilEntity, Long> {
     Optional<PerfilEntity> findByNomePerfilIgnoreCase(String nomePerfil);
     boolean existsByNomePerfilIgnoreCase(String nomePerfil);
-    List<PerfilEntity> findByStatusOrderByNomePerfilAsc(Boolean status);
-    List<PerfilEntity> findAllByOrderByNomePerfilAsc();
+List<PerfilEntity> findByAtivoOrderByNomePerfilAsc(Boolean ativo);
+
+List<PerfilEntity> findAllByOrderByNomePerfilAsc();
+
 }

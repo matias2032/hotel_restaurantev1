@@ -18,8 +18,8 @@ import java.util.List;
 @Transactional
 public class UsuarioService {
 
-private static final Boolean STATUS_ATIVO = true;
-private static final Boolean STATUS_INATIVO = false;
+private static final Boolean ATIVO = true;
+private static final Boolean INATIVO = false;
 private static final String SENHA_PADRAO = "12345678";
 
     private final UsuarioRepository usuarioRepository;
@@ -36,11 +36,11 @@ public PerfilResponseDTO criarPerfil(PerfilRequestDTO dto) {
         throw new IllegalArgumentException("Já existe um perfil com este nome.");
     }
 
-    PerfilEntity perfil = PerfilEntity.builder()
-            .nomePerfil(dto.nomePerfil().trim())
-            .descricao(normalizarTextoOpcional(dto.descricao()))
-            .status(dto.status() != null ? dto.status() : STATUS_ATIVO)
-            .build();
+PerfilEntity perfil = PerfilEntity.builder()
+        .nomePerfil(dto.nomePerfil().trim())
+        .descricao(normalizarTextoOpcional(dto.descricao()))
+        .ativo(dto.ativo() != null ? dto.ativo() : ATIVO)
+        .build();
 
     PerfilEntity salvo = perfilRepository.save(perfil);
 
@@ -57,7 +57,7 @@ public PerfilResponseDTO criarPerfil(PerfilRequestDTO dto) {
 
 @Transactional(readOnly = true)
 public List<PerfilResponseDTO> listarPerfisAtivos() {
-    return perfilRepository.findByStatusOrderByNomePerfilAsc(STATUS_ATIVO)
+return perfilRepository.findByAtivoOrderByNomePerfilAsc(ATIVO)
             .stream()
             .map(PerfilResponseDTO::fromEntity)
             .toList();
@@ -81,20 +81,20 @@ public PerfilResponseDTO editarPerfil(Long idPerfil, PerfilRequestDTO dto) {
     perfil.setNomePerfil(dto.nomePerfil().trim());
     perfil.setDescricao(normalizarTextoOpcional(dto.descricao()));
 
-    if (dto.status() != null) {
-        perfil.setStatus(dto.status());
-    }
+    if (dto.ativo() != null) {
+    perfil.setAtivo(dto.ativo());
+}
 
     PerfilEntity salvo = perfilRepository.save(perfil);
 
     return PerfilResponseDTO.fromEntity(salvo);
 }
 
-public PerfilResponseDTO alterarStatusPerfil(Long idPerfil, Boolean status) {
-    validarStatusObrigatorio(status);
+public PerfilResponseDTO alterarAtivoPerfil(Long idPerfil, Boolean ativo) {
+    validarAtivoObrigatorio(ativo);
 
     PerfilEntity perfil = buscarPerfilEntity(idPerfil);
-    perfil.setStatus(status);
+    perfil.setAtivo(ativo);
 
     PerfilEntity salvo = perfilRepository.save(perfil);
 
@@ -123,7 +123,7 @@ public PerfilResponseDTO alterarStatusPerfil(Long idPerfil, Boolean status) {
         .telefone(normalizarTextoOpcional(dto.telefone()))
         .senhaHash(passwordEncoder.encode(SENHA_PADRAO))
         .primeiraSenha(true)
-        .status(STATUS_ATIVO)
+        .ativo(ATIVO)
         .build();
 
         UsuarioEntity salvo = usuarioRepository.save(usuario);
@@ -149,7 +149,7 @@ public PerfilResponseDTO alterarStatusPerfil(Long idPerfil, Boolean status) {
 
 @Transactional(readOnly = true)
 public List<UsuarioResponseDTO> listarUsuariosAtivos() {
-    return usuarioRepository.findByStatusOrderByNomeAsc(STATUS_ATIVO)
+return usuarioRepository.findByAtivoOrderByNomeAsc(ATIVO)
             .stream()
             .map(UsuarioResponseDTO::fromEntity)
             .toList();
@@ -186,25 +186,26 @@ public UsuarioResponseDTO editarUsuario(Long idUsuario, UsuarioUpdateRequestDTO 
     usuario.setEmail(emailNormalizado);
     usuario.setTelefone(normalizarTextoOpcional(dto.telefone()));
 
-    if (dto.status() != null) {
-        usuario.setStatus(dto.status());
-    }
+    if (dto.ativo() != null) {
+    usuario.setAtivo(dto.ativo());
+}
 
     UsuarioEntity salvo = usuarioRepository.save(usuario);
 
     return UsuarioResponseDTO.fromEntity(salvo);
 }
 
-public UsuarioResponseDTO alterarStatusUsuario(Long idUsuario, Boolean status) {
-    validarStatusObrigatorio(status);
+public UsuarioResponseDTO alterarAtivoUsuario(Long idUsuario, Boolean ativo) {
+    validarAtivoObrigatorio(ativo);
 
     UsuarioEntity usuario = buscarUsuarioEntity(idUsuario);
-    usuario.setStatus(status);
+    usuario.setAtivo(ativo);
 
     UsuarioEntity salvo = usuarioRepository.save(usuario);
 
     return UsuarioResponseDTO.fromEntity(salvo);
 }
+
 public void alterarSenha(Long idUsuario, AlterarSenhaRequestDTO dto) {
     UsuarioEntity usuario = buscarUsuarioEntity(idUsuario);
 
@@ -247,7 +248,7 @@ public void trocarPrimeiraSenha(Long idUsuario, TrocarPrimeiraSenhaRequestDTO dt
 
  public void eliminarUsuario(Long idUsuario) {
     UsuarioEntity usuario = buscarUsuarioEntity(idUsuario);
-    usuario.setStatus(STATUS_INATIVO);
+    usuario.setAtivo(INATIVO);
     usuarioRepository.save(usuario);
 }
     // =========================================================
@@ -275,9 +276,9 @@ public void trocarPrimeiraSenha(Long idUsuario, TrocarPrimeiraSenhaRequestDTO dt
 
  
 
-private void validarStatusObrigatorio(Boolean status) {
-    if (status == null) {
-        throw new IllegalArgumentException("Status é obrigatório.");
+private void validarAtivoObrigatorio(Boolean ativo) {
+    if (ativo == null) {
+        throw new IllegalArgumentException("O campo ativo é obrigatório.");
     }
 }
 }

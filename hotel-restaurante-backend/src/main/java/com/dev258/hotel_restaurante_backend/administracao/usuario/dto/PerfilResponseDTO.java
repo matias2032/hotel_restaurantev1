@@ -8,7 +8,7 @@ public record PerfilResponseDTO(
         Long idPerfil,
         String nomePerfil,
         String descricao,
-        Boolean status,
+        Boolean ativo,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -22,7 +22,7 @@ public record PerfilResponseDTO(
                 perfil.getIdPerfil(),
                 perfil.getNomePerfil(),
                 perfil.getDescricao(),
-                perfil.getStatus(),
+                perfil.getAtivo(),
                 perfil.getCreatedAt(),
                 perfil.getUpdatedAt()
         );

@@ -8,7 +8,7 @@ public record UsuarioResumoDTO(
         String email,
         String nomePerfil,
         Boolean primeiraSenha,
-        Boolean status
+        Boolean ativo
 ) {
 
     public static UsuarioResumoDTO fromEntity(UsuarioEntity usuario) {
@@ -26,7 +26,7 @@ public record UsuarioResumoDTO(
                 usuario.getEmail(),
                 usuario.getPerfil() != null ? usuario.getPerfil().getNomePerfil() : null,
                 usuario.getPrimeiraSenha(),
-                usuario.getStatus()
+                usuario.getAtivo()
         );
     }
 }

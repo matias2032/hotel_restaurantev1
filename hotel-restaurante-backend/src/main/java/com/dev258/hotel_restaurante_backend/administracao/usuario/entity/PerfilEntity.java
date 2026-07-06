@@ -24,8 +24,8 @@ public class PerfilEntity {
     @Column(name = "descricao", columnDefinition = "TEXT")
     private String descricao;
 
-    @Column(name = "status", nullable = false)
-    private Boolean status = true;
+@Column(name = "ativo", nullable = false)
+private Boolean ativo = true;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -42,9 +42,9 @@ public class PerfilEntity {
         if (updatedAt == null) {
             updatedAt = agora;
         }
-        if (status == null) {
-            status = true;
-        }
+    if (ativo == null) {
+    ativo = true;
+}
     }
 
     @PreUpdate

@@ -48,9 +48,9 @@ class ApiConfig {
     return '$usuariosUrl/$idUsuario';
   }
 
-  static String usuarioStatusUrl(int idUsuario, bool status) {
-    return '$usuariosUrl/$idUsuario/status?status=$status';
-  }
+static String usuarioAtivoUrl(int idUsuario, bool ativo) {
+  return '$usuariosUrl/$idUsuario/ativo?ativo=$ativo';
+}
 
   static String usuarioAlterarSenhaUrl(int idUsuario) {
     return '$usuariosUrl/$idUsuario/senha';
@@ -68,9 +68,9 @@ class ApiConfig {
     return '$perfisUrl/$idPerfil';
   }
 
-  static String perfilStatusUrl(int idPerfil, bool status) {
-    return '$perfisUrl/$idPerfil/status?status=$status';
-  }
+static String perfilAtivoUrl(int idPerfil, bool ativo) {
+  return '$perfisUrl/$idPerfil/ativo?ativo=$ativo';
+}
 
   // ─────────────────────────────────────────────────────────────
   // CONFIGURAÇÕES GERAIS

@@ -149,7 +149,7 @@ class _UsuarioFormScreenState extends State<UsuarioFormScreen> {
   email: _textoOpcional(_emailCtrl.text),
   telefone: _textoOpcional(_telefoneCtrl.text),
   primeiraSenha: true,
-  status: true,
+  ativo: true,
   perfil: _perfilSelecionado,
 );
 
@@ -599,7 +599,7 @@ class _UsuarioResumoHeader extends StatelessWidget {
         ? usuario.nomeCompleto
         : usuario.nome;
 
-final activo = usuario.status;
+final activo = usuario.ativo;
 
     return Container(
       padding: const EdgeInsets.all(16),

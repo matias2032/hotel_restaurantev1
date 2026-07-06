@@ -2,7 +2,7 @@ class PerfilModel {
   final int? idPerfil;
   final String nomePerfil;
   final String? descricao;
-  final bool status;
+  final bool ativo;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -10,7 +10,7 @@ class PerfilModel {
     this.idPerfil,
     required this.nomePerfil,
     this.descricao,
-    this.status = true,
+    this.ativo = true,
     this.createdAt,
     this.updatedAt,
   });
@@ -20,7 +20,7 @@ class PerfilModel {
       idPerfil: _parseIntOpt(json['idPerfil']),
       nomePerfil: (json['nomePerfil'] ?? '').toString(),
       descricao: _parseStringOpt(json['descricao']),
-      status: _parseBool(json['status'], defaultValue: true),
+      ativo: _parseBool(json['ativo'], defaultValue: true),
       createdAt: _parseDateOpt(json['createdAt']),
       updatedAt: _parseDateOpt(json['updatedAt']),
     );
@@ -30,7 +30,7 @@ class PerfilModel {
     return {
       'nomePerfil': nomePerfil,
       'descricao': descricao,
-      'status': status,
+      'ativo': ativo,
     };
   }
 
@@ -38,7 +38,7 @@ class PerfilModel {
     return {
       'nomePerfil': nomePerfil,
       'descricao': descricao,
-      'status': status,
+      'ativo': ativo,
     };
   }
 
@@ -46,7 +46,7 @@ class PerfilModel {
     int? idPerfil,
     String? nomePerfil,
     String? descricao,
-    bool? status,
+    bool? ativo,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -54,7 +54,7 @@ class PerfilModel {
       idPerfil: idPerfil ?? this.idPerfil,
       nomePerfil: nomePerfil ?? this.nomePerfil,
       descricao: descricao ?? this.descricao,
-      status: status ?? this.status,
+      ativo: ativo ?? this.ativo,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -70,7 +70,7 @@ class UsuarioModel {
   final String? email;
   final String? telefone;
   final bool primeiraSenha;
-  final bool status;
+  final bool ativo;
   final DateTime? ultimoLoginAt;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -85,7 +85,7 @@ class UsuarioModel {
     this.email,
     this.telefone,
     this.primeiraSenha = true,
-    this.status = true,
+    this.ativo = true,
     this.ultimoLoginAt,
     this.createdAt,
     this.updatedAt,
@@ -106,7 +106,7 @@ class UsuarioModel {
       email: _parseStringOpt(json['email']),
       telefone: _parseStringOpt(json['telefone']),
       primeiraSenha: _parseBool(json['primeiraSenha'], defaultValue: true),
-      status: _parseBool(json['status'], defaultValue: true),
+      ativo: _parseBool(json['ativo'], defaultValue: true),
       ultimoLoginAt: _parseDateOpt(json['ultimoLoginAt']),
       createdAt: _parseDateOpt(json['createdAt']),
       updatedAt: _parseDateOpt(json['updatedAt']),
@@ -139,7 +139,7 @@ class UsuarioModel {
       'apelido': apelido,
       'email': email,
       'telefone': telefone,
-      'status': status,
+      'ativo': ativo,
     };
   }
 
@@ -152,7 +152,7 @@ class UsuarioModel {
     String? email,
     String? telefone,
     bool? primeiraSenha,
-    bool? status,
+    bool? ativo,
     DateTime? ultimoLoginAt,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -167,7 +167,7 @@ class UsuarioModel {
       email: email ?? this.email,
       telefone: telefone ?? this.telefone,
       primeiraSenha: primeiraSenha ?? this.primeiraSenha,
-      status: status ?? this.status,
+      ativo: ativo ?? this.ativo,
       ultimoLoginAt: ultimoLoginAt ?? this.ultimoLoginAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
