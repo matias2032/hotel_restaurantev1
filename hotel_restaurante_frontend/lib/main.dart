@@ -80,13 +80,15 @@ class HotelRestauranteApp extends StatelessWidget {
         ),
 
         // Primeira tela ao rodar o projecto
-        initialRoute: '/usuarios',
+        initialRoute: '/login',
 
         routes: {
           '/': (_) => const UsuarioListScreen(),
           '/usuarios': (_) => const UsuarioListScreen(),
           '/usuarios/form': (_) => const UsuarioFormScreen(),
           '/usuarios/detalhes': (_) => const UsuarioDetalhesScreen(),
+          '/login': (_) => const LoginScreen(),
+          '/primeira-senha': (_) => const PrimeiraTrocaSenhaScreen(),
         },
 
         onUnknownRoute: (settings) {

@@ -7,11 +7,18 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Long> {
+
     Optional<UsuarioEntity> findByEmailIgnoreCase(String email);
+
     boolean existsByEmailIgnoreCase(String email);
 
     List<UsuarioEntity> findByAtivoOrderByNomeAsc(Boolean ativo);
 
-List<UsuarioEntity> findAllByOrderByNomeAsc();
+    List<UsuarioEntity> findAllByOrderByNomeAsc();
 
+    Optional<UsuarioEntity> findFirstByEmailIgnoreCaseOrTelefoneIgnoreCaseOrApelidoIgnoreCase(
+            String email,
+            String telefone,
+            String apelido
+    );
 }

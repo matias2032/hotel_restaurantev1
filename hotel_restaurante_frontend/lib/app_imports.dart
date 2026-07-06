@@ -21,6 +21,8 @@ export 'package:api_compartilhado/api_compartilhado.dart';
 export 'screens/usuario_form_screen.dart';
 export 'screens/usuario_detalhes_screen.dart';
 export 'screens/usuario_list_screen.dart';
+export 'screens/login_screen.dart';
+export 'screens/primeira_troca_senha_screen.dart';
 
 // ─────────────────────────────────────────────────────────────
 // Screens - Administração / Usuários

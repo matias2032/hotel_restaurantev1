@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'services/sessao_service.dart';
 
 class ApiConfig {
   // ─────────────────────────────────────────────────────────────
@@ -72,6 +73,14 @@ static String perfilAtivoUrl(int idPerfil, bool ativo) {
   return '$perfisUrl/$idPerfil/ativo?ativo=$ativo';
 }
 
+static String get authLoginUrl {
+  return '$baseUrl/api/auth/login';
+}
+
+static String authPrimeiraSenhaUrl(int idUsuario) {
+  return usuarioPrimeiraSenhaUrl(idUsuario);
+}
+
   // ─────────────────────────────────────────────────────────────
   // CONFIGURAÇÕES GERAIS
   // ─────────────────────────────────────────────────────────────
@@ -82,6 +91,16 @@ static String perfilAtivoUrl(int idPerfil, bool ativo) {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       };
+
+      static Map<String, String> get authHeaders {
+  final token = SessaoService.instance.authorizationHeader;
+
+  return {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    if (token != null) 'Authorization': token,
+  };
+}
 
   static void printConfig() {
     debugPrint('🚀 API CONFIG — ${kIsWeb ? "Web" : "Desktop/Mobile"}');

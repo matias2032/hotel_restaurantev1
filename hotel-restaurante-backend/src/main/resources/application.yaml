@@ -8,6 +8,10 @@ spring:
 server:
   port: ${PORT:8080}
 
+app:
+  jwt:
+    secret: ${JWT_SECRET:troque-esta-chave-em-producao-com-no-minimo-32-caracteres}
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:120}
 ---
 spring:
   config:

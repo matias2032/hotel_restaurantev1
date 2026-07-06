@@ -24,7 +24,7 @@ class UsuarioService {
     );
 
     final response = await _client
-        .get(uri, headers: ApiConfig.defaultHeaders)
+        .get(uri, headers: ApiConfig.authHeaders)
         .timeout(ApiConfig.timeout);
 
     _validarResposta(response);
@@ -40,7 +40,7 @@ class UsuarioService {
     final uri = Uri.parse(ApiConfig.perfilPorIdUrl(idPerfil));
 
     final response = await _client
-        .get(uri, headers: ApiConfig.defaultHeaders)
+        .get(uri, headers: ApiConfig.authHeaders)
         .timeout(ApiConfig.timeout);
 
     _validarResposta(response);
@@ -56,7 +56,7 @@ class UsuarioService {
     final response = await _client
         .post(
           uri,
-          headers: ApiConfig.defaultHeaders,
+          headers: ApiConfig.authHeaders,
           body: jsonEncode(perfil.toCreateJson()),
         )
         .timeout(ApiConfig.timeout);
@@ -77,7 +77,7 @@ class UsuarioService {
     final response = await _client
         .put(
           uri,
-          headers: ApiConfig.defaultHeaders,
+          headers: ApiConfig.authHeaders,
           body: jsonEncode(perfil.toUpdateJson()),
         )
         .timeout(ApiConfig.timeout);
@@ -96,7 +96,7 @@ Future<PerfilModel> alterarAtivoPerfil({
   final uri = Uri.parse(ApiConfig.perfilAtivoUrl(idPerfil, ativo));
 
   final response = await _client
-      .patch(uri, headers: ApiConfig.defaultHeaders)
+      .patch(uri, headers: ApiConfig.authHeaders)
       .timeout(ApiConfig.timeout);
 
   _validarResposta(response);
@@ -132,7 +132,7 @@ Future<PerfilModel> desactivarPerfil(int idPerfil) {
     );
 
     final response = await _client
-        .get(uri, headers: ApiConfig.defaultHeaders)
+        .get(uri, headers: ApiConfig.authHeaders)
         .timeout(ApiConfig.timeout);
 
     _validarResposta(response);
@@ -148,7 +148,7 @@ Future<PerfilModel> desactivarPerfil(int idPerfil) {
     final uri = Uri.parse('${ApiConfig.usuariosUrl}/resumo');
 
     final response = await _client
-        .get(uri, headers: ApiConfig.defaultHeaders)
+        .get(uri, headers: ApiConfig.authHeaders)
         .timeout(ApiConfig.timeout);
 
     _validarResposta(response);
@@ -164,7 +164,7 @@ Future<PerfilModel> desactivarPerfil(int idPerfil) {
     final uri = Uri.parse(ApiConfig.usuarioPorIdUrl(idUsuario));
 
     final response = await _client
-        .get(uri, headers: ApiConfig.defaultHeaders)
+        .get(uri, headers: ApiConfig.authHeaders)
         .timeout(ApiConfig.timeout);
 
     _validarResposta(response);
@@ -183,7 +183,7 @@ Future<PerfilModel> desactivarPerfil(int idPerfil) {
     final response = await _client
         .post(
           uri,
-          headers: ApiConfig.defaultHeaders,
+          headers: ApiConfig.authHeaders,
           body: jsonEncode(usuario.toCreateJson(idPerfil: idPerfil)),
         )
         .timeout(ApiConfig.timeout);
@@ -205,7 +205,7 @@ Future<PerfilModel> desactivarPerfil(int idPerfil) {
     final response = await _client
         .put(
           uri,
-          headers: ApiConfig.defaultHeaders,
+          headers: ApiConfig.authHeaders,
           body: jsonEncode(usuario.toUpdateJson(idPerfil: idPerfil)),
         )
         .timeout(ApiConfig.timeout);
@@ -224,7 +224,7 @@ Future<UsuarioModel> alterarAtivoUsuario({
   final uri = Uri.parse(ApiConfig.usuarioAtivoUrl(idUsuario, ativo));
 
   final response = await _client
-      .patch(uri, headers: ApiConfig.defaultHeaders)
+      .patch(uri, headers: ApiConfig.authHeaders)
       .timeout(ApiConfig.timeout);
 
   _validarResposta(response);
@@ -244,7 +244,7 @@ Future<UsuarioModel> alterarAtivoUsuario({
     final response = await _client
         .patch(
           uri,
-          headers: ApiConfig.defaultHeaders,
+          headers: ApiConfig.authHeaders,
           body: jsonEncode({
             'senhaActual': senhaActual,
             'novaSenha': novaSenha,
@@ -264,7 +264,7 @@ Future<UsuarioModel> alterarAtivoUsuario({
     final response = await _client
         .patch(
           uri,
-          headers: ApiConfig.defaultHeaders,
+          headers: ApiConfig.authHeaders,
           body: jsonEncode({
             'novaSenha': novaSenha,
           }),
@@ -278,7 +278,7 @@ Future<UsuarioModel> alterarAtivoUsuario({
     final uri = Uri.parse(ApiConfig.usuarioResetarSenhaUrl(idUsuario));
 
     final response = await _client
-        .patch(uri, headers: ApiConfig.defaultHeaders)
+        .patch(uri, headers: ApiConfig.authHeaders)
         .timeout(ApiConfig.timeout);
 
     _validarResposta(response);
@@ -288,7 +288,7 @@ Future<UsuarioModel> alterarAtivoUsuario({
     final uri = Uri.parse(ApiConfig.usuarioPorIdUrl(idUsuario));
 
     final response = await _client
-        .delete(uri, headers: ApiConfig.defaultHeaders)
+        .delete(uri, headers: ApiConfig.authHeaders)
         .timeout(ApiConfig.timeout);
 
     _validarResposta(response);
