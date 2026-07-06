@@ -29,14 +29,22 @@ class HotelRestauranteApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final usuarioRepository = UsuarioRepository(
+        final usuarioRepository = UsuarioRepository(
       service: UsuarioService(),
+    );
+
+    final clienteRepository = ClienteRepository(
+      service: ClienteService(),
     );
 
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
           create: (_) => UsuarioProvider(repository: usuarioRepository),
+        ),
+
+                ChangeNotifierProvider(
+          create: (_) => ClienteProvider(repository: clienteRepository),
         ),
       ],
       child: MaterialApp(
@@ -87,6 +95,9 @@ class HotelRestauranteApp extends StatelessWidget {
           '/usuarios': (_) => const UsuarioListScreen(),
           '/usuarios/form': (_) => const UsuarioFormScreen(),
           '/usuarios/detalhes': (_) => const UsuarioDetalhesScreen(),
+          '/clientes': (_) => const ClienteListScreen(),
+          '/clientes/form': (_) => const ClienteFormScreen(),
+          '/clientes/detalhes': (_) => const ClienteDetalhesScreen(),
           '/login': (_) => const LoginScreen(),
           '/primeira-senha': (_) => const PrimeiraTrocaSenhaScreen(),
         },

@@ -82,6 +82,45 @@ static String authPrimeiraSenhaUrl(int idUsuario) {
 }
 
   // ─────────────────────────────────────────────────────────────
+  // CLIENTES
+  // ─────────────────────────────────────────────────────────────
+
+static const String _clientes =
+    '/api/clientes';
+
+static String get clientesUrl => '$baseUrl$_clientes';
+
+static String get perfisClienteUrl => '$clientesUrl/perfis';
+
+static String clientePorIdUrl(int idCliente) {
+  return '$clientesUrl/$idCliente';
+}
+
+static String clienteAtivoUrl(int idCliente, bool ativo) {
+  return '$clientesUrl/$idCliente/ativo?ativo=$ativo';
+}
+
+static String clienteAlterarSenhaUrl(int idCliente) {
+  return '$clientesUrl/$idCliente/senha';
+}
+
+static String clienteDefinirSenhaUrl(int idCliente) {
+  return '$clientesUrl/$idCliente/definir-senha';
+}
+
+static String clientePrimeiraSenhaUrl(int idCliente) {
+  return '$clientesUrl/$idCliente/primeira-senha';
+}
+
+static String clienteResetarSenhaUrl(int idCliente) {
+  return '$clientesUrl/$idCliente/resetar-senha';
+}
+
+static String perfilClientePorIdUrl(int idPerfilCliente) {
+  return '$perfisClienteUrl/$idPerfilCliente';
+}
+
+  // ─────────────────────────────────────────────────────────────
   // CONFIGURAÇÕES GERAIS
   // ─────────────────────────────────────────────────────────────
 

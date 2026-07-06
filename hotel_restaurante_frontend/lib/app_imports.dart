@@ -24,6 +24,10 @@ export 'screens/usuario_list_screen.dart';
 export 'screens/login_screen.dart';
 export 'screens/primeira_troca_senha_screen.dart';
 
+export 'screens/cliente_list_screen.dart';
+export 'screens/cliente_form_screen.dart';
+export 'screens/cliente_detalhes_screen.dart';
+
 // ─────────────────────────────────────────────────────────────
 // Screens - Administração / Usuários
 // ─────────────────────────────────────────────────────────────
