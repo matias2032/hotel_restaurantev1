@@ -3,6 +3,7 @@ package com.dev258.hotel_restaurante_backend.config.security;
 import com.dev258.hotel_restaurante_backend.administracao.usuario.entity.UsuarioEntity;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import com.dev258.hotel_restaurante_backend.cliente.entity.ClienteEntity;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -31,6 +32,7 @@ public class JwtService {
 
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("sub", usuario.getIdUsuario().toString());
+        payload.put("tipo", "USUARIO");
         payload.put("nome", usuario.getNome());
         payload.put("email", usuario.getEmail());
         payload.put("perfil", usuario.getPerfil() != null ? usuario.getPerfil().getNomePerfil() : null);
@@ -45,6 +47,61 @@ public class JwtService {
 
         return conteudo + "." + assinatura;
     }
+
+    public String gerarTokenCliente(ClienteEntity cliente) {
+    Instant agora = Instant.now();
+    Instant expiraEm = agora.plusSeconds(expirationMinutes * 60);
+
+    Map<String, Object> header = new LinkedHashMap<>();
+    header.put("alg", "HS256");
+    header.put("typ", "JWT");
+
+    Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("sub", cliente.getIdCliente().toString());
+    payload.put("tipo", "CLIENTE");
+    payload.put("nome", cliente.getNome());
+    payload.put("apelido", cliente.getApelido());
+    payload.put("email", cliente.getEmail());
+    payload.put("telefone", cliente.getTelefone());
+    payload.put(
+            "perfil",
+            cliente.getPerfilCliente() != null
+                    ? cliente.getPerfilCliente().getNomePerfilCliente()
+                    : null
+    );
+    payload.put("iat", agora.getEpochSecond());
+    payload.put("exp", expiraEm.getEpochSecond());
+
+    String headerBase64 = base64Url(toJson(header));
+    String payloadBase64 = base64Url(toJson(payload));
+
+    String conteudo = headerBase64 + "." + payloadBase64;
+    String assinatura = assinar(conteudo);
+
+    return conteudo + "." + assinatura;
+}
+
+public Long extrairIdCliente(String token) {
+    Map<String, Object> payload = lerPayload(token);
+    Object sub = payload.get("sub");
+
+    if (sub == null) {
+        throw new IllegalArgumentException("Token sem cliente.");
+    }
+
+    return Long.parseLong(sub.toString());
+}
+
+public String extrairTipo(String token) {
+    Map<String, Object> payload = lerPayload(token);
+    Object tipo = payload.get("tipo");
+
+    if (tipo == null) {
+        return "USUARIO";
+    }
+
+    return tipo.toString();
+}
 
     public Long extrairIdUsuario(String token) {
         Map<String, Object> payload = lerPayload(token);

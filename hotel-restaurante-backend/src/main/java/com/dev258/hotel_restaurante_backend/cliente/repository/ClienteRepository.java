@@ -16,6 +16,11 @@ public interface ClienteRepository extends JpaRepository<ClienteEntity, Long> {
 
     List<ClienteEntity> findAllByOrderByNomeAsc();
 
+    Optional<ClienteEntity> findFirstByEmailIgnoreCaseOrTelefoneIgnoreCase(
+            String email,
+            String telefone
+    );
+
     Optional<ClienteEntity> findFirstByEmailIgnoreCaseOrTelefoneIgnoreCaseOrApelidoIgnoreCase(
             String email,
             String telefone,

@@ -192,101 +192,19 @@ class ClienteService {
     );
   }
 
-  Future<ClienteModel> alterarAtivoCliente({
-    required int idCliente,
-    required bool ativo,
-  }) async {
-    final uri = Uri.parse(ApiConfig.clienteAtivoUrl(idCliente, ativo));
-
-    final response = await _client
-        .patch(uri, headers: ApiConfig.authHeaders)
-        .timeout(ApiConfig.timeout);
-
-    _validarResposta(response);
-
-    return ClienteModel.fromJson(
-      jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>,
-    );
-  }
-
-  Future<void> definirSenha({
-    required int idCliente,
-    required String novaSenha,
-  }) async {
-    final uri = Uri.parse(ApiConfig.clienteDefinirSenhaUrl(idCliente));
-
-    final response = await _client
-        .patch(
-          uri,
-          headers: ApiConfig.authHeaders,
-          body: jsonEncode({
-            'novaSenha': novaSenha,
-          }),
-        )
-        .timeout(ApiConfig.timeout);
-
-    _validarResposta(response);
-  }
-
-  Future<void> alterarSenha({
-    required int idCliente,
-    required String senhaActual,
-    required String novaSenha,
-  }) async {
-    final uri = Uri.parse(ApiConfig.clienteAlterarSenhaUrl(idCliente));
-
-    final response = await _client
-        .patch(
-          uri,
-          headers: ApiConfig.authHeaders,
-          body: jsonEncode({
-            'senhaActual': senhaActual,
-            'novaSenha': novaSenha,
-          }),
-        )
-        .timeout(ApiConfig.timeout);
-
-    _validarResposta(response);
-  }
-
-  Future<void> trocarPrimeiraSenha({
-    required int idCliente,
-    required String novaSenha,
-  }) async {
-    final uri = Uri.parse(ApiConfig.clientePrimeiraSenhaUrl(idCliente));
-
-    final response = await _client
-        .patch(
-          uri,
-          headers: ApiConfig.authHeaders,
-          body: jsonEncode({
-            'novaSenha': novaSenha,
-          }),
-        )
-        .timeout(ApiConfig.timeout);
-
-    _validarResposta(response);
-  }
-
-  Future<void> resetarSenhaPadrao(int idCliente) async {
-    final uri = Uri.parse(ApiConfig.clienteResetarSenhaUrl(idCliente));
-
-    final response = await _client
-        .patch(uri, headers: ApiConfig.authHeaders)
-        .timeout(ApiConfig.timeout);
-
-    _validarResposta(response);
-  }
-
-  Future<void> eliminarCliente(int idCliente) async {
-    final uri = Uri.parse(ApiConfig.clientePorIdUrl(idCliente));
-
-    final response = await _client
-        .delete(uri, headers: ApiConfig.authHeaders)
-        .timeout(ApiConfig.timeout);
-
-    _validarResposta(response);
-  }
+  // ─────────────────────────────────────────────────────────────
+  // MÉTODOS REMOVIDOS DO FLUTTER ADMIN
+  // ─────────────────────────────────────────────────────────────
+  //
+  // Estes fluxos foram removidos do painel administrativo Flutter:
+  //
+  // - alterarAtivoCliente(...)
+  // - resetarSenhaPadrao(...)
+  // - eliminarCliente(...)
+  //
+  // Motivo:
+  // O cliente terá fluxo próprio de recuperação/reinício de senha via email,
+  // e a desactivação manual pelo admin ficará indisponível neste momento.
 
   // ─────────────────────────────────────────────────────────────
   // HELPERS

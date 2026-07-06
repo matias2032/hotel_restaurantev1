@@ -2,6 +2,8 @@ package com.dev258.hotel_restaurante_backend.config.security;
 
 import com.dev258.hotel_restaurante_backend.administracao.usuario.entity.UsuarioEntity;
 import com.dev258.hotel_restaurante_backend.administracao.usuario.repository.UsuarioRepository;
+import com.dev258.hotel_restaurante_backend.cliente.entity.ClienteEntity;
+import com.dev258.hotel_restaurante_backend.cliente.repository.ClienteRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +23,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
+    private final ClienteRepository clienteRepository;
 
     @Override
     protected void doFilterInternal(
@@ -43,12 +46,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        String tipo = jwtService.extrairTipo(token);
+
+        if ("CLIENTE".equalsIgnoreCase(tipo)) {
+            autenticarCliente(token);
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        autenticarUsuario(token);
+
+        filterChain.doFilter(request, response);
+    }
+
+    private void autenticarUsuario(String token) {
         Long idUsuario = jwtService.extrairIdUsuario(token);
 
         UsuarioEntity usuario = usuarioRepository.findById(idUsuario).orElse(null);
 
         if (usuario == null || usuario.getAtivo() == null || !usuario.getAtivo()) {
-            filterChain.doFilter(request, response);
             return;
         }
 
@@ -60,7 +76,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
 
-        filterChain.doFilter(request, response);
+    private void autenticarCliente(String token) {
+        Long idCliente = jwtService.extrairIdCliente(token);
+
+        ClienteEntity cliente = clienteRepository.findById(idCliente).orElse(null);
+
+        if (cliente == null || cliente.getAtivo() == null || !cliente.getAtivo()) {
+            return;
+        }
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        cliente.getIdCliente(),
+                        null,
+                        List.of()
+                );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 }

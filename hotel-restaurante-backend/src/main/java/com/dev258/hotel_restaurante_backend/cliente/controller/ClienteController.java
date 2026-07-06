@@ -101,13 +101,13 @@ public class ClienteController {
         return clienteService.editarCliente(idCliente, dto);
     }
 
-    @PatchMapping("/{idCliente}/ativo")
-    public ClienteResponseDTO alterarAtivoCliente(
-            @PathVariable Long idCliente,
-            @RequestParam Boolean ativo
-    ) {
-        return clienteService.alterarAtivoCliente(idCliente, ativo);
-    }
+    // @PatchMapping("/{idCliente}/ativo")
+    // public ClienteResponseDTO alterarAtivoCliente(
+    //         @PathVariable Long idCliente,
+    //         @RequestParam Boolean ativo
+    // ) {
+    //     return clienteService.alterarAtivoCliente(idCliente, ativo);
+    // }
 
     // =========================================================
     // CLIENTE — SENHA
@@ -140,19 +140,19 @@ public class ClienteController {
         clienteService.trocarPrimeiraSenha(idCliente, dto);
     }
 
-    @PatchMapping("/{idCliente}/resetar-senha")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void resetarSenhaPadrao(@PathVariable Long idCliente) {
-        clienteService.resetarSenhaPadrao(idCliente);
-    }
+    // @PatchMapping("/{idCliente}/resetar-senha")
+    // @ResponseStatus(HttpStatus.NO_CONTENT)
+    // public void resetarSenhaPadrao(@PathVariable Long idCliente) {
+    //     clienteService.resetarSenhaPadrao(idCliente);
+    // }
 
     // =========================================================
     // CLIENTE — REMOÇÃO (SOFT DELETE)
     // =========================================================
 
-    @DeleteMapping("/{idCliente}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminarCliente(@PathVariable Long idCliente) {
-        clienteService.eliminarCliente(idCliente);
-    }
+    // @DeleteMapping("/{idCliente}")
+    // @ResponseStatus(HttpStatus.NO_CONTENT)
+    // public void eliminarCliente(@PathVariable Long idCliente) {
+    //     clienteService.eliminarCliente(idCliente);
+    // }
 }

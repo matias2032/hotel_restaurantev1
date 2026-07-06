@@ -31,14 +31,16 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/error").permitAll()
-                        .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers("/uploads/**").permitAll()
-                        .requestMatchers("/wake-up").permitAll()
-                        .requestMatchers("/api/**").authenticated()
-                        .anyRequest().authenticated()
-                )
+            .authorizeHttpRequests(auth -> auth
+        .requestMatchers("/api/auth/**", "/error").permitAll()
+        .requestMatchers("/api/clientes/auth/**").permitAll()
+        .requestMatchers("/api/clientes/registo").permitAll()
+        .requestMatchers("/actuator/**").permitAll()
+        .requestMatchers("/uploads/**").permitAll()
+        .requestMatchers("/wake-up").permitAll()
+        .requestMatchers("/api/**").authenticated()
+        .anyRequest().authenticated()
+)
                 .httpBasic(basic -> basic.disable())
                 .formLogin(form -> form.disable())
                 .addFilterBefore(

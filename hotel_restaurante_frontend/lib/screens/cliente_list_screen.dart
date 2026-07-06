@@ -151,13 +151,13 @@ List<ClienteModel> _filtrarClientes(List<ClienteModel> clientes) {
 
     final provider = context.read<ClienteProvider>();
 
-    if (activo) {
-      await provider.desactivarCliente(cliente.idCliente!);
-      _snack('Cliente desactivado com sucesso.');
-    } else {
-      await provider.activarCliente(cliente.idCliente!);
-      _snack('Cliente activado com sucesso.');
-    }
+    // if (activo) {
+    //   await provider.desactivarCliente(cliente.idCliente!);
+    //   _snack('Cliente desactivado com sucesso.');
+    // } else {
+    //   await provider.activarCliente(cliente.idCliente!);
+    //   _snack('Cliente activado com sucesso.');
+    // }
 
     await _recarregar();
   }
@@ -179,9 +179,9 @@ List<ClienteModel> _filtrarClientes(List<ClienteModel> clientes) {
 
     if (ok != true || !mounted) return;
 
-    await context.read<ClienteProvider>().resetarSenhaPadrao(
-          cliente.idCliente!,
-        );
+    // await context.read<ClienteProvider>().resetarSenhaPadrao(
+    //       cliente.idCliente!,
+    //     );
 
     _snack('Senha redefinida para 12345678.');
     await _recarregar();
@@ -229,8 +229,8 @@ List<ClienteModel> _filtrarClientes(List<ClienteModel> clientes) {
                 onRefresh: _recarregar,
                 onDetalhes: _abrirDetalhes,
                 onEditar: _abrirEdicao,
-                onToggle: _confirmarToggle,
-                onResetSenha: _confirmarResetSenha,
+                // onToggle: _confirmarToggle,
+                // onResetSenha: _confirmarResetSenha,
               ),
             ),
           ],
@@ -454,8 +454,6 @@ class _Body extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final Future<void> Function(ClienteModel) onDetalhes;
   final Future<void> Function(ClienteModel) onEditar;
-  final Future<void> Function(ClienteModel) onToggle;
-  final Future<void> Function(ClienteModel) onResetSenha;
 
   const _Body({
     required this.provider,
@@ -463,8 +461,6 @@ class _Body extends StatelessWidget {
     required this.onRefresh,
     required this.onDetalhes,
     required this.onEditar,
-    required this.onToggle,
-    required this.onResetSenha,
   });
 
   @override
@@ -515,8 +511,8 @@ class _Body extends StatelessWidget {
                   cliente: clientes[index],
                   onDetalhes: onDetalhes,
                   onEditar: onEditar,
-                  onToggle: onToggle,
-                  onResetSenha: onResetSenha,
+                  // onToggle: onToggle,
+                  // onResetSenha: onResetSenha,
                 );
               },
             );
@@ -531,8 +527,8 @@ class _Body extends StatelessWidget {
                 cliente: clientes[index],
                 onDetalhes: onDetalhes,
                 onEditar: onEditar,
-                onToggle: onToggle,
-                onResetSenha: onResetSenha,
+                // onToggle: onToggle,
+                // onResetSenha: onResetSenha,
               );
             },
           );
@@ -546,15 +542,11 @@ class _ClienteCard extends StatelessWidget {
   final ClienteModel cliente;
   final Future<void> Function(ClienteModel) onDetalhes;
   final Future<void> Function(ClienteModel) onEditar;
-  final Future<void> Function(ClienteModel) onToggle;
-  final Future<void> Function(ClienteModel) onResetSenha;
 
   const _ClienteCard({
     required this.cliente,
     required this.onDetalhes,
     required this.onEditar,
-    required this.onToggle,
-    required this.onResetSenha,
   });
 
   String get _nome {
@@ -629,31 +621,14 @@ class _ClienteCard extends StatelessWidget {
               ),
 const SizedBox(height: 8),
               Row(
-                children: [
-                  TextButton.icon(
-                    onPressed: () => onEditar(cliente),
-                    icon: const Icon(Icons.edit_rounded, size: 17),
-                    label: const Text('Editar'),
-                  ),
-const SizedBox(height: 8),
-                  IconButton(
-                    tooltip: 'Resetar senha',
-                    onPressed: () => onResetSenha(cliente),
-                    icon: const Icon(Icons.lock_reset_rounded),
-                    color: _kOrange,
-                  ),
-                  IconButton(
-                    tooltip: cliente.ativo ? 'Desactivar' : 'Activar',
-                    onPressed: () => onToggle(cliente),
-                    icon: Icon(
-                      cliente.ativo
-                          ? Icons.block_rounded
-                          : Icons.check_circle_outline_rounded,
-                    ),
-                    color: cliente.ativo ? _kRed : _kGreen,
-                  ),
-                ],
-              ),
+  children: [
+    TextButton.icon(
+      onPressed: () => onEditar(cliente),
+      icon: const Icon(Icons.edit_rounded, size: 17),
+      label: const Text('Editar'),
+    ),
+  ],
+),
             ],
           ),
         ),

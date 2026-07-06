@@ -19,8 +19,10 @@ class ClienteProvider extends ChangeNotifier {
   String? _erro;
 
   List<ClienteModel> get clientes => List.unmodifiable(_clientes);
-  List<PerfilClienteModel> get perfisCliente =>
-      List.unmodifiable(_perfisCliente);
+
+  List<PerfilClienteModel> get perfisCliente {
+    return List.unmodifiable(_perfisCliente);
+  }
 
   ClienteModel? get clienteSelecionado => _clienteSelecionado;
 
@@ -40,6 +42,16 @@ class ClienteProvider extends ChangeNotifier {
       debugPrint(
         'ℹ️ ClienteProvider — ${_perfisCliente.length} perfil(is) de cliente carregado(s).',
       );
+
+      if (_perfisCliente.isNotEmpty) {
+        final nomes = _perfisCliente
+            .map((perfil) => perfil.nomePerfilCliente)
+            .join(', ');
+
+        debugPrint(
+          '📌 ClienteProvider — Perfis disponíveis: $nomes',
+        );
+      }
     });
   }
 
@@ -58,6 +70,10 @@ class ClienteProvider extends ChangeNotifier {
         debugPrint(
           '✅ ClienteProvider — Perfil de cliente criado: '
           '${criado?.nomePerfilCliente ?? perfil.nomePerfilCliente}',
+        );
+
+        debugPrint(
+          '📊 ClienteProvider — Total de perfis após criação: ${_perfisCliente.length}',
         );
       },
     );
@@ -82,6 +98,10 @@ class ClienteProvider extends ChangeNotifier {
       debugPrint(
         '✅ ClienteProvider — Perfil de cliente #$idPerfilCliente actualizado.',
       );
+
+      debugPrint(
+        '📊 ClienteProvider — Total de perfis após edição: ${_perfisCliente.length}',
+      );
     });
 
     return editado;
@@ -102,6 +122,17 @@ class ClienteProvider extends ChangeNotifier {
       debugPrint(
         'ℹ️ ClienteProvider — ${_clientes.length} cliente(s) carregado(s). '
         'somenteAtivos=$somenteAtivos',
+      );
+
+      final empresariais = _clientes.where((cliente) {
+        return cliente.perfilCliente?.nomePerfilCliente
+                .trim()
+                .toLowerCase() ==
+            'empresarial';
+      }).length;
+
+      debugPrint(
+        '🏢 ClienteProvider — Clientes empresariais carregados: $empresariais',
       );
     });
   }
@@ -127,6 +158,16 @@ class ClienteProvider extends ChangeNotifier {
         'ℹ️ ClienteProvider — Cliente seleccionado: '
         '${cliente?.nomeCompleto ?? cliente?.nome ?? '#$idCliente'}',
       );
+
+      debugPrint(
+        '📌 ClienteProvider — Perfil do cliente seleccionado: '
+        '${cliente?.perfilCliente?.nomePerfilCliente ?? 'Sem perfil'}',
+      );
+
+      debugPrint(
+        '📌 ClienteProvider — Estado do cliente seleccionado: '
+        '${cliente?.ativo == true ? 'activo' : 'inactivo'}',
+      );
     });
 
     return cliente;
@@ -139,6 +180,18 @@ class ClienteProvider extends ChangeNotifier {
     ClienteModel? criado;
 
     await _executar('Criar cliente ${cliente.nome}', () async {
+      debugPrint(
+        '📤 ClienteProvider — A criar cliente com perfil #$idPerfilCliente...',
+      );
+
+      debugPrint(
+        '📤 ClienteProvider — Dados: '
+        'nome=${cliente.nome}, '
+        'email=${cliente.email ?? '-'}, '
+        'telefone=${cliente.telefone ?? '-'}, '
+        'nuit=${cliente.nuit ?? '-'}',
+      );
+
       criado = await repository.criarCliente(
         cliente: cliente,
         idPerfilCliente: idPerfilCliente,
@@ -149,6 +202,10 @@ class ClienteProvider extends ChangeNotifier {
       debugPrint(
         '✅ ClienteProvider — Cliente criado: '
         '${criado?.nomeCompleto ?? criado?.nome ?? cliente.nome}',
+      );
+
+      debugPrint(
+        '📊 ClienteProvider — Total de clientes após criação: ${_clientes.length}',
       );
     });
 
@@ -163,6 +220,18 @@ class ClienteProvider extends ChangeNotifier {
     ClienteModel? editado;
 
     await _executar('Editar cliente #$idCliente', () async {
+      debugPrint(
+        '📤 ClienteProvider — A editar cliente #$idCliente com perfil #$idPerfilCliente...',
+      );
+
+      debugPrint(
+        '📤 ClienteProvider — Dados actualizados: '
+        'nome=${cliente.nome}, '
+        'email=${cliente.email ?? '-'}, '
+        'telefone=${cliente.telefone ?? '-'}, '
+        'nuit=${cliente.nuit ?? '-'}',
+      );
+
       editado = await repository.editarCliente(
         idCliente: idCliente,
         cliente: cliente,
@@ -178,167 +247,34 @@ class ClienteProvider extends ChangeNotifier {
       debugPrint(
         '✅ ClienteProvider — Cliente #$idCliente actualizado.',
       );
+
+      debugPrint(
+        '📊 ClienteProvider — Total de clientes após edição: ${_clientes.length}',
+      );
     });
 
     return editado;
   }
 
-  Future<void> alterarAtivoCliente({
-    required int idCliente,
-    required bool ativo,
-  }) async {
-    final acao = ativo
-        ? 'Activar cliente #$idCliente'
-        : 'Desactivar cliente #$idCliente';
-
-    await _executar(acao, () async {
-      final actualizado = await repository.alterarAtivoCliente(
-        idCliente: idCliente,
-        ativo: ativo,
-      );
-
-      _clientes = _clientes
-          .map((c) => c.idCliente == idCliente ? actualizado : c)
-          .toList();
-
-      if (_clienteSelecionado?.idCliente == idCliente) {
-        _clienteSelecionado = actualizado;
-      }
-
-      debugPrint(
-        'ℹ️ ClienteProvider — Cliente #$idCliente agora está '
-        '${ativo ? 'activo' : 'inactivo'}.',
-      );
-    });
-  }
-
-  Future<void> activarCliente(int idCliente) async {
-    await alterarAtivoCliente(
-      idCliente: idCliente,
-      ativo: true,
-    );
-  }
-
-  Future<void> desactivarCliente(int idCliente) async {
-    await alterarAtivoCliente(
-      idCliente: idCliente,
-      ativo: false,
-    );
-  }
-
-  Future<void> definirSenha({
-    required int idCliente,
-    required String novaSenha,
-  }) async {
-    await _executar('Definir senha do cliente #$idCliente', () async {
-      await repository.definirSenha(
-        idCliente: idCliente,
-        novaSenha: novaSenha,
-      );
-
-      final actualizado = await repository.buscarClientePorId(idCliente);
-
-      _clientes = _clientes
-          .map((c) => c.idCliente == idCliente ? actualizado : c)
-          .toList();
-
-      if (_clienteSelecionado?.idCliente == idCliente) {
-        _clienteSelecionado = actualizado;
-      }
-
-      debugPrint(
-        '✅ ClienteProvider — Senha do cliente #$idCliente definida.',
-      );
-    });
-  }
-
-  Future<void> alterarSenha({
-    required int idCliente,
-    required String senhaActual,
-    required String novaSenha,
-  }) async {
-    await _executar('Alterar senha do cliente #$idCliente', () async {
-      await repository.alterarSenha(
-        idCliente: idCliente,
-        senhaActual: senhaActual,
-        novaSenha: novaSenha,
-      );
-
-      debugPrint(
-        '✅ ClienteProvider — Senha do cliente #$idCliente alterada.',
-      );
-    });
-  }
-
-  Future<void> trocarPrimeiraSenha({
-    required int idCliente,
-    required String novaSenha,
-  }) async {
-    await _executar('Trocar primeira senha do cliente #$idCliente', () async {
-      await repository.trocarPrimeiraSenha(
-        idCliente: idCliente,
-        novaSenha: novaSenha,
-      );
-
-      final actualizado = await repository.buscarClientePorId(idCliente);
-
-      _clientes = _clientes
-          .map((c) => c.idCliente == idCliente ? actualizado : c)
-          .toList();
-
-      if (_clienteSelecionado?.idCliente == idCliente) {
-        _clienteSelecionado = actualizado;
-      }
-
-      debugPrint(
-        '✅ ClienteProvider — Primeira senha do cliente #$idCliente alterada.',
-      );
-    });
-  }
-
-  Future<void> resetarSenhaPadrao(int idCliente) async {
-    await _executar('Resetar senha padrão do cliente #$idCliente', () async {
-      await repository.resetarSenhaPadrao(idCliente);
-
-      final actualizado = await repository.buscarClientePorId(idCliente);
-
-      _clientes = _clientes
-          .map((c) => c.idCliente == idCliente ? actualizado : c)
-          .toList();
-
-      if (_clienteSelecionado?.idCliente == idCliente) {
-        _clienteSelecionado = actualizado;
-      }
-
-      debugPrint(
-        '✅ ClienteProvider — Senha do cliente #$idCliente redefinida para padrão.',
-      );
-    });
-  }
-
-  Future<void> eliminarCliente(int idCliente) async {
-    await _executar('Eliminar cliente #$idCliente', () async {
-      await repository.eliminarCliente(idCliente);
-
-      _clientes = _clientes
-          .map(
-            (c) => c.idCliente == idCliente
-                ? c.copyWith(ativo: false)
-                : c,
-          )
-          .toList();
-
-      if (_clienteSelecionado?.idCliente == idCliente) {
-        _clienteSelecionado = _clienteSelecionado!.copyWith(
-          ativo: false,
-        );
-      }
-
-      debugPrint(
-        '✅ ClienteProvider — Cliente #$idCliente eliminado/desactivado.',
-      );
-    });
-  }
+  // ─────────────────────────────────────────────────────────────
+  // MÉTODOS REMOVIDOS DO FLUTTER ADMIN
+  // ─────────────────────────────────────────────────────────────
+  //
+  // Estes fluxos foram removidos desta camada para evitar uso acidental:
+  //
+  // - activarCliente(...)
+  // - desactivarCliente(...)
+  // - alterarAtivoCliente(...)
+  // - resetarSenhaPadrao(...)
+  // - eliminarCliente(...)
+  //
+  // A gestão de senha do cliente passará a ser feita por fluxo próprio:
+  //
+  // - esqueci senha
+  // - redefinir senha via email/token
+  //
+  // A desactivação manual de clientes também fica indisponível no painel
+  // administrativo Flutter neste momento.
 
   // ─────────────────────────────────────────────────────────────
   // LIMPEZA DE ESTADO
@@ -394,7 +330,8 @@ class ClienteProvider extends ChangeNotifier {
     debugPrint(
       '⏳ ClienteProvider — carregando=$value | '
       'clientes=${_clientes.length} | '
-      'perfisCliente=${_perfisCliente.length}',
+      'perfisCliente=${_perfisCliente.length} | '
+      'clienteSelecionado=${_clienteSelecionado?.idCliente ?? '-'}',
     );
 
     notifyListeners();

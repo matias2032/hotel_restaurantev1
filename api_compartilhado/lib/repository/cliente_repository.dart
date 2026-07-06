@@ -16,7 +16,9 @@ class ClienteRepository {
     return service.listarPerfisCliente();
   }
 
-  Future<PerfilClienteModel> buscarPerfilClientePorId(int idPerfilCliente) {
+  Future<PerfilClienteModel> buscarPerfilClientePorId(
+    int idPerfilCliente,
+  ) {
     return service.buscarPerfilClientePorId(idPerfilCliente);
   }
 
@@ -78,67 +80,15 @@ class ClienteRepository {
     );
   }
 
-  Future<ClienteModel> alterarAtivoCliente({
-    required int idCliente,
-    required bool ativo,
-  }) {
-    return service.alterarAtivoCliente(
-      idCliente: idCliente,
-      ativo: ativo,
-    );
-  }
-
-  Future<ClienteModel> activarCliente(int idCliente) {
-    return alterarAtivoCliente(
-      idCliente: idCliente,
-      ativo: true,
-    );
-  }
-
-  Future<ClienteModel> desactivarCliente(int idCliente) {
-    return alterarAtivoCliente(
-      idCliente: idCliente,
-      ativo: false,
-    );
-  }
-
-  Future<void> definirSenha({
-    required int idCliente,
-    required String novaSenha,
-  }) {
-    return service.definirSenha(
-      idCliente: idCliente,
-      novaSenha: novaSenha,
-    );
-  }
-
-  Future<void> alterarSenha({
-    required int idCliente,
-    required String senhaActual,
-    required String novaSenha,
-  }) {
-    return service.alterarSenha(
-      idCliente: idCliente,
-      senhaActual: senhaActual,
-      novaSenha: novaSenha,
-    );
-  }
-
-  Future<void> trocarPrimeiraSenha({
-    required int idCliente,
-    required String novaSenha,
-  }) {
-    return service.trocarPrimeiraSenha(
-      idCliente: idCliente,
-      novaSenha: novaSenha,
-    );
-  }
-
-  Future<void> resetarSenhaPadrao(int idCliente) {
-    return service.resetarSenhaPadrao(idCliente);
-  }
-
-  Future<void> eliminarCliente(int idCliente) {
-    return service.eliminarCliente(idCliente);
-  }
+  // ─────────────────────────────────────────────────────────────
+  // MÉTODOS REMOVIDOS DO FLUTTER ADMIN
+  // ─────────────────────────────────────────────────────────────
+  //
+  // Removidos para evitar uso acidental no painel administrativo:
+  //
+  // - alterarAtivoCliente(...)
+  // - activarCliente(...)
+  // - desactivarCliente(...)
+  // - resetarSenhaPadrao(...)
+  // - eliminarCliente(...)
 }

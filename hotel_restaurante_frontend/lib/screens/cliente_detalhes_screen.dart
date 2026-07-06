@@ -91,86 +91,86 @@ class _ClienteDetalhesScreenState extends State<ClienteDetalhesScreen> {
     }
   }
 
-  Future<void> _confirmarToggle() async {
-    final cliente = _cliente;
+  // Future<void> _confirmarToggle() async {
+  //   final cliente = _cliente;
 
-    if (cliente?.idCliente == null) return;
+  //   if (cliente?.idCliente == null) return;
 
-    final acao = _activo ? 'desactivar' : 'activar';
+  //   final acao = _activo ? 'desactivar' : 'activar';
 
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => _ConfirmDialog(
-        title: _activo ? 'Desactivar cliente' : 'Activar cliente',
-        message: 'Deseja $acao $_nomeCompleto?',
-        confirmLabel: _activo ? 'Desactivar' : 'Activar',
-        danger: _activo,
-      ),
-    );
+  //   final ok = await showDialog<bool>(
+  //     context: context,
+  //     builder: (_) => _ConfirmDialog(
+  //       title: _activo ? 'Desactivar cliente' : 'Activar cliente',
+  //       message: 'Deseja $acao $_nomeCompleto?',
+  //       confirmLabel: _activo ? 'Desactivar' : 'Activar',
+  //       danger: _activo,
+  //     ),
+  //   );
 
-    if (ok != true || !mounted) return;
+  //   if (ok != true || !mounted) return;
 
-    setState(() => _processando = true);
+  //   setState(() => _processando = true);
 
-    try {
-      final provider = context.read<ClienteProvider>();
+  //   try {
+  //     final provider = context.read<ClienteProvider>();
 
-      if (_activo) {
-        await provider.desactivarCliente(cliente!.idCliente!);
-        _snack('Cliente desactivado com sucesso.');
-      } else {
-        await provider.activarCliente(cliente!.idCliente!);
-        _snack('Cliente activado com sucesso.');
-      }
+  //     if (_activo) {
+  //       await provider.desactivarCliente(cliente!.idCliente!);
+  //       _snack('Cliente desactivado com sucesso.');
+  //     } else {
+  //       await provider.activarCliente(cliente!.idCliente!);
+  //       _snack('Cliente activado com sucesso.');
+  //     }
 
-      await _recarregarCliente();
-    } catch (e) {
-      _snack(
-        e.toString().replaceFirst('Exception: ', ''),
-        erro: true,
-      );
-    } finally {
-      if (mounted) setState(() => _processando = false);
-    }
-  }
+  //     await _recarregarCliente();
+  //   } catch (e) {
+  //     _snack(
+  //       e.toString().replaceFirst('Exception: ', ''),
+  //       erro: true,
+  //     );
+  //   } finally {
+  //     if (mounted) setState(() => _processando = false);
+  //   }
+  // }
 
-  Future<void> _confirmarResetSenha() async {
-    final cliente = _cliente;
+  // Future<void> _confirmarResetSenha() async {
+  //   final cliente = _cliente;
 
-    if (cliente?.idCliente == null) return;
+  //   if (cliente?.idCliente == null) return;
 
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => _ConfirmDialog(
-        title: 'Resetar senha',
-        message:
-            'A senha de $_nomeCompleto será redefinida para 12345678. '
-            'No próximo login, o cliente deverá criar uma nova senha.',
-        confirmLabel: 'Resetar senha',
-        danger: true,
-      ),
-    );
+  //   final ok = await showDialog<bool>(
+  //     context: context,
+  //     builder: (_) => _ConfirmDialog(
+  //       title: 'Resetar senha',
+  //       message:
+  //           'A senha de $_nomeCompleto será redefinida para 12345678. '
+  //           'No próximo login, o cliente deverá criar uma nova senha.',
+  //       confirmLabel: 'Resetar senha',
+  //       danger: true,
+  //     ),
+  //   );
 
-    if (ok != true || !mounted) return;
+  //   if (ok != true || !mounted) return;
 
-    setState(() => _processando = true);
+  //   setState(() => _processando = true);
 
-    try {
-      await context.read<ClienteProvider>().resetarSenhaPadrao(
-            cliente!.idCliente!,
-          );
+  //   try {
+  //     await context.read<ClienteProvider>().resetarSenhaPadrao(
+  //           cliente!.idCliente!,
+  //         );
 
-      _snack('Senha redefinida para 12345678.');
-      await _recarregarCliente();
-    } catch (e) {
-      _snack(
-        e.toString().replaceFirst('Exception: ', ''),
-        erro: true,
-      );
-    } finally {
-      if (mounted) setState(() => _processando = false);
-    }
-  }
+  //     _snack('Senha redefinida para 12345678.');
+  //     await _recarregarCliente();
+  //   } catch (e) {
+  //     _snack(
+  //       e.toString().replaceFirst('Exception: ', ''),
+  //       erro: true,
+  //     );
+  //   } finally {
+  //     if (mounted) setState(() => _processando = false);
+  //   }
+  // }
 
   void _snack(String message, {bool erro = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -337,10 +337,10 @@ class _ClienteDetalhesScreenState extends State<ClienteDetalhesScreen> {
                           ),
                           const SizedBox(height: 18),
                           _AcoesDetalhes(
-                            activo: _activo,
+                            // activo: _activo,
                             onEditarCliente: _editarCliente,
-                            onToggle: _confirmarToggle,
-                            onResetSenha: _confirmarResetSenha,
+                            // onToggle: _confirmarToggle,
+                            // onResetSenha: _confirmarResetSenha,
                           ),
                           const SizedBox(height: 22),
                         ],
@@ -867,74 +867,26 @@ class _AvisoSeguranca extends StatelessWidget {
 }
 
 class _AcoesDetalhes extends StatelessWidget {
-  final bool activo;
   final VoidCallback onEditarCliente;
-  final VoidCallback onToggle;
-  final VoidCallback onResetSenha;
 
   const _AcoesDetalhes({
-    required this.activo,
     required this.onEditarCliente,
-    required this.onToggle,
-    required this.onResetSenha,
   });
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (_, constraints) {
-        final compact = constraints.maxWidth < 720;
-
-        final buttons = [
-          _ActionButton(
-            icon: Icons.edit_rounded,
-            label: 'Editar cliente',
-            color: _kDark,
-            onPressed: onEditarCliente,
-          ),
-          _ActionButton(
-            icon: Icons.lock_reset_rounded,
-            label: 'Resetar senha',
-            color: _kOrange,
-            onPressed: onResetSenha,
-          ),
-          _ActionButton(
-            icon: activo
-                ? Icons.block_rounded
-                : Icons.check_circle_outline_rounded,
-            label: activo ? 'Desactivar' : 'Activar',
-            color: activo ? _kRed : _kGreen,
-            onPressed: onToggle,
-          ),
-        ];
-
-        if (compact) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: buttons
-                .map(
-                  (button) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: button,
-                  ),
-                )
-                .toList(),
-          );
-        }
-
-        return Row(
-          children: buttons
-              .map(
-                (button) => Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 10),
-                    child: button,
-                  ),
-                ),
-              )
-              .toList(),
-        );
-      },
+    return FilledButton.icon(
+      onPressed: onEditarCliente,
+      icon: const Icon(Icons.edit_rounded, size: 18),
+      label: const Text('Editar cliente'),
+      style: FilledButton.styleFrom(
+        backgroundColor: _kDark,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(17),
+        ),
+      ),
     );
   }
 }
