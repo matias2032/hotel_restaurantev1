@@ -37,6 +37,18 @@ class HotelRestauranteApp extends StatelessWidget {
       service: ClienteService(),
     );
 
+        final ingredienteRepository = IngredienteRepository(
+      service: IngredienteService(),
+    );
+
+    final produtoRepository = ProdutoRepository(
+      service: ProdutoService(),
+    );
+
+    final servicoRepository = ServicoRepository(
+      service: ServicoService(),
+    );
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
@@ -45,6 +57,24 @@ class HotelRestauranteApp extends StatelessWidget {
 
                 ChangeNotifierProvider(
           create: (_) => ClienteProvider(repository: clienteRepository),
+        ),
+
+                ChangeNotifierProvider(
+          create: (_) => IngredienteProvider(
+            repository: ingredienteRepository,
+          ),
+        ),
+
+        ChangeNotifierProvider(
+          create: (_) => ProdutoProvider(
+            repository: produtoRepository,
+          ),
+        ),
+
+        ChangeNotifierProvider(
+          create: (_) => ServicoProvider(
+            repository: servicoRepository,
+          ),
         ),
       ],
       child: MaterialApp(

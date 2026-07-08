@@ -121,6 +121,184 @@ static String perfilClientePorIdUrl(int idPerfilCliente) {
 }
 
   // ─────────────────────────────────────────────────────────────
+  // CATÁLOGO — INGREDIENTES
+  // ─────────────────────────────────────────────────────────────
+
+  static const String _ingredientesCatalogo =
+      '/api/catalogo/ingredientes';
+
+  static String get ingredientesUrl {
+    return '$baseUrl$_ingredientesCatalogo';
+  }
+
+  static String get categoriasIngredienteUrl {
+    return '$ingredientesUrl/categorias';
+  }
+
+  static String ingredientePorIdUrl(int idIngrediente) {
+    return '$ingredientesUrl/$idIngrediente';
+  }
+
+  static String categoriaIngredientePorIdUrl(int idCategoriaIngrediente) {
+    return '$categoriasIngredienteUrl/$idCategoriaIngrediente';
+  }
+
+  static String ingredienteDisponibilidadeUrl(int idIngrediente) {
+    return '$ingredientesUrl/$idIngrediente/disponibilidade';
+  }
+
+  static String ingredienteEstadoUrl(int idIngrediente) {
+    return '$ingredientesUrl/$idIngrediente/estado';
+  }
+
+  static String categoriaIngredienteEstadoUrl(int idCategoriaIngrediente) {
+    return '$categoriasIngredienteUrl/$idCategoriaIngrediente/estado';
+  }
+
+  static String imagensIngredienteUrl(int idIngrediente) {
+    return '$ingredientesUrl/$idIngrediente/imagens';
+  }
+
+  static String imagemIngredientePrincipalUrl({
+    required int idIngrediente,
+    required int idIngredienteImagem,
+  }) {
+    return '$ingredientesUrl/$idIngrediente/imagens/$idIngredienteImagem/principal';
+  }
+
+  static String imagemIngredientePorIdUrl({
+    required int idIngrediente,
+    required int idIngredienteImagem,
+  }) {
+    return '$ingredientesUrl/$idIngrediente/imagens/$idIngredienteImagem';
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // CATÁLOGO — PRODUTOS
+  // ─────────────────────────────────────────────────────────────
+
+  static const String _produtosCatalogo =
+      '/api/catalogo/produtos';
+
+  static String get produtosUrl {
+    return '$baseUrl$_produtosCatalogo';
+  }
+
+  static String get categoriasProdutoUrl {
+    return '$produtosUrl/categorias';
+  }
+
+  static String produtoPorIdUrl(int idProduto) {
+    return '$produtosUrl/$idProduto';
+  }
+
+  static String categoriaProdutoPorIdUrl(int idCategoriaProduto) {
+    return '$categoriasProdutoUrl/$idCategoriaProduto';
+  }
+
+  static String produtoDisponibilidadeUrl(int idProduto) {
+    return '$produtosUrl/$idProduto/disponibilidade';
+  }
+
+  static String produtoDestaqueUrl(int idProduto) {
+    return '$produtosUrl/$idProduto/destaque';
+  }
+
+  static String produtoEstadoUrl(int idProduto) {
+    return '$produtosUrl/$idProduto/estado';
+  }
+
+  static String categoriaProdutoEstadoUrl(int idCategoriaProduto) {
+    return '$categoriasProdutoUrl/$idCategoriaProduto/estado';
+  }
+
+  static String imagensProdutoUrl(int idProduto) {
+    return '$produtosUrl/$idProduto/imagens';
+  }
+
+  static String imagemProdutoPrincipalUrl({
+    required int idProduto,
+    required int idProdutoImagem,
+  }) {
+    return '$produtosUrl/$idProduto/imagens/$idProdutoImagem/principal';
+  }
+
+  static String imagemProdutoPorIdUrl({
+    required int idProduto,
+    required int idProdutoImagem,
+  }) {
+    return '$produtosUrl/$idProduto/imagens/$idProdutoImagem';
+  }
+
+  static String ingredientesProdutoUrl(int idProduto) {
+    return '$produtosUrl/$idProduto/ingredientes';
+  }
+
+  static String ingredienteProdutoPorIdUrl({
+    required int idProduto,
+    required int idIngrediente,
+  }) {
+    return '$produtosUrl/$idProduto/ingredientes/$idIngrediente';
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // CATÁLOGO — SERVIÇOS
+  // ─────────────────────────────────────────────────────────────
+
+  static const String _servicosCatalogo =
+      '/api/catalogo/servicos';
+
+  static String get servicosUrl {
+    return '$baseUrl$_servicosCatalogo';
+  }
+
+  static String get categoriasServicoUrl {
+    return '$servicosUrl/categorias';
+  }
+
+  static String servicoPorIdUrl(int idServico) {
+    return '$servicosUrl/$idServico';
+  }
+
+  static String categoriaServicoPorIdUrl(int idCategoriaServico) {
+    return '$categoriasServicoUrl/$idCategoriaServico';
+  }
+
+  static String servicoDisponibilidadeUrl(int idServico) {
+    return '$servicosUrl/$idServico/disponibilidade';
+  }
+
+  static String servicoDestaqueUrl(int idServico) {
+    return '$servicosUrl/$idServico/destaque';
+  }
+
+  static String servicoEstadoUrl(int idServico) {
+    return '$servicosUrl/$idServico/estado';
+  }
+
+  static String categoriaServicoEstadoUrl(int idCategoriaServico) {
+    return '$categoriasServicoUrl/$idCategoriaServico/estado';
+  }
+
+  static String imagensServicoUrl(int idServico) {
+    return '$servicosUrl/$idServico/imagens';
+  }
+
+  static String imagemServicoPrincipalUrl({
+    required int idServico,
+    required int idServicoImagem,
+  }) {
+    return '$servicosUrl/$idServico/imagens/$idServicoImagem/principal';
+  }
+
+  static String imagemServicoPorIdUrl({
+    required int idServico,
+    required int idServicoImagem,
+  }) {
+    return '$servicosUrl/$idServico/imagens/$idServicoImagem';
+  }
+
+  // ─────────────────────────────────────────────────────────────
   // CONFIGURAÇÕES GERAIS
   // ─────────────────────────────────────────────────────────────
 
