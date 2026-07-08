@@ -65,19 +65,19 @@ echo.
 echo A aguardar alguns segundos para o backend iniciar...
 timeout /t 8 /nobreak > nul
 
-@REM echo [2/3] A arrancar Flutter Windows...
-@REM start "Hotel Restaurante Flutter" cmd /k "cd /d ""%FRONTEND_DIR%"" && flutter run -d windows --no-pub --dart-define=API_BASE_URL=%LOCAL_API_BASE_URL%"
+echo [2/3] A arrancar Flutter Windows...
+start "Hotel Restaurante Flutter" cmd /k "cd /d ""%FRONTEND_DIR%"" && flutter run -d windows --no-pub --dart-define=API_BASE_URL=%LOCAL_API_BASE_URL%"
 
-echo.
-echo [2/2] A arrancar React Web...
-start "Hotel Restaurante React" cmd /k "cd /d ""%REACT_DIR%"" && set ""VITE_API_BASE_URL=%LOCAL_API_BASE_URL%"" && set ""VITE_API_TIMEOUT_MS=%VITE_API_TIMEOUT_MS%"" && if not exist node_modules (call npm.cmd install) else (echo node_modules encontrado, a saltar npm install) && call npm.cmd run dev"
+@REM echo.
+@REM echo [2/2] A arrancar React Web...
+@REM start "Hotel Restaurante React" cmd /k "cd /d ""%REACT_DIR%"" && set ""VITE_API_BASE_URL=%LOCAL_API_BASE_URL%"" && set ""VITE_API_TIMEOUT_MS=%VITE_API_TIMEOUT_MS%"" && if not exist node_modules (call npm.cmd install) else (echo node_modules encontrado, a saltar npm install) && call npm.cmd run dev"
 
-echo.
-echo A aguardar o React/Vite iniciar...
-timeout /t 5 /nobreak > nul
+@REM echo.
+@REM echo A aguardar o React/Vite iniciar...
+@REM timeout /t 5 /nobreak > nul
 
-echo A abrir navegador...
-start "" "%REACT_URL%"
+@REM echo A abrir navegador...
+@REM start "" "%REACT_URL%"
 
 echo.
 echo =====================================================
