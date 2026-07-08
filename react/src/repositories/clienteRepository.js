@@ -15,6 +15,7 @@ import {
   buildClienteRegistoPayload,
   buildClientePrimeiraSenhaPayload,
   buildClienteAlterarSenhaPayload,
+  buildClienteActualizarDadosPayload,
 } from '../models/clienteModel';
 
 function logInicio(acao, payload = {}) {
@@ -290,4 +291,58 @@ export const clienteRepository = {
       throw error;
     }
   },
+
+  // ─────────────────────────────────────────────────────────────
+// ACTUALIZAR DADOS DO CLIENTE
+// PUT /api/clientes/{idCliente}
+// ─────────────────────────────────────────────────────────────
+
+async actualizarDadosCliente(idCliente, {
+  nome,
+  apelido,
+  email,
+  telefone,
+  idPerfilCliente,
+}) {
+logInicio('ACTUALIZAR_DADOS_CLIENTE', {
+  idCliente,
+  nome: nome?.trim() || '',
+  apelido: apelido?.trim() || '',
+  email: email?.trim() || '',
+  telefone: telefone?.trim() || '',
+  idPerfilCliente,
+});
+
+  try {
+    validarIdCliente(idCliente, 'actualizar os dados');
+
+  const payload = buildClienteActualizarDadosPayload({
+  nome,
+  apelido,
+  email,
+  telefone,
+  idPerfilCliente,
+});
+
+    const response = await clienteApiService.actualizarDadosCliente(
+      idCliente,
+      payload
+    );
+
+    const clienteActualizado = mapClienteFromApi(response);
+
+    logSucesso('ACTUALIZAR_DADOS_CLIENTE', {
+      idCliente: clienteActualizado?.idCliente,
+      nome: clienteActualizado?.nome,
+      apelido: clienteActualizado?.apelido,
+      email: clienteActualizado?.email,
+      telefone: clienteActualizado?.telefone,
+    });
+
+    return clienteActualizado;
+  } catch (error) {
+    logErro('ACTUALIZAR_DADOS_CLIENTE', error);
+    throw error;
+  }
+},
 };

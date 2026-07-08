@@ -114,6 +114,7 @@ export function useCliente() {
     alterarSenha,
     restaurarSessao,
     limparErro,
+    actualizarDadosCliente,
   } = context;
 
   // ─────────────────────────────────────────────────────────────
@@ -292,6 +293,58 @@ export function useCliente() {
   }
 
   // ─────────────────────────────────────────────────────────────
+// EDITAR DADOS DO CLIENTE
+// Depois de actualizar, desloga o cliente
+// ─────────────────────────────────────────────────────────────
+
+async function executarEditarDadosCliente({
+  nome,
+  apelido,
+  email,
+  telefone,
+}) {
+  logInicio('EDITAR_DADOS_CLIENTE', {
+    idCliente: cliente?.idCliente,
+    nome: limparTexto(nome),
+    apelido: limparTexto(apelido),
+    email: limparTexto(email),
+    telefone: limparTexto(telefone),
+  });
+
+  try {
+    const clienteActualizado = await actualizarDadosCliente({
+      nome,
+      apelido,
+      email,
+      telefone,
+    });
+
+    logSucesso('EDITAR_DADOS_CLIENTE', {
+      idCliente: clienteActualizado?.idCliente,
+      nome: clienteActualizado?.nome,
+      email: clienteActualizado?.email,
+      acaoPosterior: 'logout',
+    });
+
+    logout();
+
+    navigate('/cliente/login', {
+      replace: true,
+      state: {
+        mensagem:
+          'Dados actualizados com sucesso. Faça login novamente para continuar.',
+      },
+    });
+
+    return clienteActualizado;
+  } catch (error) {
+    logErro('EDITAR_DADOS_CLIENTE', error);
+    throw error;
+  }
+}
+
+
+  // ─────────────────────────────────────────────────────────────
   // FORÇA DA SENHA
   // ─────────────────────────────────────────────────────────────
 
@@ -389,5 +442,6 @@ export function useCliente() {
 
     // Utilitários
     analisarSenha,
+    executarEditarDadosCliente,
   };
 }

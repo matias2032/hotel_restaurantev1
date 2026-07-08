@@ -31,16 +31,19 @@ export const API_TIMEOUT_MS = Number(
 const CLIENTES_BASE = '/api/clientes';
 
 export const API_ROUTES = {
-
   clienteRegisto: `${CLIENTES_BASE}/registo`,
-
   clienteLogin: `${CLIENTES_BASE}/auth/login`,
 
   clientePrimeiraSenha(idCliente) {
     return `${CLIENTES_BASE}/${idCliente}/primeira-senha`;
   },
+
   clienteAlterarSenha(idCliente) {
     return `${CLIENTES_BASE}/${idCliente}/senha`;
+  },
+
+  clienteActualizarDados(idCliente) {
+    return `${CLIENTES_BASE}/${idCliente}`;
   },
 };
 

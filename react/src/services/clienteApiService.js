@@ -136,4 +136,40 @@ export const clienteApiService = {
       throw error;
     }
   },
+
+  // ─────────────────────────────────────────────────────────────
+// CLIENTE — ACTUALIZAR DADOS
+// PUT /api/clientes/{idCliente}
+// ─────────────────────────────────────────────────────────────
+
+async actualizarDadosCliente(idCliente, payload) {
+  logInicio('ACTUALIZAR_DADOS_CLIENTE', {
+    idCliente,
+    nome: payload?.nome,
+    apelido: payload?.apelido,
+    email: payload?.email,
+    telefone: payload?.telefone,
+  });
+
+  try {
+    const response = await httpClient.put(
+      API_ROUTES.clienteActualizarDados(idCliente),
+      payload
+    );
+
+    logSucesso('ACTUALIZAR_DADOS_CLIENTE', {
+      status: response.status,
+      idCliente: response.data?.idCliente,
+      nome: response.data?.nome,
+      email: response.data?.email,
+      telefone: response.data?.telefone,
+    });
+
+    return response.data;
+  } catch (error) {
+    logErro('ACTUALIZAR_DADOS_CLIENTE', error);
+    throw error;
+  }
+},
+
 };

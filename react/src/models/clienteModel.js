@@ -66,6 +66,22 @@ export function buildClienteRegistoPayload({
   };
 }
 
+export function buildClienteActualizarDadosPayload({
+  nome,
+  apelido,
+  email,
+  telefone,
+  idPerfilCliente,
+}) {
+  return {
+    nome: nome?.trim() || '',
+    apelido: apelido?.trim() || null,
+    email: email?.trim() || null,
+    telefone: telefone?.trim() || null,
+    idPerfilCliente,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────
 // PAYLOAD — PRIMEIRA SENHA
 // PATCH /api/clientes/{idCliente}/primeira-senha

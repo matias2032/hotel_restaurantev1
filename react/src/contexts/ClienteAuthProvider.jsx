@@ -315,6 +315,64 @@ export function ClienteAuthProvider({ children }) {
     }
   }
 
+
+  // ─────────────────────────────────────────────────────────────
+// ACTUALIZAR DADOS DO CLIENTE
+// PUT /api/clientes/{idCliente}
+// ─────────────────────────────────────────────────────────────
+
+async function actualizarDadosCliente({
+  nome,
+  apelido,
+  email,
+  telefone,
+}) {
+  logInicio('ACTUALIZAR_DADOS_CLIENTE', {
+    idCliente: cliente?.idCliente,
+    nome,
+    apelido,
+    email,
+    telefone,
+  });
+
+  try {
+    setCarregando(true);
+    setErro(null);
+
+    const idCliente = cliente?.idCliente;
+
+    if (!idCliente) {
+      throw new Error('Cliente não identificado para actualizar dados.');
+    }
+
+const clienteActualizado = await clienteRepository.actualizarDadosCliente(
+  idCliente,
+  {
+    nome,
+    apelido,
+    email,
+    telefone,
+    idPerfilCliente: cliente?.perfilCliente?.idPerfilCliente,
+  }
+);
+
+    logSucesso('ACTUALIZAR_DADOS_CLIENTE', {
+      idCliente: clienteActualizado?.idCliente,
+      nome: clienteActualizado?.nome,
+      email: clienteActualizado?.email,
+    });
+
+    return clienteActualizado;
+  } catch (error) {
+    logErro('ACTUALIZAR_DADOS_CLIENTE', error);
+
+    setErro(error.message || 'Erro ao actualizar dados.');
+    throw error;
+  } finally {
+    setCarregando(false);
+  }
+}
+
   // ─────────────────────────────────────────────────────────────
   // HELPERS DE PERFIL
   // ─────────────────────────────────────────────────────────────
@@ -355,6 +413,7 @@ export function ClienteAuthProvider({ children }) {
       trocarPrimeiraSenha,
       alterarSenha,
       restaurarSessao,
+      actualizarDadosCliente,
 
       limparErro: () => setErro(null),
     }),
@@ -375,4 +434,6 @@ export function ClienteAuthProvider({ children }) {
       {children}
     </ClienteAuthContext.Provider>
   );
+
+  
 }

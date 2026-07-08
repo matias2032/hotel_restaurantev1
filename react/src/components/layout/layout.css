@@ -9,9 +9,8 @@
 .cliente-shell__main {
   min-width: 0;
   flex: 1;
-  margin-left: 286px;
+  margin-left: 0;
 }
-
 .cliente-shell__content {
   padding: 24px;
 }
@@ -34,6 +33,12 @@
   background: var(--color-dark);
   color: #ffffff;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
+  transform: translateX(-100%);
+  transition: transform 0.22s ease;
+}
+
+.cliente-sidebar--aberta {
+  transform: translateX(0);
 }
 
 .cliente-sidebar__header {
@@ -79,11 +84,12 @@
 }
 
 .cliente-sidebar__close {
-  display: none;
   width: 38px;
   height: 38px;
   border: 0;
   border-radius: 13px;
+  display: grid;
+  place-items: center;
   color: #ffffff;
   background: rgba(255, 255, 255, 0.08);
   cursor: pointer;
@@ -175,17 +181,17 @@
 }
 
 .cliente-topbar__hamburger {
-  display: none;
   width: 44px;
   height: 44px;
   border: 0;
   border-radius: 15px;
+  display: grid;
+  place-items: center;
   background: #ffffff;
   color: var(--color-dark);
   box-shadow: 0 8px 18px rgba(17, 24, 39, 0.06);
   cursor: pointer;
 }
-
 .cliente-topbar__title {
   min-width: 0;
   flex: 1;
@@ -401,7 +407,7 @@
    RESPONSIVO
 ───────────────────────────────────────────────────────────── */
 
-@media (max-width: 900px) {
+/* @media (max-width: 900px) {
   .cliente-shell__main {
     margin-left: 0;
   }
@@ -420,14 +426,14 @@
     place-items: center;
   }
 
-  .cliente-shell__overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 35;
-    display: block;
-    border: 0;
-    background: rgba(17, 24, 39, 0.48);
-  }
+.cliente-shell__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: block;
+  border: 0;
+  background: rgba(17, 24, 39, 0.48);
+}
 
   .cliente-topbar__hamburger {
     display: grid;
@@ -441,7 +447,7 @@
   .cliente-shell__content {
     padding: 16px;
   }
-}
+} */
 
 @media (max-width: 520px) {
   .cliente-sidebar {

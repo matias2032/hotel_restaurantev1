@@ -23,7 +23,7 @@ public class ClienteService {
     private static final Boolean ATIVO = true;
     private static final Boolean INATIVO = false;
     private static final String SENHA_PADRAO = "12345678";
-    private static final String PERFIL_CLIENTE_PADRAO = "Regular";
+    private static final String PERFIL_CLIENTE_PADRAO = "singular";
 
     private final ClienteRepository clienteRepository;
     private final PerfilClienteRepository perfilClienteRepository;

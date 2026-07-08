@@ -14,10 +14,11 @@ set "DATABASE_USERNAME=postgres"
 set "DATABASE_PASSWORD=hx1232"
 
 REM =====================================================
-REM CONFIGURACAO LOCAL DA API
+REM CONFIGURACAO LOCAL DA API / REACT
 REM =====================================================
 set "LOCAL_API_BASE_URL=http://localhost:8080"
 set "VITE_API_TIMEOUT_MS=30000"
+set "REACT_URL=http://localhost:5173"
 
 echo =====================================================
 echo   HOTEL + RESTAURANTE - ARRANQUE LOCAL
@@ -30,6 +31,7 @@ echo React:          %REACT_DIR%
 echo Banco:          %DATABASE_URL%
 echo Usuario Banco:  %DATABASE_USERNAME%
 echo API Local:      %LOCAL_API_BASE_URL%
+echo React URL:      %REACT_URL%
 echo.
 
 if not exist "%BACKEND_DIR%" (
@@ -57,18 +59,25 @@ if not exist "%REACT_DIR%" (
 )
 
 echo [1/3] A arrancar backend Spring Boot...
-start "Hotel Restaurante Backend" cmd /k "cd /d ""%BACKEND_DIR%"" && set ""DATABASE_URL=%DATABASE_URL%"" && set ""DATABASE_USERNAME=%DATABASE_USERNAME%"" && set ""DATABASE_PASSWORD=%DATABASE_PASSWORD%"" && if exist mvnw.cmd (mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local) else (mvn spring-boot:run -Dspring-boot.run.profiles=local)"
+start "Hotel Restaurante Backend" cmd /k "cd /d ""%BACKEND_DIR%"" && set ""DATABASE_URL=%DATABASE_URL%"" && set ""DATABASE_USERNAME=%DATABASE_USERNAME%"" && set ""DATABASE_PASSWORD=%DATABASE_PASSWORD%"" && if exist mvnw.cmd (call mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local) else (call mvn.cmd spring-boot:run -Dspring-boot.run.profiles=local)"
 
 echo.
 echo A aguardar alguns segundos para o backend iniciar...
 timeout /t 8 /nobreak > nul
 
-echo [2/3] A arrancar Flutter Windows...
-start "Hotel Restaurante Flutter" cmd /k "cd /d ""%FRONTEND_DIR%"" && flutter run -d windows --no-pub --dart-define=API_BASE_URL=%LOCAL_API_BASE_URL%"
+@REM echo [2/3] A arrancar Flutter Windows...
+@REM start "Hotel Restaurante Flutter" cmd /k "cd /d ""%FRONTEND_DIR%"" && flutter run -d windows --no-pub --dart-define=API_BASE_URL=%LOCAL_API_BASE_URL%"
 
 echo.
-echo [3/3] A arrancar React Web...
-start "Hotel Restaurante React" cmd /k "cd /d ""%REACT_DIR%"" && set ""VITE_API_BASE_URL=%LOCAL_API_BASE_URL%"" && set ""VITE_API_TIMEOUT_MS=%VITE_API_TIMEOUT_MS%"" && if not exist node_modules npm install && npm run dev"
+echo [2/2] A arrancar React Web...
+start "Hotel Restaurante React" cmd /k "cd /d ""%REACT_DIR%"" && set ""VITE_API_BASE_URL=%LOCAL_API_BASE_URL%"" && set ""VITE_API_TIMEOUT_MS=%VITE_API_TIMEOUT_MS%"" && if not exist node_modules (call npm.cmd install) else (echo node_modules encontrado, a saltar npm install) && call npm.cmd run dev"
+
+echo.
+echo A aguardar o React/Vite iniciar...
+timeout /t 5 /nobreak > nul
+
+echo A abrir navegador...
+start "" "%REACT_URL%"
 
 echo.
 echo =====================================================
@@ -82,6 +91,6 @@ echo Flutter vai consumir:
 echo %LOCAL_API_BASE_URL%
 echo.
 echo React esperado em:
-echo http://localhost:5173
+echo %REACT_URL%
 echo.
 pause
