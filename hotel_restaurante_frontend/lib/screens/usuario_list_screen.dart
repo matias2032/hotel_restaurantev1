@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
+import '/widgets/app_sidebar.dart';
 
 
 const _kDark = Color(0xFF111827);
@@ -215,6 +216,9 @@ class _UsuarioListScreenState extends State<UsuarioListScreen> {
 
     return Scaffold(
       backgroundColor: _kBg,
+      drawer: const AppSidebar(
+  currentRoute: '/usuarios',
+),
       body: SafeArea(
         child: Column(
           children: [
@@ -272,19 +276,32 @@ class _Header extends StatelessWidget {
       color: _kDark,
       padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
       child: Row(
-        children: [
-          Container(
-            height: 46,
-            width: 46,
-            decoration: BoxDecoration(
-              color: _kOrange,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.manage_accounts_rounded,
-              color: Colors.white,
-            ),
-          ),
+  children: [
+    Builder(
+      builder: (context) {
+        return IconButton(
+          tooltip: 'Abrir menu',
+          onPressed: () {
+            Scaffold.of(context).openDrawer();
+          },
+          icon: const Icon(Icons.menu_rounded),
+          color: Colors.white,
+        );
+      },
+    ),
+    const SizedBox(width: 8),
+    Container(
+      height: 46,
+      width: 46,
+      decoration: BoxDecoration(
+        color: _kOrange,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Icon(
+        Icons.manage_accounts_rounded,
+        color: Colors.white,
+      ),
+    ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(

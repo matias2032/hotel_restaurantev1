@@ -93,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen>
       switch (result.status) {
         case StatusAutenticacao.sucesso:
           Navigator.of(context).pushNamedAndRemoveUntil(
-            '/clientes',
+            '/categorias-ingrediente',
             (_) => false,
           );
           return;

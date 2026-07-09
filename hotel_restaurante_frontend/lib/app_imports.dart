@@ -10,6 +10,7 @@ export 'package:provider/provider.dart';
 export 'package:sqflite/sqflite.dart';
 export 'package:sqflite_common_ffi/sqflite_ffi.dart';
 export 'package:path/path.dart';
+export 'widgets/app_sidebar.dart';
 
 
 // ─────────────────────────────────────────────────────────────
@@ -27,6 +28,21 @@ export 'screens/primeira_troca_senha_screen.dart';
 export 'screens/cliente_list_screen.dart';
 export 'screens/cliente_form_screen.dart';
 export 'screens/cliente_detalhes_screen.dart';
+
+export 'screens/categoria_ingrediente_list_screen.dart';
+export 'screens/categoria_ingrediente_form_screen.dart';
+
+export 'screens/ingrediente_list_screen.dart';
+export 'screens/ingrediente_form_screen.dart';
+
+export 'screens/categoria_servico_list_screen.dart';
+export 'screens/categoria_servico_form_screen.dart';
+
+export 'screens/servico_list_screen.dart';
+export 'screens/servico_form_screen.dart';
+
+
+
 
 // ─────────────────────────────────────────────────────────────
 // Screens - Administração / Usuários
