@@ -23,15 +23,15 @@ public interface ServicoRepository
 
     List<ServicoEntity> findByDestaqueTrueAndAtivoTrueOrderByNomeAsc();
 
-    List<ServicoEntity> findByCategoriaServico_IdCategoriaServicoAndAtivoTrueOrderByNomeAsc(
-            Long idCategoriaServico
-    );
+List<ServicoEntity> findDistinctByCategorias_CategoriaServico_IdCategoriaServicoOrderByNomeAsc(
+        Long idCategoriaServico
+);
 
-    List<ServicoEntity> findByCategoriaServico_IdCategoriaServicoOrderByNomeAsc(
-            Long idCategoriaServico
-    );
+List<ServicoEntity> findDistinctByCategorias_CategoriaServico_IdCategoriaServicoAndAtivoTrueOrderByNomeAsc(
+        Long idCategoriaServico
+);
 
-    List<ServicoEntity> findByCategoriaServico_IdCategoriaServicoAndDisponivelTrueAndAtivoTrueOrderByNomeAsc(
-            Long idCategoriaServico
-    );
+List<ServicoEntity> findDistinctByCategorias_CategoriaServico_IdCategoriaServicoAndDisponivelTrueAndAtivoTrueOrderByNomeAsc(
+        Long idCategoriaServico
+);
 }

@@ -283,8 +283,9 @@ class IngredienteService {
           headers: ApiConfig.authHeaders,
           body: jsonEncode(
             ingrediente.toJson(
-              enviarImagens: true,
-            ),
+  enviarCategorias: true,
+  enviarImagens: true,
+),
           ),
         )
         .timeout(ApiConfig.timeout);
@@ -300,16 +301,17 @@ class IngredienteService {
     return ingredienteCriado;
   }
 
-  Future<IngredienteModel> editarIngrediente(
-    int idIngrediente,
-    IngredienteModel ingrediente, {
-    bool enviarImagens = true,
-  }) async {
+Future<IngredienteModel> editarIngrediente(
+  int idIngrediente,
+  IngredienteModel ingrediente, {
+  bool enviarCategorias = true,
+  bool enviarImagens = true,
+}) async {
     final uri = Uri.parse('$_ingredientesUrl/$idIngrediente');
 
     debugPrint(
       '[IngredienteService] EDITAR_INGREDIENTE_INICIO — '
-      'id=$idIngrediente enviarImagens=$enviarImagens',
+'id=$idIngrediente enviarCategorias=$enviarCategorias enviarImagens=$enviarImagens',
     );
 
     final response = await http
@@ -318,8 +320,9 @@ class IngredienteService {
           headers: ApiConfig.authHeaders,
           body: jsonEncode(
             ingrediente.toJson(
-              enviarImagens: enviarImagens,
-            ),
+  enviarCategorias: enviarCategorias,
+  enviarImagens: enviarImagens,
+),
           ),
         )
         .timeout(ApiConfig.timeout);

@@ -240,12 +240,13 @@ class ProdutoRepository {
     return produtoCriado;
   }
 
-  Future<ProdutoModel> editarProduto(
-    int idProduto,
-    ProdutoModel produto, {
-    bool enviarImagens = true,
-    bool enviarIngredientes = true,
-  }) async {
+Future<ProdutoModel> editarProduto(
+  int idProduto,
+  ProdutoModel produto, {
+  bool enviarCategorias = true,
+  bool enviarImagens = true,
+  bool enviarIngredientes = true,
+}) async {
     _validarId(
       idProduto,
       'ID do produto inválido para edição.',
@@ -259,16 +260,18 @@ class ProdutoRepository {
 
     debugPrint(
       '[ProdutoRepository] EDITAR_PRODUTO_INICIO — '
-      'id=$idProduto enviarImagens=$enviarImagens '
-      'enviarIngredientes=$enviarIngredientes',
+ 'id=$idProduto enviarCategorias=$enviarCategorias '
+'enviarImagens=$enviarImagens '
+'enviarIngredientes=$enviarIngredientes',
     );
 
     final produtoEditado = await service.editarProduto(
-      idProduto,
-      produtoNormalizado,
-      enviarImagens: enviarImagens,
-      enviarIngredientes: enviarIngredientes,
-    );
+  idProduto,
+  produtoNormalizado,
+  enviarCategorias: enviarCategorias,
+  enviarImagens: enviarImagens,
+  enviarIngredientes: enviarIngredientes,
+);
 
     debugPrint(
       '[ProdutoRepository] EDITAR_PRODUTO_SUCESSO — id=$idProduto',
@@ -643,14 +646,29 @@ class ProdutoRepository {
       throw Exception('O tempo de preparo não pode ser negativo.');
     }
 
-    final idCategoria = produto.categoriaProduto?.idCategoriaProduto;
+for (final categoria in produto.categoriasProduto) {
+  final idCategoria = categoria.idCategoriaProduto;
 
-    if (idCategoria != null) {
-      _validarId(
-        idCategoria,
-        'ID da categoria de produto inválido.',
-      );
-    }
+  if (idCategoria == null) {
+    throw Exception('Categoria de produto inválida.');
+  }
+
+  _validarId(
+    idCategoria,
+    'ID da categoria de produto inválido.',
+  );
+}
+
+final idsCategorias = produto.categoriasProduto
+    .map((categoria) => categoria.idCategoriaProduto)
+    .whereType<int>()
+    .toList();
+
+final idsUnicos = idsCategorias.toSet();
+
+if (idsCategorias.length != idsUnicos.length) {
+  throw Exception('Não é permitido associar a mesma categoria mais de uma vez.');
+}
 
     final imagensNormalizadas = validarImagens
         ? produto.imagens.map(_normalizarImagem).toList()
@@ -660,20 +678,21 @@ class ProdutoRepository {
         ? _normalizarIngredientesProduto(produto.ingredientes)
         : produto.ingredientes;
 
-    return produto.copyWith(
-      nome: nome,
-      descricao: _normalizarTextoOpcional(produto.descricao),
-      preco: produto.preco,
-      imagemPrincipalUrl: _normalizarTextoOpcional(
-        produto.imagemPrincipalUrl,
-      ),
-      controlaEstoque: produto.controlaEstoque,
-      quantidadeEstoque: produto.controlaEstoque
-          ? produto.quantidadeEstoque
-          : null,
-      imagens: imagensNormalizadas,
-      ingredientes: ingredientesNormalizados,
-    );
+return produto.copyWith(
+  nome: nome,
+  descricao: _normalizarTextoOpcional(produto.descricao),
+  preco: produto.preco,
+  imagemPrincipalUrl: _normalizarTextoOpcional(
+    produto.imagemPrincipalUrl,
+  ),
+  controlaEstoque: produto.controlaEstoque,
+  quantidadeEstoque: produto.controlaEstoque
+      ? produto.quantidadeEstoque
+      : null,
+  categoriasProduto: produto.categoriasProduto,
+  imagens: imagensNormalizadas,
+  ingredientes: ingredientesNormalizados,
+);
   }
 
   ProdutoImagemModel _normalizarImagem(

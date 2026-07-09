@@ -3,6 +3,8 @@ package com.dev258.hotel_restaurante_backend.catalogo.servico.dto;
 import com.dev258.hotel_restaurante_backend.catalogo.servico.entity.CategoriaServicoEntity;
 import com.dev258.hotel_restaurante_backend.catalogo.servico.entity.ServicoEntity;
 import com.dev258.hotel_restaurante_backend.catalogo.servico.entity.ServicoImagemEntity;
+import com.dev258.hotel_restaurante_backend.catalogo.servico.entity.ServicoCategoriaEntity;
+import java.util.Comparator;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -11,7 +13,7 @@ import java.util.List;
 public record ServicoResponseDTO(
         Long idServico,
 
-        CategoriaResumoDTO categoriaServico,
+List<CategoriaResumoDTO> categoriasServico,
 
         String nome,
         String descricao,
@@ -33,9 +35,7 @@ public record ServicoResponseDTO(
     public ServicoResponseDTO(ServicoEntity entity) {
         this(
                 entity.getIdServico(),
-                entity.getCategoriaServico() != null
-                        ? new CategoriaResumoDTO(entity.getCategoriaServico())
-                        : null,
+                resolverCategorias(entity),
                 entity.getNome(),
                 entity.getDescricao(),
                 entity.getPreco(),
@@ -53,6 +53,34 @@ public record ServicoResponseDTO(
                 entity.getUpdatedAt()
         );
     }
+
+    private static List<CategoriaResumoDTO> resolverCategorias(
+        ServicoEntity entity
+) {
+    if (entity.getCategorias() == null || entity.getCategorias().isEmpty()) {
+        return List.of();
+    }
+
+    return entity.getCategorias()
+            .stream()
+            .sorted(
+                    Comparator
+                            .comparing(
+                                    ServicoCategoriaEntity::getPrincipal,
+                                    Comparator.nullsLast(Comparator.reverseOrder())
+                            )
+                            .thenComparing(
+                                    ServicoCategoriaEntity::getOrdem,
+                                    Comparator.nullsLast(Integer::compareTo)
+                            )
+                            .thenComparing(categoria -> categoria
+                                    .getCategoriaServico()
+                                    .getNome()
+                            )
+            )
+            .map(CategoriaResumoDTO::new)
+            .toList();
+}
 
     private static String resolverImagemPrincipal(ServicoEntity entity) {
         if (entity.getImagemPrincipalUrl() != null && !entity.getImagemPrincipalUrl().isBlank()) {
@@ -75,18 +103,31 @@ public record ServicoResponseDTO(
                         .orElse(null));
     }
 
-    public record CategoriaResumoDTO(
-            Long idCategoriaServico,
-            String nome
-    ) {
+public record CategoriaResumoDTO(
+        Long idCategoriaServico,
+        String nome,
+        Boolean principal,
+        Integer ordem
+) {
 
-        public CategoriaResumoDTO(CategoriaServicoEntity entity) {
-            this(
-                    entity.getIdCategoriaServico(),
-                    entity.getNome()
-            );
-        }
+    public CategoriaResumoDTO(ServicoCategoriaEntity entity) {
+        this(
+                entity.getCategoriaServico().getIdCategoriaServico(),
+                entity.getCategoriaServico().getNome(),
+                entity.getPrincipal(),
+                entity.getOrdem()
+        );
     }
+
+    public CategoriaResumoDTO(CategoriaServicoEntity entity) {
+        this(
+                entity.getIdCategoriaServico(),
+                entity.getNome(),
+                false,
+                0
+        );
+    }
+}
 
     public record ServicoImagemResponseDTO(
             Long idServicoImagem,

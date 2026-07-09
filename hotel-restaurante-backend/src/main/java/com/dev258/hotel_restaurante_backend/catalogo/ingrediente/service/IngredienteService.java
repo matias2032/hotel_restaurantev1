@@ -5,12 +5,14 @@ import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.dto.CategoriaIn
 import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.dto.IngredienteRequestDTO;
 import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.dto.IngredienteResponseDTO;
 import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.entity.CategoriaIngredienteEntity;
+import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.entity.IngredienteCategoriaEntity;
 import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.entity.IngredienteEntity;
 import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.entity.IngredienteImagemEntity;
 import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.exception.CategoriaIngredienteNaoEncontradaException;
 import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.exception.IngredienteNaoEncontradoException;
 import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.exception.IngredienteRegraNegocioException;
 import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.repository.CategoriaIngredienteRepository;
+import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.repository.IngredienteCategoriaRepository;
 import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.repository.IngredienteImagemRepository;
 import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.repository.IngredienteRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +32,7 @@ public class IngredienteService {
     private final CategoriaIngredienteRepository categoriaIngredienteRepository;
     private final IngredienteRepository ingredienteRepository;
     private final IngredienteImagemRepository ingredienteImagemRepository;
+    private final IngredienteCategoriaRepository ingredienteCategoriaRepository;
 
     // ─────────────────────────────────────────────────────────────
     // CATEGORIAS — LISTAR
@@ -109,6 +114,12 @@ public class IngredienteService {
     ) {
         CategoriaIngredienteEntity categoria = buscarCategoriaEntityObrigatoria(idCategoriaIngrediente);
 
+        boolean vaiDesativar = Boolean.FALSE.equals(ativo);
+
+        if (vaiDesativar) {
+            validarCategoriaSemIngredientesAtivos(idCategoriaIngrediente);
+        }
+
         categoria.setAtivo(ativo != null ? ativo : true);
 
         CategoriaIngredienteEntity categoriaSalva = categoriaIngredienteRepository.save(categoria);
@@ -124,16 +135,7 @@ public class IngredienteService {
     public void desativarCategoria(Long idCategoriaIngrediente) {
         CategoriaIngredienteEntity categoria = buscarCategoriaEntityObrigatoria(idCategoriaIngrediente);
 
-        List<IngredienteEntity> ingredientesAtivos =
-                ingredienteRepository.findByCategoriaIngrediente_IdCategoriaIngredienteAndAtivoTrueOrderByNomeAsc(
-                        idCategoriaIngrediente
-                );
-
-        if (!ingredientesAtivos.isEmpty()) {
-            throw new IngredienteRegraNegocioException(
-                    "Não é possível desativar esta categoria porque existem ingredientes ativos associados."
-            );
-        }
+        validarCategoriaSemIngredientesAtivos(idCategoriaIngrediente);
 
         categoria.setAtivo(false);
         categoriaIngredienteRepository.save(categoria);
@@ -154,11 +156,11 @@ public class IngredienteService {
         if (idCategoriaIngrediente != null) {
             ingredientes = Boolean.TRUE.equals(somenteAtivos)
                     ? ingredienteRepository
-                    .findByCategoriaIngrediente_IdCategoriaIngredienteAndAtivoTrueOrderByNomeAsc(
+                    .findDistinctByCategorias_CategoriaIngrediente_IdCategoriaIngredienteAndAtivoTrueOrderByNomeAsc(
                             idCategoriaIngrediente
                     )
                     : ingredienteRepository
-                    .findByCategoriaIngrediente_IdCategoriaIngredienteOrderByNomeAsc(
+                    .findDistinctByCategorias_CategoriaIngrediente_IdCategoriaIngredienteOrderByNomeAsc(
                             idCategoriaIngrediente
                     );
         } else if (Boolean.TRUE.equals(somenteDisponiveis)) {
@@ -173,6 +175,7 @@ public class IngredienteService {
             ingredientes = ingredientes
                     .stream()
                     .filter(ingrediente -> Boolean.TRUE.equals(ingrediente.getDisponivel()))
+                    .filter(ingrediente -> Boolean.TRUE.equals(ingrediente.getAtivo()))
                     .toList();
         }
 
@@ -200,10 +203,7 @@ public class IngredienteService {
     public IngredienteResponseDTO criarIngrediente(IngredienteRequestDTO dto) {
         validarNomeIngredienteDuplicado(dto.nome(), null);
 
-        CategoriaIngredienteEntity categoria = resolverCategoriaOpcional(dto.idCategoriaIngrediente());
-
         IngredienteEntity ingrediente = IngredienteEntity.builder()
-                .categoriaIngrediente(categoria)
                 .nome(limparObrigatorio(dto.nome(), "O nome do ingrediente é obrigatório."))
                 .descricao(limparOpcional(dto.descricao()))
                 .precoAdicional(resolverPrecoAdicional(dto.precoAdicional()))
@@ -216,7 +216,13 @@ public class IngredienteService {
                 .ativo(dto.ativo() != null ? dto.ativo() : true)
                 .build();
 
-        aplicarImagensNoIngrediente(ingrediente, dto.imagens(), true);
+        aplicarCategoriasNoIngrediente(
+                ingrediente,
+                dto.idCategoriasIngrediente(),
+                false
+        );
+
+        aplicarImagensNoIngrediente(ingrediente, dto.imagens());
 
         IngredienteEntity ingredienteSalvo = ingredienteRepository.save(ingrediente);
 
@@ -236,9 +242,6 @@ public class IngredienteService {
 
         validarNomeIngredienteDuplicado(dto.nome(), idIngrediente);
 
-        CategoriaIngredienteEntity categoria = resolverCategoriaOpcional(dto.idCategoriaIngrediente());
-
-        ingrediente.setCategoriaIngrediente(categoria);
         ingrediente.setNome(limparObrigatorio(dto.nome(), "O nome do ingrediente é obrigatório."));
         ingrediente.setDescricao(limparOpcional(dto.descricao()));
         ingrediente.setPrecoAdicional(resolverPrecoAdicional(dto.precoAdicional()));
@@ -252,15 +255,33 @@ public class IngredienteService {
         ingrediente.setDisponivel(dto.disponivel() != null ? dto.disponivel() : true);
         ingrediente.setAtivo(dto.ativo() != null ? dto.ativo() : true);
 
+        if (Boolean.FALSE.equals(ingrediente.getAtivo())) {
+            ingrediente.setDisponivel(false);
+        }
+
         /*
          * Regra:
-         * - dto.imagens() == null  -> mantém as imagens actuais.
-         * - dto.imagens() == []    -> remove todas as imagens.
+         * - dto.idCategoriasIngrediente() == null  -> mantém categorias atuais.
+         * - dto.idCategoriasIngrediente() == []    -> remove todas as categorias.
+         * - dto.idCategoriasIngrediente() com IDs  -> substitui pelas categorias enviadas.
+         */
+        if (dto.idCategoriasIngrediente() != null) {
+            aplicarCategoriasNoIngrediente(
+                    ingrediente,
+                    dto.idCategoriasIngrediente(),
+                    true
+            );
+        }
+
+        /*
+         * Regra:
+         * - dto.imagens() == null   -> mantém as imagens atuais.
+         * - dto.imagens() == []     -> remove todas as imagens.
          * - dto.imagens() com itens -> substitui pelas imagens enviadas.
          */
         if (dto.imagens() != null) {
             ingrediente.getImagens().clear();
-            aplicarImagensNoIngrediente(ingrediente, dto.imagens(), false);
+            aplicarImagensNoIngrediente(ingrediente, dto.imagens());
         }
 
         IngredienteEntity ingredienteSalvo = ingredienteRepository.save(ingrediente);
@@ -278,6 +299,12 @@ public class IngredienteService {
             Boolean disponivel
     ) {
         IngredienteEntity ingrediente = buscarIngredienteEntityObrigatorio(idIngrediente);
+
+        if (Boolean.FALSE.equals(ingrediente.getAtivo()) && Boolean.TRUE.equals(disponivel)) {
+            throw new IngredienteRegraNegocioException(
+                    "Não é possível disponibilizar um ingrediente inativo."
+            );
+        }
 
         ingrediente.setDisponivel(disponivel != null ? disponivel : true);
 
@@ -467,14 +494,6 @@ public class IngredienteService {
                 .orElseThrow(() -> new IngredienteNaoEncontradoException(idIngrediente));
     }
 
-    private CategoriaIngredienteEntity resolverCategoriaOpcional(Long idCategoriaIngrediente) {
-        if (idCategoriaIngrediente == null) {
-            return null;
-        }
-
-        return buscarCategoriaEntityObrigatoria(idCategoriaIngrediente);
-    }
-
     // ─────────────────────────────────────────────────────────────
     // HELPERS — VALIDAÇÕES
     // ─────────────────────────────────────────────────────────────
@@ -522,6 +541,20 @@ public class IngredienteService {
         }
     }
 
+    private void validarCategoriaSemIngredientesAtivos(Long idCategoriaIngrediente) {
+        boolean existeIngredienteAtivo =
+                ingredienteCategoriaRepository
+                        .existsByCategoriaIngrediente_IdCategoriaIngredienteAndIngrediente_AtivoTrue(
+                                idCategoriaIngrediente
+                        );
+
+        if (existeIngredienteAtivo) {
+            throw new IngredienteRegraNegocioException(
+                    "Não é possível desativar esta categoria porque existem ingredientes ativos associados."
+            );
+        }
+    }
+
     private BigDecimal resolverPrecoAdicional(BigDecimal precoAdicional) {
         BigDecimal valor = precoAdicional != null ? precoAdicional : BigDecimal.ZERO;
 
@@ -556,13 +589,59 @@ public class IngredienteService {
     }
 
     // ─────────────────────────────────────────────────────────────
+    // HELPERS — CATEGORIAS DO INGREDIENTE
+    // ─────────────────────────────────────────────────────────────
+
+    private void aplicarCategoriasNoIngrediente(
+            IngredienteEntity ingrediente,
+            List<Long> idCategoriasIngrediente,
+            boolean substituirCategoriasAtuais
+    ) {
+        if (substituirCategoriasAtuais) {
+            ingrediente.limparCategorias();
+        }
+
+        if (idCategoriasIngrediente == null || idCategoriasIngrediente.isEmpty()) {
+            return;
+        }
+
+        Set<Long> idsUnicos = new LinkedHashSet<>(idCategoriasIngrediente);
+
+        int ordem = 0;
+
+        for (Long idCategoriaIngrediente : idsUnicos) {
+            CategoriaIngredienteEntity categoria =
+                    buscarCategoriaEntityObrigatoria(idCategoriaIngrediente);
+
+            if (Boolean.FALSE.equals(categoria.getAtivo())) {
+                throw new IngredienteRegraNegocioException(
+                        "Não é possível associar uma categoria de ingrediente inativa."
+                );
+            }
+
+            boolean principal = ordem == 0;
+
+            IngredienteCategoriaEntity ingredienteCategoria =
+                    IngredienteCategoriaEntity.builder()
+                            .ingrediente(ingrediente)
+                            .categoriaIngrediente(categoria)
+                            .principal(principal)
+                            .ordem(ordem)
+                            .build();
+
+            ingrediente.adicionarCategoria(ingredienteCategoria);
+
+            ordem++;
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // HELPERS — IMAGENS
     // ─────────────────────────────────────────────────────────────
 
     private void aplicarImagensNoIngrediente(
             IngredienteEntity ingrediente,
-            List<IngredienteRequestDTO.IngredienteImagemRequestDTO> imagensDto,
-            boolean criacao
+            List<IngredienteRequestDTO.IngredienteImagemRequestDTO> imagensDto
     ) {
         if (imagensDto == null || imagensDto.isEmpty()) {
             return;

@@ -62,16 +62,22 @@ class CategoriaServicoModel {
 class CategoriaServicoResumoModel {
   final int? idCategoriaServico;
   final String nome;
+  final bool principal;
+  final int ordem;
 
   const CategoriaServicoResumoModel({
     this.idCategoriaServico,
     required this.nome,
+    this.principal = false,
+    this.ordem = 0,
   });
 
   factory CategoriaServicoResumoModel.fromJson(Map<String, dynamic> json) {
     return CategoriaServicoResumoModel(
       idCategoriaServico: _parseIntOpt(json['idCategoriaServico']),
       nome: _parseString(json['nome']),
+      principal: _parseBool(json['principal'], defaultValue: false),
+      ordem: _parseInt(json['ordem'], defaultValue: 0),
     );
   }
 
@@ -79,16 +85,22 @@ class CategoriaServicoResumoModel {
     return {
       'idCategoriaServico': idCategoriaServico,
       'nome': nome.trim(),
+      'principal': principal,
+      'ordem': ordem,
     };
   }
 
   CategoriaServicoResumoModel copyWith({
     int? idCategoriaServico,
     String? nome,
+    bool? principal,
+    int? ordem,
   }) {
     return CategoriaServicoResumoModel(
       idCategoriaServico: idCategoriaServico ?? this.idCategoriaServico,
       nome: nome ?? this.nome,
+      principal: principal ?? this.principal,
+      ordem: ordem ?? this.ordem,
     );
   }
 }
@@ -151,7 +163,7 @@ class ServicoImagemModel {
 
 class ServicoModel {
   final int? idServico;
-  final CategoriaServicoResumoModel? categoriaServico;
+final List<CategoriaServicoResumoModel> categoriasServico;
   final String nome;
   final String? descricao;
   final double preco;
@@ -165,7 +177,7 @@ class ServicoModel {
 
   const ServicoModel({
     this.idServico,
-    this.categoriaServico,
+this.categoriasServico = const [],
     required this.nome,
     this.descricao,
     this.preco = 0.0,
@@ -181,11 +193,10 @@ class ServicoModel {
   factory ServicoModel.fromJson(Map<String, dynamic> json) {
     return ServicoModel(
       idServico: _parseIntOpt(json['idServico']),
-      categoriaServico: json['categoriaServico'] is Map<String, dynamic>
-          ? CategoriaServicoResumoModel.fromJson(
-              json['categoriaServico'] as Map<String, dynamic>,
-            )
-          : null,
+      categoriasServico: _parseCategoriasServico(
+  json['categoriasServico'],
+  fallbackCategoriaUnica: json['categoriaServico'],
+),
       nome: _parseString(json['nome']),
       descricao: _parseStringOpt(json['descricao']),
       preco: _parseDouble(json['preco']),
@@ -199,11 +210,16 @@ class ServicoModel {
     );
   }
 
-  Map<String, dynamic> toJson({
-    bool enviarImagens = true,
-  }) {
+Map<String, dynamic> toJson({
+  bool enviarCategorias = true,
+  bool enviarImagens = true,
+}) {
     return {
-      'idCategoriaServico': categoriaServico?.idCategoriaServico,
+if (enviarCategorias)
+  'idCategoriasServico': categoriasServico
+      .map((categoria) => categoria.idCategoriaServico)
+      .whereType<int>()
+      .toList(),
       'nome': nome.trim(),
       'descricao': _nullIfBlank(descricao),
       'preco': preco,
@@ -218,7 +234,7 @@ class ServicoModel {
 
   ServicoModel copyWith({
     int? idServico,
-    CategoriaServicoResumoModel? categoriaServico,
+List<CategoriaServicoResumoModel>? categoriasServico,
     String? nome,
     String? descricao,
     double? preco,
@@ -232,7 +248,7 @@ class ServicoModel {
   }) {
     return ServicoModel(
       idServico: idServico ?? this.idServico,
-      categoriaServico: categoriaServico ?? this.categoriaServico,
+categoriasServico: categoriasServico ?? this.categoriasServico,
       nome: nome ?? this.nome,
       descricao: descricao ?? this.descricao,
       preco: preco ?? this.preco,
@@ -250,6 +266,7 @@ class ServicoModel {
 // ─────────────────────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────────────────────
+
 
 int? _parseIntOpt(dynamic value) {
   if (value == null) return null;
@@ -336,13 +353,43 @@ String? _nullIfBlank(String? value) {
   return text.isEmpty ? null : text;
 }
 
+List<CategoriaServicoResumoModel> _parseCategoriasServico(
+  dynamic value, {
+  dynamic fallbackCategoriaUnica,
+}) {
+  if (value is List) {
+    return value
+        .whereType<Map>()
+        .map(
+          (item) => CategoriaServicoResumoModel.fromJson(
+            Map<String, dynamic>.from(item),
+          ),
+        )
+        .toList();
+  }
+
+  if (fallbackCategoriaUnica is Map) {
+    return [
+      CategoriaServicoResumoModel.fromJson(
+        Map<String, dynamic>.from(fallbackCategoriaUnica),
+      ),
+    ];
+  }
+
+  return [];
+}
+
 List<ServicoImagemModel> _parseImagensServico(dynamic value) {
   if (value == null || value is! List) {
     return [];
   }
 
   return value
-      .whereType<Map<String, dynamic>>()
-      .map(ServicoImagemModel.fromJson)
+      .whereType<Map>()
+      .map(
+        (item) => ServicoImagemModel.fromJson(
+          Map<String, dynamic>.from(item),
+        ),
+      )
       .toList();
 }

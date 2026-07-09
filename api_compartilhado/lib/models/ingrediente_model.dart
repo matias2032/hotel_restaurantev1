@@ -63,16 +63,22 @@ class CategoriaIngredienteModel {
 class CategoriaIngredienteResumoModel {
   final int? idCategoriaIngrediente;
   final String nome;
+  final bool principal;
+  final int ordem;
 
   const CategoriaIngredienteResumoModel({
     this.idCategoriaIngrediente,
     required this.nome,
+    this.principal = false,
+    this.ordem = 0,
   });
 
   factory CategoriaIngredienteResumoModel.fromJson(Map<String, dynamic> json) {
     return CategoriaIngredienteResumoModel(
       idCategoriaIngrediente: _parseIntOpt(json['idCategoriaIngrediente']),
       nome: _parseString(json['nome']),
+      principal: _parseBool(json['principal'], defaultValue: false),
+      ordem: _parseInt(json['ordem'], defaultValue: 0),
     );
   }
 
@@ -80,17 +86,23 @@ class CategoriaIngredienteResumoModel {
     return {
       'idCategoriaIngrediente': idCategoriaIngrediente,
       'nome': nome.trim(),
+      'principal': principal,
+      'ordem': ordem,
     };
   }
 
   CategoriaIngredienteResumoModel copyWith({
     int? idCategoriaIngrediente,
     String? nome,
+    bool? principal,
+    int? ordem,
   }) {
     return CategoriaIngredienteResumoModel(
       idCategoriaIngrediente:
           idCategoriaIngrediente ?? this.idCategoriaIngrediente,
       nome: nome ?? this.nome,
+      principal: principal ?? this.principal,
+      ordem: ordem ?? this.ordem,
     );
   }
 }
@@ -153,7 +165,7 @@ class IngredienteImagemModel {
 
 class IngredienteModel {
   final int? idIngrediente;
-  final CategoriaIngredienteResumoModel? categoriaIngrediente;
+final List<CategoriaIngredienteResumoModel> categoriasIngrediente;
   final String nome;
   final String? descricao;
   final double precoAdicional;
@@ -168,7 +180,7 @@ class IngredienteModel {
 
   const IngredienteModel({
     this.idIngrediente,
-    this.categoriaIngrediente,
+this.categoriasIngrediente = const [],
     required this.nome,
     this.descricao,
     this.precoAdicional = 0.0,
@@ -185,12 +197,10 @@ class IngredienteModel {
   factory IngredienteModel.fromJson(Map<String, dynamic> json) {
     return IngredienteModel(
       idIngrediente: _parseIntOpt(json['idIngrediente']),
-      categoriaIngrediente:
-          json['categoriaIngrediente'] is Map<String, dynamic>
-              ? CategoriaIngredienteResumoModel.fromJson(
-                  json['categoriaIngrediente'] as Map<String, dynamic>,
-                )
-              : null,
+      categoriasIngrediente: _parseCategoriasIngrediente(
+  json['categoriasIngrediente'],
+  fallbackCategoriaUnica: json['categoriaIngrediente'],
+),
       nome: _parseString(json['nome']),
       descricao: _parseStringOpt(json['descricao']),
       precoAdicional: _parseDouble(json['precoAdicional']),
@@ -209,26 +219,30 @@ class IngredienteModel {
   }
 
   Map<String, dynamic> toJson({
-    bool enviarImagens = true,
-  }) {
-    return {
-      'idCategoriaIngrediente':
-          categoriaIngrediente?.idCategoriaIngrediente,
-      'nome': nome.trim(),
-      'descricao': _nullIfBlank(descricao),
-      'precoAdicional': precoAdicional,
-      'controlaEstoque': controlaEstoque,
-      'quantidadeEstoque': controlaEstoque ? quantidadeEstoque : null,
-      'disponivel': disponivel,
-      'ativo': ativo,
-      if (enviarImagens)
-        'imagens': imagens.map((imagem) => imagem.toJson()).toList(),
-    };
-  }
+  bool enviarCategorias = true,
+  bool enviarImagens = true,
+}) {
+  return {
+    if (enviarCategorias)
+      'idCategoriasIngrediente': categoriasIngrediente
+          .map((categoria) => categoria.idCategoriaIngrediente)
+          .whereType<int>()
+          .toList(),
+    'nome': nome.trim(),
+    'descricao': _nullIfBlank(descricao),
+    'precoAdicional': precoAdicional,
+    'controlaEstoque': controlaEstoque,
+    'quantidadeEstoque': controlaEstoque ? quantidadeEstoque : null,
+    'disponivel': disponivel,
+    'ativo': ativo,
+    if (enviarImagens)
+      'imagens': imagens.map((imagem) => imagem.toJson()).toList(),
+  };
+}
 
   IngredienteModel copyWith({
     int? idIngrediente,
-    CategoriaIngredienteResumoModel? categoriaIngrediente,
+List<CategoriaIngredienteResumoModel>? categoriasIngrediente,
     String? nome,
     String? descricao,
     double? precoAdicional,
@@ -243,8 +257,8 @@ class IngredienteModel {
   }) {
     return IngredienteModel(
       idIngrediente: idIngrediente ?? this.idIngrediente,
-      categoriaIngrediente:
-          categoriaIngrediente ?? this.categoriaIngrediente,
+categoriasIngrediente:
+    categoriasIngrediente ?? this.categoriasIngrediente,
       nome: nome ?? this.nome,
       descricao: descricao ?? this.descricao,
       precoAdicional: precoAdicional ?? this.precoAdicional,
@@ -349,13 +363,43 @@ String? _nullIfBlank(String? value) {
   return text.isEmpty ? null : text;
 }
 
+List<CategoriaIngredienteResumoModel> _parseCategoriasIngrediente(
+  dynamic value, {
+  dynamic fallbackCategoriaUnica,
+}) {
+  if (value is List) {
+    return value
+        .whereType<Map>()
+        .map(
+          (item) => CategoriaIngredienteResumoModel.fromJson(
+            Map<String, dynamic>.from(item),
+          ),
+        )
+        .toList();
+  }
+
+  if (fallbackCategoriaUnica is Map) {
+    return [
+      CategoriaIngredienteResumoModel.fromJson(
+        Map<String, dynamic>.from(fallbackCategoriaUnica),
+      ),
+    ];
+  }
+
+  return [];
+}
+
 List<IngredienteImagemModel> _parseImagens(dynamic value) {
   if (value == null || value is! List) {
     return [];
   }
 
   return value
-      .whereType<Map<String, dynamic>>()
-      .map(IngredienteImagemModel.fromJson)
+      .whereType<Map>()
+      .map(
+        (item) => IngredienteImagemModel.fromJson(
+          Map<String, dynamic>.from(item),
+        ),
+      )
       .toList();
 }

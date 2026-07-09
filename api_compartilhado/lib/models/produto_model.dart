@@ -62,16 +62,22 @@ class CategoriaProdutoModel {
 class CategoriaProdutoResumoModel {
   final int? idCategoriaProduto;
   final String nome;
+  final bool principal;
+  final int ordem;
 
   const CategoriaProdutoResumoModel({
     this.idCategoriaProduto,
     required this.nome,
+    this.principal = false,
+    this.ordem = 0,
   });
 
   factory CategoriaProdutoResumoModel.fromJson(Map<String, dynamic> json) {
     return CategoriaProdutoResumoModel(
       idCategoriaProduto: _parseIntOpt(json['idCategoriaProduto']),
       nome: _parseString(json['nome']),
+      principal: _parseBool(json['principal'], defaultValue: false),
+      ordem: _parseInt(json['ordem'], defaultValue: 0),
     );
   }
 
@@ -79,16 +85,22 @@ class CategoriaProdutoResumoModel {
     return {
       'idCategoriaProduto': idCategoriaProduto,
       'nome': nome.trim(),
+      'principal': principal,
+      'ordem': ordem,
     };
   }
 
   CategoriaProdutoResumoModel copyWith({
     int? idCategoriaProduto,
     String? nome,
+    bool? principal,
+    int? ordem,
   }) {
     return CategoriaProdutoResumoModel(
       idCategoriaProduto: idCategoriaProduto ?? this.idCategoriaProduto,
       nome: nome ?? this.nome,
+      principal: principal ?? this.principal,
+      ordem: ordem ?? this.ordem,
     );
   }
 }
@@ -213,7 +225,7 @@ class ProdutoIngredienteModel {
 
 class ProdutoModel {
   final int? idProduto;
-  final CategoriaProdutoResumoModel? categoriaProduto;
+  final List<CategoriaProdutoResumoModel> categoriasProduto;
   final String nome;
   final String? descricao;
   final double preco;
@@ -231,7 +243,7 @@ class ProdutoModel {
 
   const ProdutoModel({
     this.idProduto,
-    this.categoriaProduto,
+    this.categoriasProduto = const [],
     required this.nome,
     this.descricao,
     this.preco = 0.0,
@@ -251,11 +263,10 @@ class ProdutoModel {
   factory ProdutoModel.fromJson(Map<String, dynamic> json) {
     return ProdutoModel(
       idProduto: _parseIntOpt(json['idProduto']),
-      categoriaProduto: json['categoriaProduto'] is Map<String, dynamic>
-          ? CategoriaProdutoResumoModel.fromJson(
-              json['categoriaProduto'] as Map<String, dynamic>,
-            )
-          : null,
+      categoriasProduto: _parseCategoriasProduto(
+  json['categoriasProduto'],
+  fallbackCategoriaUnica: json['categoriaProduto'],
+),
       nome: _parseString(json['nome']),
       descricao: _parseStringOpt(json['descricao']),
       preco: _parseDouble(json['preco']),
@@ -276,12 +287,17 @@ class ProdutoModel {
     );
   }
 
-  Map<String, dynamic> toJson({
-    bool enviarImagens = true,
-    bool enviarIngredientes = true,
-  }) {
+Map<String, dynamic> toJson({
+  bool enviarCategorias = true,
+  bool enviarImagens = true,
+  bool enviarIngredientes = true,
+}) {
     return {
-      'idCategoriaProduto': categoriaProduto?.idCategoriaProduto,
+if (enviarCategorias)
+  'idCategoriasProduto': categoriasProduto
+      .map((categoria) => categoria.idCategoriaProduto)
+      .whereType<int>()
+      .toList(),
       'nome': nome.trim(),
       'descricao': _nullIfBlank(descricao),
       'preco': preco,
@@ -303,7 +319,7 @@ class ProdutoModel {
 
   ProdutoModel copyWith({
     int? idProduto,
-    CategoriaProdutoResumoModel? categoriaProduto,
+List<CategoriaProdutoResumoModel>? categoriasProduto,
     String? nome,
     String? descricao,
     double? preco,
@@ -321,7 +337,7 @@ class ProdutoModel {
   }) {
     return ProdutoModel(
       idProduto: idProduto ?? this.idProduto,
-      categoriaProduto: categoriaProduto ?? this.categoriaProduto,
+categoriasProduto: categoriasProduto ?? this.categoriasProduto,
       nome: nome ?? this.nome,
       descricao: descricao ?? this.descricao,
       preco: preco ?? this.preco,
@@ -354,6 +370,7 @@ int? _parseIntOpt(dynamic value) {
 
   return int.tryParse(value.toString());
 }
+
 
 int _parseInt(
   dynamic value, {
@@ -430,14 +447,44 @@ String? _nullIfBlank(String? value) {
   return text.isEmpty ? null : text;
 }
 
+List<CategoriaProdutoResumoModel> _parseCategoriasProduto(
+  dynamic value, {
+  dynamic fallbackCategoriaUnica,
+}) {
+  if (value is List) {
+    return value
+        .whereType<Map>()
+        .map(
+          (item) => CategoriaProdutoResumoModel.fromJson(
+            Map<String, dynamic>.from(item),
+          ),
+        )
+        .toList();
+  }
+
+  if (fallbackCategoriaUnica is Map) {
+    return [
+      CategoriaProdutoResumoModel.fromJson(
+        Map<String, dynamic>.from(fallbackCategoriaUnica),
+      ),
+    ];
+  }
+
+  return [];
+}
+
 List<ProdutoImagemModel> _parseImagensProduto(dynamic value) {
   if (value == null || value is! List) {
     return [];
   }
 
   return value
-      .whereType<Map<String, dynamic>>()
-      .map(ProdutoImagemModel.fromJson)
+      .whereType<Map>()
+      .map(
+        (item) => ProdutoImagemModel.fromJson(
+          Map<String, dynamic>.from(item),
+        ),
+      )
       .toList();
 }
 
@@ -447,7 +494,12 @@ List<ProdutoIngredienteModel> _parseIngredientesProduto(dynamic value) {
   }
 
   return value
-      .whereType<Map<String, dynamic>>()
-      .map(ProdutoIngredienteModel.fromJson)
+      .whereType<Map>()
+      .map(
+        (item) => ProdutoIngredienteModel.fromJson(
+          Map<String, dynamic>.from(item),
+        ),
+      )
       .toList();
 }
+

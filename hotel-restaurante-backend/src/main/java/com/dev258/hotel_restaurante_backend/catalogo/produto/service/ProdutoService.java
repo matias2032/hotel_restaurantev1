@@ -19,13 +19,15 @@ import com.dev258.hotel_restaurante_backend.catalogo.produto.repository.Categori
 import com.dev258.hotel_restaurante_backend.catalogo.produto.repository.ProdutoImagemRepository;
 import com.dev258.hotel_restaurante_backend.catalogo.produto.repository.ProdutoIngredienteRepository;
 import com.dev258.hotel_restaurante_backend.catalogo.produto.repository.ProdutoRepository;
+import com.dev258.hotel_restaurante_backend.catalogo.produto.entity.ProdutoCategoriaEntity;
+import com.dev258.hotel_restaurante_backend.catalogo.produto.repository.ProdutoCategoriaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -38,6 +40,7 @@ public class ProdutoService {
     private final ProdutoImagemRepository produtoImagemRepository;
     private final ProdutoIngredienteRepository produtoIngredienteRepository;
     private final IngredienteRepository ingredienteRepository;
+    private final ProdutoCategoriaRepository produtoCategoriaRepository;
 
     // ─────────────────────────────────────────────────────────────
     // CATEGORIAS — LISTAR
@@ -119,6 +122,12 @@ public class ProdutoService {
     ) {
         CategoriaProdutoEntity categoria = buscarCategoriaEntityObrigatoria(idCategoriaProduto);
 
+        boolean vaiDesativar = Boolean.FALSE.equals(ativo);
+
+if (vaiDesativar) {
+    validarCategoriaSemProdutosAtivos(idCategoriaProduto);
+}
+
         categoria.setAtivo(ativo != null ? ativo : true);
 
         CategoriaProdutoEntity categoriaSalva = categoriaProdutoRepository.save(categoria);
@@ -134,16 +143,7 @@ public class ProdutoService {
     public void desativarCategoria(Long idCategoriaProduto) {
         CategoriaProdutoEntity categoria = buscarCategoriaEntityObrigatoria(idCategoriaProduto);
 
-        List<ProdutoEntity> produtosAtivos =
-                produtoRepository.findByCategoriaProduto_IdCategoriaProdutoAndAtivoTrueOrderByNomeAsc(
-                        idCategoriaProduto
-                );
-
-        if (!produtosAtivos.isEmpty()) {
-            throw new ProdutoRegraNegocioException(
-                    "Não é possível desativar esta categoria porque existem produtos ativos associados."
-            );
-        }
+validarCategoriaSemProdutosAtivos(idCategoriaProduto);
 
         categoria.setAtivo(false);
         categoriaProdutoRepository.save(categoria);
@@ -162,20 +162,22 @@ public class ProdutoService {
     ) {
         List<ProdutoEntity> produtos;
 
-        if (idCategoriaProduto != null && Boolean.TRUE.equals(somenteDisponiveis)) {
-            produtos = produtoRepository
-                    .findByCategoriaProduto_IdCategoriaProdutoAndDisponivelTrueAndAtivoTrueOrderByNomeAsc(
-                            idCategoriaProduto
-                    );
-        } else if (idCategoriaProduto != null) {
-            produtos = Boolean.TRUE.equals(somenteAtivos)
-                    ? produtoRepository.findByCategoriaProduto_IdCategoriaProdutoAndAtivoTrueOrderByNomeAsc(
-                            idCategoriaProduto
-                    )
-                    : produtoRepository.findByCategoriaProduto_IdCategoriaProdutoOrderByNomeAsc(
-                            idCategoriaProduto
-                    );
-        } else if (Boolean.TRUE.equals(somenteDestaques)) {
+if (idCategoriaProduto != null && Boolean.TRUE.equals(somenteDisponiveis)) {
+    produtos = produtoRepository
+            .findDistinctByCategorias_CategoriaProduto_IdCategoriaProdutoAndDisponivelTrueAndAtivoTrueOrderByNomeAsc(
+                    idCategoriaProduto
+            );
+} else if (idCategoriaProduto != null) {
+    produtos = Boolean.TRUE.equals(somenteAtivos)
+            ? produtoRepository
+            .findDistinctByCategorias_CategoriaProduto_IdCategoriaProdutoAndAtivoTrueOrderByNomeAsc(
+                    idCategoriaProduto
+            )
+            : produtoRepository
+            .findDistinctByCategorias_CategoriaProduto_IdCategoriaProdutoOrderByNomeAsc(
+                    idCategoriaProduto
+            );
+} else if (Boolean.TRUE.equals(somenteDestaques)) {
             produtos = produtoRepository.findByDestaqueTrueAndAtivoTrueOrderByNomeAsc();
         } else if (Boolean.TRUE.equals(somenteDisponiveis)) {
             produtos = produtoRepository.findByDisponivelTrueAndAtivoTrueOrderByNomeAsc();
@@ -216,10 +218,10 @@ public class ProdutoService {
     public ProdutoResponseDTO criarProduto(ProdutoRequestDTO dto) {
         validarNomeProdutoDuplicado(dto.nome(), null);
 
-        CategoriaProdutoEntity categoria = resolverCategoriaOpcional(dto.idCategoriaProduto());
+
 
         ProdutoEntity produto = ProdutoEntity.builder()
-                .categoriaProduto(categoria)
+                
                 .nome(limparObrigatorio(dto.nome(), "O nome do produto é obrigatório."))
                 .descricao(limparOpcional(dto.descricao()))
                 .preco(resolverPreco(dto.preco()))
@@ -234,6 +236,8 @@ public class ProdutoService {
                 .destaque(dto.destaque() != null ? dto.destaque() : false)
                 .ativo(dto.ativo() != null ? dto.ativo() : true)
                 .build();
+
+                aplicarCategoriasNoProduto(produto,dto.idCategoriasProduto(),false);
 
         aplicarImagensNoProduto(produto, dto.imagens());
         aplicarIngredientesNoProduto(produto, dto.ingredientes());
@@ -256,9 +260,7 @@ public class ProdutoService {
 
         validarNomeProdutoDuplicado(dto.nome(), idProduto);
 
-        CategoriaProdutoEntity categoria = resolverCategoriaOpcional(dto.idCategoriaProduto());
 
-        produto.setCategoriaProduto(categoria);
         produto.setNome(limparObrigatorio(dto.nome(), "O nome do produto é obrigatório."));
         produto.setDescricao(limparOpcional(dto.descricao()));
         produto.setPreco(resolverPreco(dto.preco()));
@@ -274,6 +276,22 @@ public class ProdutoService {
         produto.setDisponivel(dto.disponivel() != null ? dto.disponivel() : true);
         produto.setDestaque(dto.destaque() != null ? dto.destaque() : false);
         produto.setAtivo(dto.ativo() != null ? dto.ativo() : true);
+
+
+
+        /*
+ * Regra:
+ * - dto.idCategoriasProduto() == null -> mantém categorias atuais.
+ * - dto.idCategoriasProduto() == []   -> remove todas as categorias.
+ * - dto.idCategoriasProduto() com IDs -> substitui pelas categorias enviadas.
+ */
+if (dto.idCategoriasProduto() != null) {
+    aplicarCategoriasNoProduto(
+            produto,
+            dto.idCategoriasProduto(),
+            true
+    );
+}
 
         /*
          * Regra:
@@ -596,7 +614,19 @@ public class ProdutoService {
         return categoriaProdutoRepository.findById(idCategoriaProduto)
                 .orElseThrow(() -> new CategoriaProdutoNaoEncontradaException(idCategoriaProduto));
     }
+private void validarCategoriaSemProdutosAtivos(Long idCategoriaProduto) {
+    boolean existeProdutoAtivo =
+            produtoCategoriaRepository
+                    .existsByCategoriaProduto_IdCategoriaProdutoAndProduto_AtivoTrue(
+                            idCategoriaProduto
+                    );
 
+    if (existeProdutoAtivo) {
+        throw new ProdutoRegraNegocioException(
+                "Não é possível desativar esta categoria porque existem produtos ativos associados."
+        );
+    }
+}
     private ProdutoEntity buscarProdutoEntityObrigatorio(Long idProduto) {
         if (idProduto == null) {
             throw new ProdutoNaoEncontradoException(
@@ -619,13 +649,6 @@ public class ProdutoService {
                 .orElseThrow(() -> new IngredienteNaoEncontradoException(idIngrediente));
     }
 
-    private CategoriaProdutoEntity resolverCategoriaOpcional(Long idCategoriaProduto) {
-        if (idCategoriaProduto == null) {
-            return null;
-        }
-
-        return buscarCategoriaEntityObrigatoria(idCategoriaProduto);
-    }
 
     // ─────────────────────────────────────────────────────────────
     // HELPERS — VALIDAÇÕES
@@ -720,6 +743,58 @@ public class ProdutoService {
 
         return tempoPreparoMinutos;
     }
+
+
+    // ─────────────────────────────────────────────────────────────
+// HELPERS — CATEGORIAS DO PRODUTO
+// ─────────────────────────────────────────────────────────────
+
+private void aplicarCategoriasNoProduto(
+        ProdutoEntity produto,
+        List<Long> idCategoriasProduto,
+        boolean substituirCategoriasAtuais
+) {
+    if (substituirCategoriasAtuais) {
+        produto.limparCategorias();
+    }
+
+    if (idCategoriasProduto == null || idCategoriasProduto.isEmpty()) {
+        return;
+    }
+
+    Set<Long> idsUnicos = new LinkedHashSet<>(idCategoriasProduto);
+
+    if (idsUnicos.size() != idCategoriasProduto.size()) {
+        throw new ProdutoRegraNegocioException(
+                "Não é permitido associar a mesma categoria mais de uma vez."
+        );
+    }
+
+    int ordem = 0;
+
+    for (Long idCategoriaProduto : idsUnicos) {
+        CategoriaProdutoEntity categoria =
+                buscarCategoriaEntityObrigatoria(idCategoriaProduto);
+
+        if (Boolean.FALSE.equals(categoria.getAtivo())) {
+            throw new ProdutoRegraNegocioException(
+                    "Não é possível associar uma categoria de produto inativa."
+            );
+        }
+
+        ProdutoCategoriaEntity produtoCategoria =
+                ProdutoCategoriaEntity.builder()
+                        .produto(produto)
+                        .categoriaProduto(categoria)
+                        .principal(ordem == 0)
+                        .ordem(ordem)
+                        .build();
+
+        produto.adicionarCategoria(produtoCategoria);
+
+        ordem++;
+    }
+}
 
     // ─────────────────────────────────────────────────────────────
     // HELPERS — IMAGENS

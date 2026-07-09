@@ -232,11 +232,12 @@ class IngredienteRepository {
     return ingredienteCriado;
   }
 
-  Future<IngredienteModel> editarIngrediente(
-    int idIngrediente,
-    IngredienteModel ingrediente, {
-    bool enviarImagens = true,
-  }) async {
+Future<IngredienteModel> editarIngrediente(
+  int idIngrediente,
+  IngredienteModel ingrediente, {
+  bool enviarCategorias = true,
+  bool enviarImagens = true,
+}) async {
     _validarId(
       idIngrediente,
       'ID do ingrediente inválido para edição.',
@@ -252,11 +253,12 @@ class IngredienteRepository {
       'id=$idIngrediente enviarImagens=$enviarImagens',
     );
 
-    final ingredienteEditado = await service.editarIngrediente(
-      idIngrediente,
-      ingredienteNormalizado,
-      enviarImagens: enviarImagens,
-    );
+final ingredienteEditado = await service.editarIngrediente(
+  idIngrediente,
+  ingredienteNormalizado,
+  enviarCategorias: enviarCategorias,
+  enviarImagens: enviarImagens,
+);
 
     debugPrint(
       '[IngredienteRepository] EDITAR_INGREDIENTE_SUCESSO — id=$idIngrediente',
@@ -504,30 +506,47 @@ class IngredienteRepository {
       throw Exception('A quantidade em estoque não pode ser negativa.');
     }
 
-    final idCategoria =
-        ingrediente.categoriaIngrediente?.idCategoriaIngrediente;
+    for (final categoria in ingrediente.categoriasIngrediente) {
+  final idCategoria = categoria.idCategoriaIngrediente;
 
-    if (idCategoria != null) {
-      _validarId(
-        idCategoria,
-        'ID da categoria de ingrediente inválido.',
-      );
-    }
+  if (idCategoria == null) {
+    throw Exception('Categoria de ingrediente inválida.');
+  }
+
+  _validarId(
+    idCategoria,
+    'ID da categoria de ingrediente inválido.',
+  );
+}
+
+final idsCategorias = ingrediente.categoriasIngrediente
+    .map((categoria) => categoria.idCategoriaIngrediente)
+    .whereType<int>()
+    .toList();
+
+final idsUnicos = idsCategorias.toSet();
+
+if (idsCategorias.length != idsUnicos.length) {
+  throw Exception('Não é permitido associar a mesma categoria mais de uma vez.');
+}
 
     final imagensNormalizadas = validarImagens
         ? ingrediente.imagens.map(_normalizarImagem).toList()
         : ingrediente.imagens;
 
-    return ingrediente.copyWith(
-      nome: nome,
-      descricao: _normalizarTextoOpcional(ingrediente.descricao),
-      precoAdicional: ingrediente.precoAdicional,
-      controlaEstoque: ingrediente.controlaEstoque,
-      quantidadeEstoque: ingrediente.controlaEstoque
-          ? ingrediente.quantidadeEstoque
-          : null,
-      imagens: imagensNormalizadas,
-    );
+return ingrediente.copyWith(
+  nome: nome,
+  descricao: _normalizarTextoOpcional(ingrediente.descricao),
+  precoAdicional: ingrediente.precoAdicional,
+  controlaEstoque: ingrediente.controlaEstoque,
+  quantidadeEstoque: ingrediente.controlaEstoque
+      ? ingrediente.quantidadeEstoque
+      : null,
+  categoriasIngrediente: ingrediente.categoriasIngrediente,
+  imagens: imagensNormalizadas,
+);
+
+    
   }
 
   IngredienteImagemModel _normalizarImagem(

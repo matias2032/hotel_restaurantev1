@@ -22,9 +22,14 @@ public class ServicoEntity {
     @Column(name = "id_servico")
     private Long idServico;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_categoria_servico")
-    private CategoriaServicoEntity categoriaServico;
+@OneToMany(
+        mappedBy = "servico",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
+)
+@OrderBy("principal DESC, ordem ASC")
+@Builder.Default
+private List<ServicoCategoriaEntity> categorias = new ArrayList<>();
 
     @Column(name = "nome", nullable = false, length = 160)
     private String nome;
@@ -65,6 +70,29 @@ public class ServicoEntity {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public void adicionarCategoria(ServicoCategoriaEntity categoria) {
+    if (categoria == null) {
+        return;
+    }
+
+    categoria.setServico(this);
+    categorias.add(categoria);
+}
+
+public void removerCategoria(ServicoCategoriaEntity categoria) {
+    if (categoria == null) {
+        return;
+    }
+
+    categoria.setServico(null);
+    categorias.remove(categoria);
+}
+
+public void limparCategorias() {
+    categorias.forEach(categoria -> categoria.setServico(null));
+    categorias.clear();
+}
 
     public void adicionarImagem(ServicoImagemEntity imagem) {
         if (imagem == null) {

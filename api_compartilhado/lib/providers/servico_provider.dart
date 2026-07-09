@@ -298,21 +298,23 @@ class ServicoProvider extends ChangeNotifier {
     return sucesso;
   }
 
-  Future<bool> editarServico(
-    int idServico,
-    ServicoModel servico, {
-    bool enviarImagens = true,
-  }) async {
+Future<bool> editarServico(
+  int idServico,
+  ServicoModel servico, {
+  bool enviarCategorias = true,
+  bool enviarImagens = true,
+}) async {
     var sucesso = false;
 
     await _executar(
       'EDITAR_SERVICO',
       () async {
-        final editado = await repository.editarServico(
-          idServico,
-          servico,
-          enviarImagens: enviarImagens,
-        );
+final editado = await repository.editarServico(
+  idServico,
+  servico,
+  enviarCategorias: enviarCategorias,
+  enviarImagens: enviarImagens,
+);
 
         _actualizarServicoNaLista(editado);
 
@@ -323,8 +325,9 @@ class ServicoProvider extends ChangeNotifier {
         sucesso = true;
 
         debugPrint(
-          '[ServicoProvider] EDITAR_SERVICO_SUCESSO — '
-          'id=$idServico enviarImagens=$enviarImagens',
+'[ServicoProvider] EDITAR_SERVICO_SUCESSO — '
+'id=$idServico enviarCategorias=$enviarCategorias '
+'enviarImagens=$enviarImagens',
         );
       },
     );

@@ -21,11 +21,11 @@ public interface IngredienteRepository
 
     List<IngredienteEntity> findByDisponivelTrueAndAtivoTrueOrderByNomeAsc();
 
-    List<IngredienteEntity> findByCategoriaIngrediente_IdCategoriaIngredienteAndAtivoTrueOrderByNomeAsc(
+    List<IngredienteEntity> findDistinctByCategorias_CategoriaIngrediente_IdCategoriaIngredienteOrderByNomeAsc(
             Long idCategoriaIngrediente
     );
 
-    List<IngredienteEntity> findByCategoriaIngrediente_IdCategoriaIngredienteOrderByNomeAsc(
+    List<IngredienteEntity> findDistinctByCategorias_CategoriaIngrediente_IdCategoriaIngredienteAndAtivoTrueOrderByNomeAsc(
             Long idCategoriaIngrediente
     );
 }

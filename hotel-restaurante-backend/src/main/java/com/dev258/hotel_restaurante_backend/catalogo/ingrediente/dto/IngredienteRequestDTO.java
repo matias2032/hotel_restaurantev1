@@ -11,7 +11,15 @@ import java.util.List;
 
 public record IngredienteRequestDTO(
 
-        Long idCategoriaIngrediente,
+        /*
+         * Agora o ingrediente pode pertencer a várias categorias.
+         *
+         * Regra recomendada no service:
+         * - idCategoriasIngrediente == null -> mantém categorias atuais na edição.
+         * - idCategoriasIngrediente == []   -> remove todas as categorias.
+         * - lista com IDs                   -> substitui pelas categorias enviadas.
+         */
+        List<Long> idCategoriasIngrediente,
 
         @NotBlank(message = "O nome do ingrediente é obrigatório.")
         @Size(max = 120, message = "O nome do ingrediente deve ter no máximo 120 caracteres.")

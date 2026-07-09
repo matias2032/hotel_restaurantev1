@@ -288,8 +288,9 @@ class ServicoService {
           headers: ApiConfig.authHeaders,
           body: jsonEncode(
             servico.toJson(
-              enviarImagens: true,
-            ),
+  enviarCategorias: true,
+  enviarImagens: true,
+),
           ),
         )
         .timeout(ApiConfig.timeout);
@@ -305,16 +306,18 @@ class ServicoService {
     return servicoCriado;
   }
 
-  Future<ServicoModel> editarServico(
-    int idServico,
-    ServicoModel servico, {
-    bool enviarImagens = true,
-  }) async {
+Future<ServicoModel> editarServico(
+  int idServico,
+  ServicoModel servico, {
+  bool enviarCategorias = true,
+  bool enviarImagens = true,
+}) async {
     final uri = Uri.parse('$_servicosUrl/$idServico');
 
     debugPrint(
-      '[ServicoService] EDITAR_SERVICO_INICIO — '
-      'id=$idServico enviarImagens=$enviarImagens',
+'[ServicoService] EDITAR_SERVICO_INICIO — '
+'id=$idServico enviarCategorias=$enviarCategorias '
+'enviarImagens=$enviarImagens',
     );
 
     final response = await http
@@ -323,8 +326,9 @@ class ServicoService {
           headers: ApiConfig.authHeaders,
           body: jsonEncode(
             servico.toJson(
-              enviarImagens: enviarImagens,
-            ),
+  enviarCategorias: enviarCategorias,
+  enviarImagens: enviarImagens,
+),
           ),
         )
         .timeout(ApiConfig.timeout);

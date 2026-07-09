@@ -2,9 +2,11 @@ package com.dev258.hotel_restaurante_backend.catalogo.produto.dto;
 
 import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.entity.IngredienteEntity;
 import com.dev258.hotel_restaurante_backend.catalogo.produto.entity.CategoriaProdutoEntity;
+import com.dev258.hotel_restaurante_backend.catalogo.produto.entity.ProdutoCategoriaEntity;
 import com.dev258.hotel_restaurante_backend.catalogo.produto.entity.ProdutoEntity;
 import com.dev258.hotel_restaurante_backend.catalogo.produto.entity.ProdutoImagemEntity;
 import com.dev258.hotel_restaurante_backend.catalogo.produto.entity.ProdutoIngredienteEntity;
+import java.util.Comparator;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -13,7 +15,7 @@ import java.util.List;
 public record ProdutoResponseDTO(
         Long idProduto,
 
-        CategoriaResumoDTO categoriaProduto,
+List<CategoriaResumoDTO> categoriasProduto,
 
         String nome,
         String descricao,
@@ -42,9 +44,7 @@ public record ProdutoResponseDTO(
     public ProdutoResponseDTO(ProdutoEntity entity) {
         this(
                 entity.getIdProduto(),
-                entity.getCategoriaProduto() != null
-                        ? new CategoriaResumoDTO(entity.getCategoriaProduto())
-                        : null,
+             resolverCategorias(entity),
                 entity.getNome(),
                 entity.getDescricao(),
                 entity.getPreco(),
@@ -72,6 +72,36 @@ public record ProdutoResponseDTO(
         );
     }
 
+    private static List<CategoriaResumoDTO> resolverCategorias(
+        ProdutoEntity entity) {
+    if (entity.getCategorias() == null || entity.getCategorias().isEmpty()) {
+        return List.of();
+    }
+    return entity.getCategorias()
+            .stream()
+            .sorted(
+                    Comparator
+                            .comparing(
+                                    ProdutoCategoriaEntity::getPrincipal,
+                                    Comparator.nullsLast(Comparator.reverseOrder())
+                            )
+                            .thenComparing(
+                                    ProdutoCategoriaEntity::getOrdem,
+                                    Comparator.nullsLast(Integer::compareTo)
+                            )
+                            .thenComparing(categoria -> categoria
+                                    .getCategoriaProduto()
+                                    .getNome()
+                            )
+            )
+            .map(CategoriaResumoDTO::new)
+            .toList();
+}
+
+
+    
+    
+
     private static String resolverImagemPrincipal(ProdutoEntity entity) {
         if (entity.getImagemPrincipalUrl() != null && !entity.getImagemPrincipalUrl().isBlank()) {
             return entity.getImagemPrincipalUrl();
@@ -93,18 +123,31 @@ public record ProdutoResponseDTO(
                         .orElse(null));
     }
 
-    public record CategoriaResumoDTO(
-            Long idCategoriaProduto,
-            String nome
-    ) {
+public record CategoriaResumoDTO(
+        Long idCategoriaProduto,
+        String nome,
+        Boolean principal,
+        Integer ordem
+) {
 
-        public CategoriaResumoDTO(CategoriaProdutoEntity entity) {
-            this(
-                    entity.getIdCategoriaProduto(),
-                    entity.getNome()
-            );
-        }
+    public CategoriaResumoDTO(ProdutoCategoriaEntity entity) {
+        this(
+                entity.getCategoriaProduto().getIdCategoriaProduto(),
+                entity.getCategoriaProduto().getNome(),
+                entity.getPrincipal(),
+                entity.getOrdem()
+        );
     }
+
+    public CategoriaResumoDTO(CategoriaProdutoEntity entity) {
+        this(
+                entity.getIdCategoriaProduto(),
+                entity.getNome(),
+                false,
+                0
+        );
+    }
+}
 
     public record ProdutoImagemResponseDTO(
             Long idProdutoImagem,

@@ -298,23 +298,25 @@ class ProdutoProvider extends ChangeNotifier {
     return sucesso;
   }
 
-  Future<bool> editarProduto(
-    int idProduto,
-    ProdutoModel produto, {
-    bool enviarImagens = true,
-    bool enviarIngredientes = true,
-  }) async {
+Future<bool> editarProduto(
+  int idProduto,
+  ProdutoModel produto, {
+  bool enviarCategorias = true,
+  bool enviarImagens = true,
+  bool enviarIngredientes = true,
+}) async {
     var sucesso = false;
 
     await _executar(
       'EDITAR_PRODUTO',
       () async {
-        final editado = await repository.editarProduto(
-          idProduto,
-          produto,
-          enviarImagens: enviarImagens,
-          enviarIngredientes: enviarIngredientes,
-        );
+final editado = await repository.editarProduto(
+  idProduto,
+  produto,
+  enviarCategorias: enviarCategorias,
+  enviarImagens: enviarImagens,
+  enviarIngredientes: enviarIngredientes,
+);
 
         _actualizarProdutoNaLista(editado);
 
@@ -326,8 +328,9 @@ class ProdutoProvider extends ChangeNotifier {
 
         debugPrint(
           '[ProdutoProvider] EDITAR_PRODUTO_SUCESSO — '
-          'id=$idProduto enviarImagens=$enviarImagens '
-          'enviarIngredientes=$enviarIngredientes',
+      'id=$idProduto enviarCategorias=$enviarCategorias '
+'enviarImagens=$enviarImagens '
+'enviarIngredientes=$enviarIngredientes',
         );
       },
     );

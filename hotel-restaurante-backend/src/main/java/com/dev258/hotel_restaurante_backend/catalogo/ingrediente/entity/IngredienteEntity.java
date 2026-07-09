@@ -22,9 +22,14 @@ public class IngredienteEntity {
     @Column(name = "id_ingrediente")
     private Long idIngrediente;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_categoria_ingrediente")
-    private CategoriaIngredienteEntity categoriaIngrediente;
+@OneToMany(
+        mappedBy = "ingrediente",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
+)
+@OrderBy("principal DESC, ordem ASC")
+@Builder.Default
+private List<IngredienteCategoriaEntity> categorias = new ArrayList<>();
 
     @Column(name = "nome", nullable = false, length = 120)
     private String nome;
@@ -74,6 +79,29 @@ public class IngredienteEntity {
         imagem.setIngrediente(this);
         imagens.add(imagem);
     }
+
+    public void adicionarCategoria(IngredienteCategoriaEntity categoria) {
+    if (categoria == null) {
+        return;
+    }
+
+    categoria.setIngrediente(this);
+    categorias.add(categoria);
+}
+
+public void removerCategoria(IngredienteCategoriaEntity categoria) {
+    if (categoria == null) {
+        return;
+    }
+
+    categoria.setIngrediente(null);
+    categorias.remove(categoria);
+}
+
+public void limparCategorias() {
+    categorias.forEach(categoria -> categoria.setIngrediente(null));
+    categorias.clear();
+}
 
     public void removerImagem(IngredienteImagemEntity imagem) {
         if (imagem == null) {

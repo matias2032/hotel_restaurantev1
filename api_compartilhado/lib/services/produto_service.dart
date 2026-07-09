@@ -287,10 +287,11 @@ class ProdutoService {
           uri,
           headers: ApiConfig.authHeaders,
           body: jsonEncode(
-            produto.toJson(
-              enviarImagens: true,
-              enviarIngredientes: true,
-            ),
+         produto.toJson(
+  enviarCategorias: true,
+  enviarImagens: true,
+  enviarIngredientes: true,
+),
           ),
         )
         .timeout(ApiConfig.timeout);
@@ -306,18 +307,20 @@ class ProdutoService {
     return produtoCriado;
   }
 
-  Future<ProdutoModel> editarProduto(
-    int idProduto,
-    ProdutoModel produto, {
-    bool enviarImagens = true,
-    bool enviarIngredientes = true,
-  }) async {
+Future<ProdutoModel> editarProduto(
+  int idProduto,
+  ProdutoModel produto, {
+  bool enviarCategorias = true,
+  bool enviarImagens = true,
+  bool enviarIngredientes = true,
+}) async {
     final uri = Uri.parse('$_produtosUrl/$idProduto');
 
     debugPrint(
       '[ProdutoService] EDITAR_PRODUTO_INICIO — '
-      'id=$idProduto enviarImagens=$enviarImagens '
-      'enviarIngredientes=$enviarIngredientes',
+'id=$idProduto enviarCategorias=$enviarCategorias '
+'enviarImagens=$enviarImagens '
+'enviarIngredientes=$enviarIngredientes',
     );
 
     final response = await http
@@ -326,9 +329,10 @@ class ProdutoService {
           headers: ApiConfig.authHeaders,
           body: jsonEncode(
             produto.toJson(
-              enviarImagens: enviarImagens,
-              enviarIngredientes: enviarIngredientes,
-            ),
+  enviarCategorias: enviarCategorias,
+  enviarImagens: enviarImagens,
+  enviarIngredientes: enviarIngredientes,
+),
           ),
         )
         .timeout(ApiConfig.timeout);

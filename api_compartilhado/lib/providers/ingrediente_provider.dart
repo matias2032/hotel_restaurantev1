@@ -299,21 +299,23 @@ class IngredienteProvider extends ChangeNotifier {
     return sucesso;
   }
 
-  Future<bool> editarIngrediente(
-    int idIngrediente,
-    IngredienteModel ingrediente, {
-    bool enviarImagens = true,
-  }) async {
+Future<bool> editarIngrediente(
+  int idIngrediente,
+  IngredienteModel ingrediente, {
+  bool enviarCategorias = true,
+  bool enviarImagens = true,
+}) async {
     var sucesso = false;
 
     await _executar(
       'EDITAR_INGREDIENTE',
       () async {
         final editado = await repository.editarIngrediente(
-          idIngrediente,
-          ingrediente,
-          enviarImagens: enviarImagens,
-        );
+  idIngrediente,
+  ingrediente,
+  enviarCategorias: enviarCategorias,
+  enviarImagens: enviarImagens,
+);
 
         _actualizarIngredienteNaLista(editado);
 
@@ -325,7 +327,7 @@ class IngredienteProvider extends ChangeNotifier {
 
         debugPrint(
           '[IngredienteProvider] EDITAR_INGREDIENTE_SUCESSO — '
-          'id=$idIngrediente enviarImagens=$enviarImagens',
+          'id=$idIngrediente enviarCategorias=$enviarCategorias enviarImagens=$enviarImagens',
         );
       },
     );

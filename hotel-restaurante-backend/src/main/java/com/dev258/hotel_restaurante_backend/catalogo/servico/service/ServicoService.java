@@ -13,6 +13,8 @@ import com.dev258.hotel_restaurante_backend.catalogo.servico.exception.ServicoRe
 import com.dev258.hotel_restaurante_backend.catalogo.servico.repository.CategoriaServicoRepository;
 import com.dev258.hotel_restaurante_backend.catalogo.servico.repository.ServicoImagemRepository;
 import com.dev258.hotel_restaurante_backend.catalogo.servico.repository.ServicoRepository;
+import com.dev258.hotel_restaurante_backend.catalogo.servico.entity.ServicoCategoriaEntity;
+import com.dev258.hotel_restaurante_backend.catalogo.servico.repository.ServicoCategoriaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +32,7 @@ public class ServicoService {
     private final CategoriaServicoRepository categoriaServicoRepository;
     private final ServicoRepository servicoRepository;
     private final ServicoImagemRepository servicoImagemRepository;
+    private final ServicoCategoriaRepository servicoCategoriaRepository;
 
     // ─────────────────────────────────────────────────────────────
     // CATEGORIAS — LISTAR
@@ -149,20 +154,22 @@ public class ServicoService {
     ) {
         List<ServicoEntity> servicos;
 
-        if (idCategoriaServico != null && Boolean.TRUE.equals(somenteDisponiveis)) {
-            servicos = servicoRepository
-                    .findByCategoriaServico_IdCategoriaServicoAndDisponivelTrueAndAtivoTrueOrderByNomeAsc(
-                            idCategoriaServico
-                    );
-        } else if (idCategoriaServico != null) {
-            servicos = Boolean.TRUE.equals(somenteAtivos)
-                    ? servicoRepository.findByCategoriaServico_IdCategoriaServicoAndAtivoTrueOrderByNomeAsc(
-                            idCategoriaServico
-                    )
-                    : servicoRepository.findByCategoriaServico_IdCategoriaServicoOrderByNomeAsc(
-                            idCategoriaServico
-                    );
-        } else if (Boolean.TRUE.equals(somenteDestaques)) {
+if (idCategoriaServico != null && Boolean.TRUE.equals(somenteDisponiveis)) {
+    servicos = servicoRepository
+            .findDistinctByCategorias_CategoriaServico_IdCategoriaServicoAndDisponivelTrueAndAtivoTrueOrderByNomeAsc(
+                    idCategoriaServico
+            );
+} else if (idCategoriaServico != null) {
+    servicos = Boolean.TRUE.equals(somenteAtivos)
+            ? servicoRepository
+            .findDistinctByCategorias_CategoriaServico_IdCategoriaServicoAndAtivoTrueOrderByNomeAsc(
+                    idCategoriaServico
+            )
+            : servicoRepository
+            .findDistinctByCategorias_CategoriaServico_IdCategoriaServicoOrderByNomeAsc(
+                    idCategoriaServico
+            );
+} else if (Boolean.TRUE.equals(somenteDestaques)) {
             servicos = servicoRepository.findByDestaqueTrueAndAtivoTrueOrderByNomeAsc();
         } else if (Boolean.TRUE.equals(somenteDisponiveis)) {
             servicos = servicoRepository.findByDisponivelTrueAndAtivoTrueOrderByNomeAsc();
@@ -203,10 +210,10 @@ public class ServicoService {
     public ServicoResponseDTO criarServico(ServicoRequestDTO dto) {
         validarNomeServicoDuplicado(dto.nome(), null);
 
-        CategoriaServicoEntity categoria = resolverCategoriaOpcional(dto.idCategoriaServico());
+
 
         ServicoEntity servico = ServicoEntity.builder()
-                .categoriaServico(categoria)
+
                 .nome(limparObrigatorio(dto.nome(), "O nome do serviço é obrigatório."))
                 .descricao(limparOpcional(dto.descricao()))
                 .preco(resolverPreco(dto.preco()))
@@ -221,7 +228,7 @@ public class ServicoService {
                     "Não é possível disponibilizar um serviço inativo."
             );
         }
-
+aplicarCategoriasNoServico(servico,dto.idCategoriasServico(),false);
         aplicarImagensNoServico(servico, dto.imagens());
 
         ServicoEntity servicoSalvo = servicoRepository.save(servico);
@@ -242,7 +249,7 @@ public class ServicoService {
 
         validarNomeServicoDuplicado(dto.nome(), idServico);
 
-        CategoriaServicoEntity categoria = resolverCategoriaOpcional(dto.idCategoriaServico());
+
 
         Boolean ativo = dto.ativo() != null ? dto.ativo() : true;
         Boolean disponivel = dto.disponivel() != null ? dto.disponivel() : true;
@@ -253,7 +260,7 @@ public class ServicoService {
             );
         }
 
-        servico.setCategoriaServico(categoria);
+
         servico.setNome(limparObrigatorio(dto.nome(), "O nome do serviço é obrigatório."));
         servico.setDescricao(limparOpcional(dto.descricao()));
         servico.setPreco(resolverPreco(dto.preco()));
@@ -261,6 +268,21 @@ public class ServicoService {
         servico.setDisponivel(disponivel);
         servico.setDestaque(dto.destaque() != null ? dto.destaque() : false);
         servico.setAtivo(ativo);
+
+
+        /*
+ * Regra:
+ * - dto.idCategoriasServico() == null -> mantém categorias atuais.
+ * - dto.idCategoriasServico() == []   -> remove todas as categorias.
+ * - dto.idCategoriasServico() com IDs -> substitui pelas categorias enviadas.
+ */
+if (dto.idCategoriasServico() != null) {
+    aplicarCategoriasNoServico(
+            servico,
+            dto.idCategoriasServico(),
+            true
+    );
+}
 
         if (Boolean.FALSE.equals(ativo)) {
             servico.setDisponivel(false);
@@ -514,13 +536,6 @@ public class ServicoService {
                 .orElseThrow(() -> new ServicoNaoEncontradoException(idServico));
     }
 
-    private CategoriaServicoEntity resolverCategoriaOpcional(Long idCategoriaServico) {
-        if (idCategoriaServico == null) {
-            return null;
-        }
-
-        return buscarCategoriaEntityObrigatoria(idCategoriaServico);
-    }
 
     // ─────────────────────────────────────────────────────────────
     // HELPERS — VALIDAÇÕES
@@ -569,18 +584,19 @@ public class ServicoService {
         }
     }
 
-    private void validarCategoriaSemServicosAtivos(Long idCategoriaServico) {
-        List<ServicoEntity> servicosAtivos =
-                servicoRepository.findByCategoriaServico_IdCategoriaServicoAndAtivoTrueOrderByNomeAsc(
-                        idCategoriaServico
-                );
+private void validarCategoriaSemServicosAtivos(Long idCategoriaServico) {
+    boolean existeServicoAtivo =
+            servicoCategoriaRepository
+                    .existsByCategoriaServico_IdCategoriaServicoAndServico_AtivoTrue(
+                            idCategoriaServico
+                    );
 
-        if (!servicosAtivos.isEmpty()) {
-            throw new ServicoRegraNegocioException(
-                    "Não é possível desativar esta categoria porque existem serviços ativos associados."
-            );
-        }
+    if (existeServicoAtivo) {
+        throw new ServicoRegraNegocioException(
+                "Não é possível desativar esta categoria porque existem serviços ativos associados."
+        );
     }
+}
 
     private BigDecimal resolverPreco(BigDecimal preco) {
         BigDecimal valor = preco != null ? preco : BigDecimal.ZERO;
@@ -593,6 +609,58 @@ public class ServicoService {
 
         return valor;
     }
+
+
+    // ─────────────────────────────────────────────────────────────
+// HELPERS — CATEGORIAS DO SERVIÇO
+// ─────────────────────────────────────────────────────────────
+
+private void aplicarCategoriasNoServico(
+        ServicoEntity servico,
+        List<Long> idCategoriasServico,
+        boolean substituirCategoriasAtuais
+) {
+    if (substituirCategoriasAtuais) {
+        servico.limparCategorias();
+    }
+
+    if (idCategoriasServico == null || idCategoriasServico.isEmpty()) {
+        return;
+    }
+
+    Set<Long> idsUnicos = new LinkedHashSet<>(idCategoriasServico);
+
+    if (idsUnicos.size() != idCategoriasServico.size()) {
+        throw new ServicoRegraNegocioException(
+                "Não é permitido associar a mesma categoria mais de uma vez."
+        );
+    }
+
+    int ordem = 0;
+
+    for (Long idCategoriaServico : idsUnicos) {
+        CategoriaServicoEntity categoria =
+                buscarCategoriaEntityObrigatoria(idCategoriaServico);
+
+        if (Boolean.FALSE.equals(categoria.getAtivo())) {
+            throw new ServicoRegraNegocioException(
+                    "Não é possível associar uma categoria de serviço inativa."
+            );
+        }
+
+        ServicoCategoriaEntity servicoCategoria =
+                ServicoCategoriaEntity.builder()
+                        .servico(servico)
+                        .categoriaServico(categoria)
+                        .principal(ordem == 0)
+                        .ordem(ordem)
+                        .build();
+
+        servico.adicionarCategoria(servicoCategoria);
+
+        ordem++;
+    }
+}
 
     // ─────────────────────────────────────────────────────────────
     // HELPERS — IMAGENS

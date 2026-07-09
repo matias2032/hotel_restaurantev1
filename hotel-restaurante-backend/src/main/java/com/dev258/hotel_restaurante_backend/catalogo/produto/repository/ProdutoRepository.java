@@ -23,15 +23,15 @@ public interface ProdutoRepository
 
     List<ProdutoEntity> findByDestaqueTrueAndAtivoTrueOrderByNomeAsc();
 
-    List<ProdutoEntity> findByCategoriaProduto_IdCategoriaProdutoAndAtivoTrueOrderByNomeAsc(
-            Long idCategoriaProduto
-    );
+List<ProdutoEntity> findDistinctByCategorias_CategoriaProduto_IdCategoriaProdutoOrderByNomeAsc(
+        Long idCategoriaProduto
+);
 
-    List<ProdutoEntity> findByCategoriaProduto_IdCategoriaProdutoOrderByNomeAsc(
-            Long idCategoriaProduto
-    );
+List<ProdutoEntity> findDistinctByCategorias_CategoriaProduto_IdCategoriaProdutoAndAtivoTrueOrderByNomeAsc(
+        Long idCategoriaProduto
+);
 
-    List<ProdutoEntity> findByCategoriaProduto_IdCategoriaProdutoAndDisponivelTrueAndAtivoTrueOrderByNomeAsc(
-            Long idCategoriaProduto
-    );
+List<ProdutoEntity> findDistinctByCategorias_CategoriaProduto_IdCategoriaProdutoAndDisponivelTrueAndAtivoTrueOrderByNomeAsc(
+        Long idCategoriaProduto
+);
 }

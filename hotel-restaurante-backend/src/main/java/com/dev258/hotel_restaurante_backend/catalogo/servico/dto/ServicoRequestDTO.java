@@ -11,7 +11,7 @@ import java.util.List;
 
 public record ServicoRequestDTO(
 
-        Long idCategoriaServico,
+List<Long> idCategoriasServico,
 
         @NotBlank(message = "O nome do serviço é obrigatório.")
         @Size(max = 160, message = "O nome do serviço deve ter no máximo 160 caracteres.")

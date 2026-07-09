@@ -22,9 +22,14 @@ public class ProdutoEntity {
     @Column(name = "id_produto")
     private Long idProduto;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_categoria_produto")
-    private CategoriaProdutoEntity categoriaProduto;
+@OneToMany(
+        mappedBy = "produto",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
+)
+@OrderBy("principal DESC, ordem ASC")
+@Builder.Default
+private List<ProdutoCategoriaEntity> categorias = new ArrayList<>();
 
     @Column(name = "nome", nullable = false, length = 160)
     private String nome;
@@ -140,6 +145,29 @@ public class ProdutoEntity {
         updatedAt = LocalDateTime.now();
         normalizarDefaults();
     }
+
+    public void adicionarCategoria(ProdutoCategoriaEntity categoria) {
+    if (categoria == null) {
+        return;
+    }
+
+    categoria.setProduto(this);
+    categorias.add(categoria);
+}
+
+public void removerCategoria(ProdutoCategoriaEntity categoria) {
+    if (categoria == null) {
+        return;
+    }
+
+    categoria.setProduto(null);
+    categorias.remove(categoria);
+}
+
+public void limparCategorias() {
+    categorias.forEach(categoria -> categoria.setProduto(null));
+    categorias.clear();
+}
 
     private void normalizarDefaults() {
         if (preco == null) {

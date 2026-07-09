@@ -239,11 +239,12 @@ class ServicoRepository {
     return servicoCriado;
   }
 
-  Future<ServicoModel> editarServico(
-    int idServico,
-    ServicoModel servico, {
-    bool enviarImagens = true,
-  }) async {
+Future<ServicoModel> editarServico(
+  int idServico,
+  ServicoModel servico, {
+  bool enviarCategorias = true,
+  bool enviarImagens = true,
+}) async {
     _validarId(
       idServico,
       'ID do serviço inválido para edição.',
@@ -255,15 +256,17 @@ class ServicoRepository {
     );
 
     debugPrint(
-      '[ServicoRepository] EDITAR_SERVICO_INICIO — '
-      'id=$idServico enviarImagens=$enviarImagens',
+'[ServicoRepository] EDITAR_SERVICO_INICIO — '
+'id=$idServico enviarCategorias=$enviarCategorias '
+'enviarImagens=$enviarImagens',
     );
 
     final servicoEditado = await service.editarServico(
-      idServico,
-      servicoNormalizado,
-      enviarImagens: enviarImagens,
-    );
+  idServico,
+  servicoNormalizado,
+  enviarCategorias: enviarCategorias,
+  enviarImagens: enviarImagens,
+);
 
     debugPrint(
       '[ServicoRepository] EDITAR_SERVICO_SUCESSO — id=$idServico',
@@ -536,14 +539,29 @@ class ServicoRepository {
       throw Exception('O preço do serviço não pode ser negativo.');
     }
 
-    final idCategoria = servico.categoriaServico?.idCategoriaServico;
+for (final categoria in servico.categoriasServico) {
+  final idCategoria = categoria.idCategoriaServico;
 
-    if (idCategoria != null) {
-      _validarId(
-        idCategoria,
-        'ID da categoria de serviço inválido.',
-      );
-    }
+  if (idCategoria == null) {
+    throw Exception('Categoria de serviço inválida.');
+  }
+
+  _validarId(
+    idCategoria,
+    'ID da categoria de serviço inválido.',
+  );
+}
+
+final idsCategorias = servico.categoriasServico
+    .map((categoria) => categoria.idCategoriaServico)
+    .whereType<int>()
+    .toList();
+
+final idsUnicos = idsCategorias.toSet();
+
+if (idsCategorias.length != idsUnicos.length) {
+  throw Exception('Não é permitido associar a mesma categoria mais de uma vez.');
+}
 
     if (!servico.ativo && servico.disponivel) {
       throw Exception(
@@ -556,16 +574,17 @@ class ServicoRepository {
         : servico.imagens;
 
     return servico.copyWith(
-      nome: nome,
-      descricao: _normalizarTextoOpcional(servico.descricao),
-      preco: servico.preco,
-      imagemPrincipalUrl: _normalizarTextoOpcional(
-        servico.imagemPrincipalUrl,
-      ),
-      disponivel: servico.ativo ? servico.disponivel : false,
-      destaque: servico.ativo ? servico.destaque : false,
-      imagens: imagensNormalizadas,
-    );
+  nome: nome,
+  descricao: _normalizarTextoOpcional(servico.descricao),
+  preco: servico.preco,
+  imagemPrincipalUrl: _normalizarTextoOpcional(
+    servico.imagemPrincipalUrl,
+  ),
+  categoriasServico: servico.categoriasServico,
+  disponivel: servico.ativo ? servico.disponivel : false,
+  destaque: servico.ativo ? servico.destaque : false,
+  imagens: imagensNormalizadas,
+);
   }
 
   ServicoImagemModel _normalizarImagem(

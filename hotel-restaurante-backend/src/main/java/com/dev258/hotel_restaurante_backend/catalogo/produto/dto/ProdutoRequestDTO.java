@@ -11,7 +11,7 @@ import java.util.List;
 
 public record ProdutoRequestDTO(
 
-        Long idCategoriaProduto,
+        List<Long> idCategoriasProduto,
 
         @NotBlank(message = "O nome do produto é obrigatório.")
         @Size(max = 160, message = "O nome do produto deve ter no máximo 160 caracteres.")
