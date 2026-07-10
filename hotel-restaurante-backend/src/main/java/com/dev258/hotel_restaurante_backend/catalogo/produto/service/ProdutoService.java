@@ -21,6 +21,7 @@ import com.dev258.hotel_restaurante_backend.catalogo.produto.repository.ProdutoI
 import com.dev258.hotel_restaurante_backend.catalogo.produto.repository.ProdutoRepository;
 import com.dev258.hotel_restaurante_backend.catalogo.produto.entity.ProdutoCategoriaEntity;
 import com.dev258.hotel_restaurante_backend.catalogo.produto.repository.ProdutoCategoriaRepository;
+import com.dev258.hotel_restaurante_backend.administracao.movimento_estoque.service.MovimentoEstoqueService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,7 @@ public class ProdutoService {
     private final ProdutoIngredienteRepository produtoIngredienteRepository;
     private final IngredienteRepository ingredienteRepository;
     private final ProdutoCategoriaRepository produtoCategoriaRepository;
+    private final MovimentoEstoqueService movimentoEstoqueService;
 
     // ─────────────────────────────────────────────────────────────
     // CATEGORIAS — LISTAR
@@ -270,6 +272,8 @@ if (idCategoriaProduto != null && Boolean.TRUE.equals(somenteDisponiveis)) {
             ProdutoRequestDTO dto
     ) {
         ProdutoEntity produto = buscarProdutoEntityObrigatorio(idProduto);
+        BigDecimal quantidadeAnteriorEstoque = produto.getQuantidadeEstoque();
+        Boolean controlavaEstoqueAntes = produto.getControlaEstoque();
 
         validarNomeProdutoDuplicado(dto.nome(), idProduto);
 
@@ -291,10 +295,12 @@ if (idCategoriaProduto != null && Boolean.TRUE.equals(somenteDisponiveis)) {
         produto.setImagemPrincipalUrl(limparOpcional(dto.imagemPrincipalUrl()));
 
         Boolean controlaEstoque = dto.controlaEstoque() != null ? dto.controlaEstoque() : false;
+
+        BigDecimal quantidadePosteriorEstoque =
+                resolverQuantidadeEstoque(controlaEstoque, dto.quantidadeEstoque());
+
         produto.setControlaEstoque(controlaEstoque);
-        produto.setQuantidadeEstoque(
-                resolverQuantidadeEstoque(controlaEstoque, dto.quantidadeEstoque())
-        );
+        produto.setQuantidadeEstoque(quantidadePosteriorEstoque);
 
         produto.setControlaEstoquePorIngredientes(
                 dto.controlaEstoquePorIngredientes() != null
@@ -346,6 +352,15 @@ if (dto.idCategoriasProduto() != null) {
         }
 
         ProdutoEntity produtoSalvo = produtoRepository.save(produto);
+
+        registrarMovimentoEstoqueProdutoSeNecessario(
+        produtoSalvo,
+        controlavaEstoqueAntes,
+        controlaEstoque,
+        quantidadeAnteriorEstoque,
+        quantidadePosteriorEstoque,
+        dto
+);
 
         return new ProdutoResponseDTO(produtoSalvo);
     }
@@ -963,6 +978,41 @@ private void aplicarCategoriasNoProduto(
     // ─────────────────────────────────────────────────────────────
     // HELPERS — INGREDIENTES
     // ─────────────────────────────────────────────────────────────
+
+    private void registrarMovimentoEstoqueProdutoSeNecessario(
+        ProdutoEntity produto,
+        Boolean controlavaEstoqueAntes,
+        Boolean controlaEstoqueAgora,
+        BigDecimal quantidadeAnterior,
+        BigDecimal quantidadePosterior,
+        ProdutoRequestDTO dto
+) {
+    if (!Boolean.TRUE.equals(controlaEstoqueAgora)) {
+        return;
+    }
+
+    BigDecimal anterior = quantidadeAnterior != null
+            ? quantidadeAnterior
+            : BigDecimal.ZERO;
+
+    BigDecimal posterior = quantidadePosterior != null
+            ? quantidadePosterior
+            : BigDecimal.ZERO;
+
+    if (anterior.compareTo(posterior) == 0) {
+        return;
+    }
+
+    movimentoEstoqueService.registrarMovimentoProdutoPorEdicao(
+            produto,
+            anterior,
+            posterior,
+            dto.tipoMovimentoEstoque(),
+            dto.motivoMovimentoEstoque(),
+            dto.observacoesMovimentoEstoque(),
+            dto.idUsuarioMovimentoEstoque()
+    );
+}
 
     private void aplicarIngredientesNoProduto(
             ProdutoEntity produto,

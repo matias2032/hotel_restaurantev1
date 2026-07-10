@@ -23,15 +23,16 @@ public class MovimentoEstoqueEntity {
         INGREDIENTE
     }
 
-    public enum TipoMovimentoEstoque {
-        ENTRADA,
-        SAIDA,
-        AJUSTE,
-        PERDA,
-        CORRECAO,
-        INVENTARIO,
-        VENCIMENTO
-    }
+public enum TipoMovimentoEstoque {
+    ENTRADA,
+    SAIDA,
+    AJUSTE,
+    PERDA,
+    CORRECAO,
+    INVENTARIO,
+    VENCIMENTO,
+    OUTROS
+}
 
     public enum OrigemMovimentoEstoque {
         MANUAL

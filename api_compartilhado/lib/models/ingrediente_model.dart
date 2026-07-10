@@ -1,3 +1,5 @@
+import 'movimento_estoque_model.dart';
+
 class CategoriaIngredienteModel {
   final int? idCategoriaIngrediente;
   final String nome;
@@ -173,6 +175,10 @@ final List<CategoriaIngredienteResumoModel> categoriasIngrediente;
   final double? quantidadeEstoque;
   final bool disponivel;
   final bool ativo;
+  final TipoMovimentoEstoqueModel? tipoMovimentoEstoque;
+final String? motivoMovimentoEstoque;
+final String? observacoesMovimentoEstoque;
+final int? idUsuarioMovimentoEstoque;
   final String? imagemPrincipalUrl;
   final List<IngredienteImagemModel> imagens;
   final DateTime? createdAt;
@@ -188,6 +194,10 @@ this.categoriasIngrediente = const [],
     this.quantidadeEstoque,
     this.disponivel = true,
     this.ativo = true,
+    this.tipoMovimentoEstoque,
+this.motivoMovimentoEstoque,
+this.observacoesMovimentoEstoque,
+this.idUsuarioMovimentoEstoque,
     this.imagemPrincipalUrl,
     this.imagens = const [],
     this.createdAt,
@@ -211,6 +221,13 @@ this.categoriasIngrediente = const [],
       quantidadeEstoque: _parseDoubleOpt(json['quantidadeEstoque']),
       disponivel: _parseBool(json['disponivel'], defaultValue: true),
       ativo: _parseBool(json['ativo'], defaultValue: true),
+      tipoMovimentoEstoque:
+    TipoMovimentoEstoqueModel.fromJson(json['tipoMovimentoEstoque']),
+motivoMovimentoEstoque: _parseStringOpt(json['motivoMovimentoEstoque']),
+observacoesMovimentoEstoque:
+    _parseStringOpt(json['observacoesMovimentoEstoque']),
+idUsuarioMovimentoEstoque:
+    _parseIntOpt(json['idUsuarioMovimentoEstoque']),
       imagemPrincipalUrl: _parseStringOpt(json['imagemPrincipalUrl']),
       imagens: _parseImagens(json['imagens']),
       createdAt: _parseDateTimeOpt(json['createdAt']),
@@ -235,6 +252,10 @@ this.categoriasIngrediente = const [],
     'quantidadeEstoque': controlaEstoque ? quantidadeEstoque : null,
     'disponivel': disponivel,
     'ativo': ativo,
+    'tipoMovimentoEstoque': tipoMovimentoEstoque?.apiValue,
+'motivoMovimentoEstoque': _nullIfBlank(motivoMovimentoEstoque),
+'observacoesMovimentoEstoque': _nullIfBlank(observacoesMovimentoEstoque),
+'idUsuarioMovimentoEstoque': idUsuarioMovimentoEstoque,
     if (enviarImagens)
       'imagens': imagens.map((imagem) => imagem.toJson()).toList(),
   };
@@ -250,6 +271,10 @@ List<CategoriaIngredienteResumoModel>? categoriasIngrediente,
     double? quantidadeEstoque,
     bool? disponivel,
     bool? ativo,
+    TipoMovimentoEstoqueModel? tipoMovimentoEstoque,
+String? motivoMovimentoEstoque,
+String? observacoesMovimentoEstoque,
+int? idUsuarioMovimentoEstoque,
     String? imagemPrincipalUrl,
     List<IngredienteImagemModel>? imagens,
     DateTime? createdAt,
@@ -266,6 +291,14 @@ categoriasIngrediente:
       quantidadeEstoque: quantidadeEstoque ?? this.quantidadeEstoque,
       disponivel: disponivel ?? this.disponivel,
       ativo: ativo ?? this.ativo,
+      tipoMovimentoEstoque:
+    tipoMovimentoEstoque ?? this.tipoMovimentoEstoque,
+motivoMovimentoEstoque:
+    motivoMovimentoEstoque ?? this.motivoMovimentoEstoque,
+observacoesMovimentoEstoque:
+    observacoesMovimentoEstoque ?? this.observacoesMovimentoEstoque,
+idUsuarioMovimentoEstoque:
+    idUsuarioMovimentoEstoque ?? this.idUsuarioMovimentoEstoque,
       imagemPrincipalUrl: imagemPrincipalUrl ?? this.imagemPrincipalUrl,
       imagens: imagens ?? this.imagens,
       createdAt: createdAt ?? this.createdAt,

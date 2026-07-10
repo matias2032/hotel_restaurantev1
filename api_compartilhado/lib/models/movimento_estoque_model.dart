@@ -1,3 +1,5 @@
+
+
 enum TipoItemEstoqueModel {
   produto,
   ingrediente;
@@ -34,7 +36,8 @@ enum TipoMovimentoEstoqueModel {
   perda,
   correcao,
   inventario,
-  vencimento;
+  vencimento,
+  outros;
 
   String get apiValue {
     return switch (this) {
@@ -45,6 +48,7 @@ enum TipoMovimentoEstoqueModel {
       TipoMovimentoEstoqueModel.correcao => 'CORRECAO',
       TipoMovimentoEstoqueModel.inventario => 'INVENTARIO',
       TipoMovimentoEstoqueModel.vencimento => 'VENCIMENTO',
+      TipoMovimentoEstoqueModel.outros => 'OUTROS',
     };
   }
 
@@ -57,6 +61,7 @@ enum TipoMovimentoEstoqueModel {
       TipoMovimentoEstoqueModel.correcao => 'Correção',
       TipoMovimentoEstoqueModel.inventario => 'Inventário',
       TipoMovimentoEstoqueModel.vencimento => 'Vencimento',
+      TipoMovimentoEstoqueModel.outros => 'Outros',
     };
   }
 
@@ -81,6 +86,7 @@ enum TipoMovimentoEstoqueModel {
       'CORRECAO' => TipoMovimentoEstoqueModel.correcao,
       'INVENTARIO' => TipoMovimentoEstoqueModel.inventario,
       'VENCIMENTO' => TipoMovimentoEstoqueModel.vencimento,
+      'OUTROS' => TipoMovimentoEstoqueModel.outros,
       _ => null,
     };
   }

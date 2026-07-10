@@ -1,10 +1,12 @@
 package com.dev258.hotel_restaurante_backend.catalogo.ingrediente.dto;
 
+import com.dev258.hotel_restaurante_backend.administracao.movimento_estoque.entity.MovimentoEstoqueEntity.TipoMovimentoEstoque;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -38,6 +40,13 @@ public record IngredienteRequestDTO(
         Boolean disponivel,
 
         Boolean ativo,
+        TipoMovimentoEstoque tipoMovimentoEstoque,
+
+        String motivoMovimentoEstoque,
+
+        String observacoesMovimentoEstoque,
+
+        Long idUsuarioMovimentoEstoque,
 
         @Valid
         List<IngredienteImagemRequestDTO> imagens

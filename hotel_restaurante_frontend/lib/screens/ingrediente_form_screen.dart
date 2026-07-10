@@ -32,8 +32,11 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
   final _descricaoCtrl = TextEditingController();
   final _precoAdicionalCtrl = TextEditingController(text: '0.00');
   final _quantidadeEstoqueCtrl = TextEditingController();
+  final _motivoMovimentoOutroCtrl = TextEditingController();
+  final _observacoesMovimentoEstoqueCtrl = TextEditingController();
 
   IngredienteModel? _ingredienteEdicao;
+  TipoMovimentoEstoqueModel? _tipoMovimentoEstoqueSelecionado;
 
   bool _carregouArgumentos = false;
   bool _salvando = false;
@@ -47,6 +50,72 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
   List<IngredienteImagemModel> _imagens = [];
 
   bool get _modoEdicao => _ingredienteEdicao != null;
+
+  double get _quantidadeEstoqueAnterior {
+    return _ingredienteEdicao?.quantidadeEstoque ?? 0.0;
+  }
+
+  double get _quantidadeEstoqueActualForm {
+    return _parseDoubleNullable(_quantidadeEstoqueCtrl.text) ?? 0.0;
+  }
+
+  bool get _quantidadeEstoqueFoiAlterada {
+    if (!_modoEdicao) return false;
+    if (!_controlaEstoque) return false;
+
+    return _quantidadeEstoqueAnterior != _quantidadeEstoqueActualForm;
+  }
+
+  bool get _estoqueAumentou {
+    return _quantidadeEstoqueActualForm > _quantidadeEstoqueAnterior;
+  }
+
+  bool get _estoqueReduziu {
+    return _quantidadeEstoqueActualForm < _quantidadeEstoqueAnterior;
+  }
+
+  String get _motivoMovimentoEstoque {
+    if (_tipoMovimentoEstoqueSelecionado == TipoMovimentoEstoqueModel.outros) {
+      return _motivoMovimentoOutroCtrl.text.trim();
+    }
+
+    return _tipoMovimentoEstoqueSelecionado?.label ?? '';
+  }
+
+  List<TipoMovimentoEstoqueModel> get _tiposMovimentoPermitidos {
+    if (_estoqueAumentou) {
+      return const [
+        TipoMovimentoEstoqueModel.entrada,
+        TipoMovimentoEstoqueModel.ajuste,
+        TipoMovimentoEstoqueModel.correcao,
+        TipoMovimentoEstoqueModel.inventario,
+        TipoMovimentoEstoqueModel.outros,
+      ];
+    }
+
+    if (_estoqueReduziu) {
+      return const [
+        TipoMovimentoEstoqueModel.saida,
+        TipoMovimentoEstoqueModel.perda,
+        TipoMovimentoEstoqueModel.vencimento,
+        TipoMovimentoEstoqueModel.ajuste,
+        TipoMovimentoEstoqueModel.correcao,
+        TipoMovimentoEstoqueModel.inventario,
+        TipoMovimentoEstoqueModel.outros,
+      ];
+    }
+
+    return const [
+      TipoMovimentoEstoqueModel.entrada,
+      TipoMovimentoEstoqueModel.saida,
+      TipoMovimentoEstoqueModel.perda,
+      TipoMovimentoEstoqueModel.vencimento,
+      TipoMovimentoEstoqueModel.ajuste,
+      TipoMovimentoEstoqueModel.correcao,
+      TipoMovimentoEstoqueModel.inventario,
+      TipoMovimentoEstoqueModel.outros,
+    ];
+  }
 
   static const List<String> _extensoesImagem = [
     'jpg',
@@ -90,6 +159,8 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
     _descricaoCtrl.dispose();
     _precoAdicionalCtrl.dispose();
     _quantidadeEstoqueCtrl.dispose();
+    _motivoMovimentoOutroCtrl.dispose();
+    _observacoesMovimentoEstoqueCtrl.dispose();
     super.dispose();
   }
 
@@ -104,8 +175,9 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
       _nomeCtrl.text = args.nome;
       _descricaoCtrl.text = args.descricao ?? '';
       _precoAdicionalCtrl.text = args.precoAdicional.toStringAsFixed(2);
-      _quantidadeEstoqueCtrl.text =
-          args.quantidadeEstoque?.toStringAsFixed(2) ?? '';
+      _quantidadeEstoqueCtrl.text = args.quantidadeEstoque != null
+          ? args.quantidadeEstoque.toString()
+          : '';
 
       _ativo = args.ativo;
       _disponivel = args.disponivel;
@@ -113,21 +185,52 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
 
       _categoriasSelecionadas = [...args.categoriasIngrediente];
       _imagens = [...args.imagens];
-
-      if (_imagens.isEmpty &&
-          args.imagemPrincipalUrl != null &&
-          args.imagemPrincipalUrl!.trim().isNotEmpty) {
-        _imagens = [
-          IngredienteImagemModel(
-            imagemUrl: args.imagemPrincipalUrl!.trim(),
-            principal: true,
-            ordem: 0,
-          ),
-        ];
-      }
     }
 
     _carregouArgumentos = true;
+  }
+
+  int? _idUsuarioLogado() {
+    return SessaoService.instance.idUsuario;
+  }
+
+  bool _validarMovimentoEstoque() {
+    if (!_quantidadeEstoqueFoiAlterada) return true;
+
+    if (_tipoMovimentoEstoqueSelecionado == null) {
+      _snack(
+        'Selecione o motivo do movimento de estoque.',
+        erro: true,
+      );
+      return false;
+    }
+
+    if (_tipoMovimentoEstoqueSelecionado == TipoMovimentoEstoqueModel.outros &&
+        _motivoMovimentoOutroCtrl.text.trim().isEmpty) {
+      _snack(
+        'Informe o motivo quando selecionar Outros.',
+        erro: true,
+      );
+      return false;
+    }
+
+    final idUsuario = _idUsuarioLogado();
+
+    if (idUsuario == null) {
+      _snack(
+        'Não foi possível identificar o usuário responsável pelo movimento.',
+        erro: true,
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  void _resetarMovimentoEstoque() {
+    _tipoMovimentoEstoqueSelecionado = null;
+    _motivoMovimentoOutroCtrl.clear();
+    _observacoesMovimentoEstoqueCtrl.clear();
   }
 
   Future<void> _escolherImagens() async {
@@ -165,9 +268,7 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
     final novas = <IngredienteImagemModel>[];
 
     for (final path in paths) {
-      if (!_isImagemSuportada(path)) {
-        continue;
-      }
+      if (!_isImagemSuportada(path)) continue;
 
       final jaExiste = _imagens.any(
         (imagem) => imagem.imagemUrl.trim() == path.trim(),
@@ -222,7 +323,7 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
     });
   }
 
-  void _definirPrincipal(
+  void _definirImagemPrincipal(
     IngredienteImagemModel imagem,
   ) {
     setState(() {
@@ -299,15 +400,68 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
     setState(() {
       _categoriasSelecionadas = _categoriasSelecionadas.map((item) {
         return item.copyWith(
-          principal:
-              item.idCategoriaIngrediente == categoria.idCategoriaIngrediente,
+          principal: item.idCategoriaIngrediente == categoria.idCategoriaIngrediente,
         );
       }).toList();
     });
   }
 
   Future<void> _salvar() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_salvando) return;
+
+    final formState = _formKey.currentState;
+
+    if (formState == null) {
+      _snack(
+        'Não foi possível validar o formulário. Verifique se a tela carregou corretamente.',
+        erro: true,
+      );
+      return;
+    }
+
+    if (!formState.validate()) return;
+
+    if (_categoriasSelecionadas.isEmpty) {
+      _snack(
+        'Selecione pelo menos uma categoria para o ingrediente.',
+        erro: true,
+      );
+      return;
+    }
+
+    final precoAdicional = _parseDouble(_precoAdicionalCtrl.text);
+
+    if (precoAdicional < 0) {
+      _snack(
+        'O preço adicional não pode ser negativo.',
+        erro: true,
+      );
+      return;
+    }
+
+    final quantidadeEstoque = _controlaEstoque
+        ? _parseDoubleNullable(_quantidadeEstoqueCtrl.text)
+        : null;
+
+    if (_controlaEstoque && quantidadeEstoque == null) {
+      _snack(
+        'Informe a quantidade em estoque.',
+        erro: true,
+      );
+      return;
+    }
+
+    if (_controlaEstoque && quantidadeEstoque! < 0) {
+      _snack(
+        'A quantidade em estoque não pode ser negativa.',
+        erro: true,
+      );
+      return;
+    }
+
+    if (!_validarMovimentoEstoque()) {
+      return;
+    }
 
     setState(() => _salvando = true);
 
@@ -321,18 +475,26 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
         idIngrediente: _ingredienteEdicao?.idIngrediente,
         nome: _nomeCtrl.text.trim(),
         descricao: _nullIfBlank(_descricaoCtrl.text),
-        precoAdicional: _parseDouble(_precoAdicionalCtrl.text),
+        precoAdicional: precoAdicional,
         controlaEstoque: _controlaEstoque,
-        quantidadeEstoque: _controlaEstoque
-            ? _parseDoubleNullable(_quantidadeEstoqueCtrl.text)
-            : null,
-        disponivel: _disponivel,
+        quantidadeEstoque: quantidadeEstoque,
+        disponivel: _ativo ? _disponivel : false,
         ativo: _ativo,
         categoriasIngrediente: _categoriasSelecionadas,
         imagens: _imagens,
+        tipoMovimentoEstoque: _quantidadeEstoqueFoiAlterada
+            ? _tipoMovimentoEstoqueSelecionado
+            : null,
+        motivoMovimentoEstoque:
+            _quantidadeEstoqueFoiAlterada ? _motivoMovimentoEstoque : null,
+        observacoesMovimentoEstoque: _quantidadeEstoqueFoiAlterada
+            ? _nullIfBlank(_observacoesMovimentoEstoqueCtrl.text)
+            : null,
+        idUsuarioMovimentoEstoque:
+            _quantidadeEstoqueFoiAlterada ? _idUsuarioLogado() : null,
       );
 
-      bool sucesso;
+      final bool sucesso;
 
       if (_modoEdicao) {
         final id = _ingredienteEdicao?.idIngrediente;
@@ -352,9 +514,7 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
           enviarImagens: true,
         );
       } else {
-        sucesso = await provider.criarIngrediente(
-          ingrediente,
-        );
+        sucesso = await provider.criarIngrediente(ingrediente);
       }
 
       if (!mounted) return;
@@ -367,12 +527,23 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
         );
 
         Navigator.of(context).pop(true);
-      } else {
-        _snack(
-          provider.erro ?? 'Não foi possível salvar o ingrediente.',
-          erro: true,
-        );
+        return;
       }
+
+      _snack(
+        provider.erro ?? 'Não foi possível salvar o ingrediente.',
+        erro: true,
+      );
+    } catch (e, stackTrace) {
+      debugPrint('❌ IngredienteFormScreen — erro ao salvar ingrediente: $e');
+      debugPrintStack(stackTrace: stackTrace);
+
+      if (!mounted) return;
+
+      _snack(
+        e.toString().replaceFirst('Exception: ', ''),
+        erro: true,
+      );
     } finally {
       if (mounted) {
         setState(() => _salvando = false);
@@ -394,11 +565,11 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
     return null;
   }
 
-  String? _validarPreco(String? value) {
+  String? _validarPrecoAdicional(String? value) {
     final numero = _parseDoubleNullable(value ?? '');
 
     if (numero == null) {
-      return 'Informe um preço válido.';
+      return 'Informe um preço adicional válido.';
     }
 
     if (numero < 0) {
@@ -408,17 +579,17 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
     return null;
   }
 
-  String? _validarQuantidade(String? value) {
+  String? _validarQuantidadeEstoque(String? value) {
     if (!_controlaEstoque) return null;
 
     final numero = _parseDoubleNullable(value ?? '');
 
     if (numero == null) {
-      return 'Informe uma quantidade válida.';
+      return 'Informe a quantidade em estoque.';
     }
 
     if (numero < 0) {
-      return 'A quantidade não pode ser negativa.';
+      return 'A quantidade em estoque não pode ser negativa.';
     }
 
     return null;
@@ -473,54 +644,29 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
       ),
       body: SafeArea(
         child: Consumer<IngredienteProvider>(
-          builder: (context, provider, _) {
-            final categorias = [...provider.categorias]
+          builder: (context, ingredienteProvider, _) {
+            final categoriasIngrediente = [...ingredienteProvider.categorias]
               ..sort((a, b) {
                 final ordem = a.ordem.compareTo(b.ordem);
 
                 if (ordem != 0) return ordem;
 
-                return a.nome.toLowerCase().compareTo(
-                      b.nome.toLowerCase(),
-                    );
+                return a.nome.toLowerCase().compareTo(b.nome.toLowerCase());
               });
 
-            return ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                Container(
-                  decoration: _cardDecoration(),
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        titulo,
-                        style: const TextStyle(
-                          color: _kDark,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        _modoEdicao
-                            ? 'Actualize os dados, categorias e imagens do ingrediente.'
-                            : 'Cadastre um ingrediente com categorias, disponibilidade, estoque e imagens.',
-                        style: const TextStyle(
-                          color: _kMuted,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+            return Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+                  _HeaderFormCard(
+                    titulo: titulo,
+                    modoEdicao: _modoEdicao,
                   ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  decoration: _cardDecoration(),
-                  padding: const EdgeInsets.all(18),
-                  child: Form(
-                    key: _formKey,
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: _cardDecoration(),
+                    padding: const EdgeInsets.all(18),
                     child: Column(
                       children: [
                         TextFormField(
@@ -529,7 +675,7 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
                           textInputAction: TextInputAction.next,
                           decoration: const InputDecoration(
                             labelText: 'Nome do ingrediente',
-                            prefixIcon: Icon(Icons.restaurant_menu),
+                            prefixIcon: Icon(Icons.kitchen_outlined),
                           ),
                         ),
                         const SizedBox(height: 14),
@@ -546,7 +692,7 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
                         const SizedBox(height: 14),
                         TextFormField(
                           controller: _precoAdicionalCtrl,
-                          validator: _validarPreco,
+                          validator: _validarPrecoAdicional,
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
@@ -559,7 +705,7 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
                         SwitchListTile(
                           contentPadding: EdgeInsets.zero,
                           value: _controlaEstoque,
-                          activeColor: _kOrange,
+                          activeColor: _kBlue,
                           title: const Text(
                             'Controla estoque',
                             style: TextStyle(
@@ -568,7 +714,7 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
                             ),
                           ),
                           subtitle: const Text(
-                            'Active quando o ingrediente tiver quantidade controlada.',
+                            'Use para ingredientes com quantidade controlada em estoque.',
                             style: TextStyle(
                               color: _kMuted,
                               fontSize: 13,
@@ -580,6 +726,7 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
 
                               if (!value) {
                                 _quantidadeEstoqueCtrl.clear();
+                                _resetarMovimentoEstoque();
                               }
                             });
                           },
@@ -588,7 +735,7 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
                           const SizedBox(height: 14),
                           TextFormField(
                             controller: _quantidadeEstoqueCtrl,
-                            validator: _validarQuantidade,
+                            validator: _validarQuantidadeEstoque,
                             keyboardType:
                                 const TextInputType.numberWithOptions(
                               decimal: true,
@@ -597,6 +744,37 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
                               labelText: 'Quantidade em estoque',
                               prefixIcon: Icon(Icons.inventory_2_outlined),
                             ),
+                            onChanged: (_) {
+                              setState(() {
+                                if (!_tiposMovimentoPermitidos.contains(
+                                  _tipoMovimentoEstoqueSelecionado,
+                                )) {
+                                  _tipoMovimentoEstoqueSelecionado = null;
+                                  _motivoMovimentoOutroCtrl.clear();
+                                }
+                              });
+                            },
+                          ),
+                        ],
+                        if (_quantidadeEstoqueFoiAlterada) ...[
+                          const SizedBox(height: 14),
+                          _MovimentoEstoqueEdicaoCard(
+                            aumentou: _estoqueAumentou,
+                            quantidadeAnterior: _quantidadeEstoqueAnterior,
+                            quantidadeActual: _quantidadeEstoqueActualForm,
+                            tipoSelecionado: _tipoMovimentoEstoqueSelecionado,
+                            tiposPermitidos: _tiposMovimentoPermitidos,
+                            motivoOutroCtrl: _motivoMovimentoOutroCtrl,
+                            observacoesCtrl: _observacoesMovimentoEstoqueCtrl,
+                            onTipoChanged: (value) {
+                              setState(() {
+                                _tipoMovimentoEstoqueSelecionado = value;
+
+                                if (value != TipoMovimentoEstoqueModel.outros) {
+                                  _motivoMovimentoOutroCtrl.clear();
+                                }
+                              });
+                            },
                           ),
                         ],
                         const SizedBox(height: 14),
@@ -605,24 +783,24 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
                           value: _disponivel,
                           activeColor: _kBlue,
                           title: const Text(
-                            'Disponível',
+                            'Disponível manualmente',
                             style: TextStyle(
                               color: _kDark,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          subtitle: Text(
-                            _disponivel
-                                ? 'O ingrediente pode ser usado normalmente.'
-                                : 'O ingrediente ficará indisponível.',
-                            style: const TextStyle(
+                          subtitle: const Text(
+                            'Mesmo activo, o ingrediente pode ficar indisponível.',
+                            style: TextStyle(
                               color: _kMuted,
                               fontSize: 13,
                             ),
                           ),
-                          onChanged: (value) {
-                            setState(() => _disponivel = value);
-                          },
+                          onChanged: _ativo
+                              ? (value) {
+                                  setState(() => _disponivel = value);
+                                }
+                              : null,
                         ),
                         SwitchListTile(
                           contentPadding: EdgeInsets.zero,
@@ -635,11 +813,9 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          subtitle: Text(
-                            _ativo
-                                ? 'O ingrediente ficará activo no sistema.'
-                                : 'O ingrediente ficará inactivo.',
-                            style: const TextStyle(
+                          subtitle: const Text(
+                            'Ao desactivar, o ingrediente fica indisponível.',
+                            style: TextStyle(
                               color: _kMuted,
                               fontSize: 13,
                             ),
@@ -657,74 +833,74 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
                       ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                _CategoriasSection(
-                  categorias: categorias,
-                  selecionadas: _categoriasSelecionadas,
-                  onToggle: _toggleCategoria,
-                  onDefinirPrincipal: _definirCategoriaPrincipal,
-                ),
-                const SizedBox(height: 16),
-                _ImagensSection(
-                  imagens: _imagens,
-                  dragging: _dragging,
-                  onChoose: _escolherImagens,
-                  onDrop: _adicionarImagensPorDrop,
-                  onDraggingChanged: (value) {
-                    setState(() => _dragging = value);
-                  },
-                  onRemover: _removerImagem,
-                  onDefinirPrincipal: _definirPrincipal,
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _salvando
-                            ? null
-                            : () => Navigator.of(context).pop(false),
-                        icon: const Icon(Icons.arrow_back),
-                        label: const Text('Cancelar'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          foregroundColor: _kDark,
-                          side: const BorderSide(color: _kBorder),
+                  const SizedBox(height: 16),
+                  _CategoriasIngredienteSection(
+                    categorias: categoriasIngrediente,
+                    selecionadas: _categoriasSelecionadas,
+                    onToggle: _toggleCategoria,
+                    onDefinirPrincipal: _definirCategoriaPrincipal,
+                  ),
+                  const SizedBox(height: 16),
+                  _ImagensSection(
+                    imagens: _imagens,
+                    dragging: _dragging,
+                    onChoose: _escolherImagens,
+                    onDrop: _adicionarImagensPorDrop,
+                    onDraggingChanged: (value) {
+                      setState(() => _dragging = value);
+                    },
+                    onRemover: _removerImagem,
+                    onDefinirPrincipal: _definirImagemPrincipal,
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _salvando
+                              ? null
+                              : () => Navigator.of(context).pop(false),
+                          icon: const Icon(Icons.arrow_back),
+                          label: const Text('Cancelar'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            foregroundColor: _kDark,
+                            side: const BorderSide(color: _kBorder),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: _salvando ? null : _salvar,
-                        icon: _salvando
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(Icons.save_outlined),
-                        label: Text(
-                          _salvando
-                              ? 'Salvando...'
-                              : _modoEdicao
-                                  ? 'Actualizar'
-                                  : 'Salvar',
-                        ),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: _kOrange,
-                          foregroundColor: Colors.white,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: _salvando ? null : _salvar,
+                          icon: _salvando
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.save_outlined),
+                          label: Text(
+                            _salvando
+                                ? 'Salvando...'
+                                : _modoEdicao
+                                    ? 'Actualizar'
+                                    : 'Salvar',
+                          ),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: _kOrange,
+                            foregroundColor: Colors.white,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             );
           },
         ),
@@ -733,13 +909,172 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
   }
 }
 
-class _CategoriasSection extends StatelessWidget {
+class _MovimentoEstoqueEdicaoCard extends StatelessWidget {
+  final bool aumentou;
+  final double quantidadeAnterior;
+  final double quantidadeActual;
+  final TipoMovimentoEstoqueModel? tipoSelecionado;
+  final List<TipoMovimentoEstoqueModel> tiposPermitidos;
+  final TextEditingController motivoOutroCtrl;
+  final TextEditingController observacoesCtrl;
+  final ValueChanged<TipoMovimentoEstoqueModel?> onTipoChanged;
+
+  const _MovimentoEstoqueEdicaoCard({
+    required this.aumentou,
+    required this.quantidadeAnterior,
+    required this.quantidadeActual,
+    required this.tipoSelecionado,
+    required this.tiposPermitidos,
+    required this.motivoOutroCtrl,
+    required this.observacoesCtrl,
+    required this.onTipoChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: aumentou ? _kGreen.withOpacity(0.08) : _kRed.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: aumentou
+              ? _kGreen.withOpacity(0.22)
+              : _kRed.withOpacity(0.22),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            aumentou
+                ? 'Movimento de aumento de estoque'
+                : 'Movimento de redução de estoque',
+            style: TextStyle(
+              color: aumentou ? _kGreen : _kRed,
+              fontWeight: FontWeight.w900,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Anterior: ${quantidadeAnterior.toStringAsFixed(3)} • Nova: ${quantidadeActual.toStringAsFixed(3)}',
+            style: const TextStyle(
+              color: _kMuted,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<TipoMovimentoEstoqueModel>(
+            value: tipoSelecionado,
+            decoration: const InputDecoration(
+              labelText: 'Motivo do movimento',
+              prefixIcon: Icon(Icons.swap_vert_rounded),
+            ),
+            items: tiposPermitidos.map((tipo) {
+              return DropdownMenuItem<TipoMovimentoEstoqueModel>(
+                value: tipo,
+                child: Text(tipo.label),
+              );
+            }).toList(),
+            onChanged: onTipoChanged,
+          ),
+          if (tipoSelecionado == TipoMovimentoEstoqueModel.outros) ...[
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: motivoOutroCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Descreva o motivo',
+                prefixIcon: Icon(Icons.edit_note_outlined),
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          TextFormField(
+            controller: observacoesCtrl,
+            minLines: 2,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              labelText: 'Observações do movimento',
+              alignLabelWithHint: true,
+              prefixIcon: Icon(Icons.notes_outlined),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderFormCard extends StatelessWidget {
+  final String titulo;
+  final bool modoEdicao;
+
+  const _HeaderFormCard({
+    required this.titulo,
+    required this.modoEdicao,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: _cardDecoration(),
+      padding: const EdgeInsets.all(18),
+      child: Row(
+        children: [
+          Container(
+            height: 46,
+            width: 46,
+            decoration: BoxDecoration(
+              color: _kOrange,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.kitchen_outlined,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  titulo,
+                  style: const TextStyle(
+                    color: _kDark,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  modoEdicao
+                      ? 'Actualize dados, categorias, estoque e imagens.'
+                      : 'Cadastre um ingrediente com categorias, estoque e imagens.',
+                  style: const TextStyle(
+                    color: _kMuted,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoriasIngredienteSection extends StatelessWidget {
   final List<CategoriaIngredienteModel> categorias;
   final List<CategoriaIngredienteResumoModel> selecionadas;
   final ValueChanged<CategoriaIngredienteModel> onToggle;
   final ValueChanged<CategoriaIngredienteResumoModel> onDefinirPrincipal;
 
-  const _CategoriasSection({
+  const _CategoriasIngredienteSection({
     required this.categorias,
     required this.selecionadas,
     required this.onToggle,
@@ -755,7 +1090,7 @@ class _CategoriasSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Categorias associadas',
+            'Categorias do ingrediente',
             style: TextStyle(
               color: _kDark,
               fontSize: 16,
@@ -764,7 +1099,7 @@ class _CategoriasSection extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Seleccione uma ou mais categorias. A categoria principal será destacada.',
+            'Associe o ingrediente a uma ou mais categorias.',
             style: TextStyle(
               color: _kMuted,
               fontSize: 13,
@@ -794,9 +1129,7 @@ class _CategoriasSection extends StatelessWidget {
                   selected: selecionada,
                   label: Text(categoria.nome),
                   avatar: Icon(
-                    selecionada
-                        ? Icons.check_circle
-                        : Icons.category_outlined,
+                    selecionada ? Icons.check_circle : Icons.category_outlined,
                     size: 16,
                   ),
                   selectedColor: _kOrange.withOpacity(0.14),
@@ -898,7 +1231,7 @@ class _ImagensSection extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Escolha ficheiros ou arraste imagens para esta área. Suporta jpg, jpeg, jfif, png, webp, gif, bmp, heic, tiff, svg, avif e outros formatos comuns.',
+            'Escolha ficheiros ou arraste imagens para esta área.',
             style: TextStyle(
               color: _kMuted,
               fontSize: 13,
@@ -1037,8 +1370,7 @@ class _ImagemPreviewCard extends StatelessWidget {
                     imagem.principal ? 'Principal' : 'Definir',
                   ),
                   style: TextButton.styleFrom(
-                    foregroundColor:
-                        imagem.principal ? _kOrange : _kMuted,
+                    foregroundColor: imagem.principal ? _kOrange : _kMuted,
                     textStyle: const TextStyle(fontSize: 12),
                   ),
                 ),

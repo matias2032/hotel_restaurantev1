@@ -1,3 +1,6 @@
+import 'movimento_estoque_model.dart';
+
+
 class CategoriaProdutoModel {
   final int? idCategoriaProduto;
   final String nome;
@@ -252,6 +255,10 @@ class ProdutoModel {
   final List<ProdutoIngredienteModel> ingredientes;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final TipoMovimentoEstoqueModel? tipoMovimentoEstoque;
+  final String? motivoMovimentoEstoque;
+  final String? observacoesMovimentoEstoque;
+  final int? idUsuarioMovimentoEstoque;
 
   const ProdutoModel({
     this.idProduto,
@@ -276,6 +283,10 @@ class ProdutoModel {
     this.ingredientes = const [],
     this.createdAt,
     this.updatedAt,
+    this.tipoMovimentoEstoque,
+    this.motivoMovimentoEstoque,
+    this.observacoesMovimentoEstoque,
+    this.idUsuarioMovimentoEstoque,
   });
 
   factory ProdutoModel.fromJson(Map<String, dynamic> json) {
@@ -327,6 +338,13 @@ class ProdutoModel {
       ingredientes: _parseIngredientesProduto(json['ingredientes']),
       createdAt: _parseDateTimeOpt(json['createdAt']),
       updatedAt: _parseDateTimeOpt(json['updatedAt']),
+      tipoMovimentoEstoque:
+    TipoMovimentoEstoqueModel.fromJson(json['tipoMovimentoEstoque']),
+motivoMovimentoEstoque: _parseStringOpt(json['motivoMovimentoEstoque']),
+observacoesMovimentoEstoque:
+    _parseStringOpt(json['observacoesMovimentoEstoque']),
+idUsuarioMovimentoEstoque:
+    _parseIntOpt(json['idUsuarioMovimentoEstoque']),
     );
   }
 
@@ -354,6 +372,10 @@ if (enviarCategorias)
       'disponivel': disponivel,
       'destaque': destaque,
       'ativo': ativo,
+      'tipoMovimentoEstoque': tipoMovimentoEstoque?.apiValue,
+'motivoMovimentoEstoque': _nullIfBlank(motivoMovimentoEstoque),
+'observacoesMovimentoEstoque': _nullIfBlank(observacoesMovimentoEstoque),
+'idUsuarioMovimentoEstoque': idUsuarioMovimentoEstoque,
       if (enviarImagens)
         'imagens': imagens.map((imagem) => imagem.toJson()).toList(),
       if (enviarIngredientes)
@@ -382,6 +404,10 @@ static const Object _naoAlterar = Object();
     bool? disponivel,
     bool? destaque,
     bool? ativo,
+    TipoMovimentoEstoqueModel? tipoMovimentoEstoque,
+String? motivoMovimentoEstoque,
+String? observacoesMovimentoEstoque,
+int? idUsuarioMovimentoEstoque,
     List<ProdutoImagemModel>? imagens,
     List<ProdutoIngredienteModel>? ingredientes,
     DateTime? createdAt,
@@ -418,6 +444,14 @@ static const Object _naoAlterar = Object();
       disponivel: disponivel ?? this.disponivel,
       destaque: destaque ?? this.destaque,
       ativo: ativo ?? this.ativo,
+      tipoMovimentoEstoque:
+    tipoMovimentoEstoque ?? this.tipoMovimentoEstoque,
+motivoMovimentoEstoque:
+    motivoMovimentoEstoque ?? this.motivoMovimentoEstoque,
+observacoesMovimentoEstoque:
+    observacoesMovimentoEstoque ?? this.observacoesMovimentoEstoque,
+idUsuarioMovimentoEstoque:
+    idUsuarioMovimentoEstoque ?? this.idUsuarioMovimentoEstoque,
       imagens: imagens ?? this.imagens,
       ingredientes: ingredientes ?? this.ingredientes,
       createdAt: createdAt ?? this.createdAt,

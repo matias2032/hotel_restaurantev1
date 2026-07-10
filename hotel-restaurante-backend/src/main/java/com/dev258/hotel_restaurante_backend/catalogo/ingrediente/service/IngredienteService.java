@@ -15,6 +15,7 @@ import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.repository.Cate
 import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.repository.IngredienteCategoriaRepository;
 import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.repository.IngredienteImagemRepository;
 import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.repository.IngredienteRepository;
+import com.dev258.hotel_restaurante_backend.administracao.movimento_estoque.service.MovimentoEstoqueService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,7 @@ public class IngredienteService {
     private final IngredienteRepository ingredienteRepository;
     private final IngredienteImagemRepository ingredienteImagemRepository;
     private final IngredienteCategoriaRepository ingredienteCategoriaRepository;
+    private final MovimentoEstoqueService movimentoEstoqueService;
 
     // ─────────────────────────────────────────────────────────────
     // CATEGORIAS — LISTAR
@@ -239,6 +241,9 @@ public class IngredienteService {
             IngredienteRequestDTO dto
     ) {
         IngredienteEntity ingrediente = buscarIngredienteEntityObrigatorio(idIngrediente);
+        BigDecimal quantidadeAnteriorEstoque = ingrediente.getQuantidadeEstoque();
+        Boolean controlavaEstoqueAntes = ingrediente.getControlaEstoque();
+
 
         validarNomeIngredienteDuplicado(dto.nome(), idIngrediente);
 
@@ -247,10 +252,12 @@ public class IngredienteService {
         ingrediente.setPrecoAdicional(resolverPrecoAdicional(dto.precoAdicional()));
 
         Boolean controlaEstoque = dto.controlaEstoque() != null ? dto.controlaEstoque() : false;
+
+        BigDecimal quantidadePosteriorEstoque =
+                resolverQuantidadeEstoque(controlaEstoque, dto.quantidadeEstoque());
+
         ingrediente.setControlaEstoque(controlaEstoque);
-        ingrediente.setQuantidadeEstoque(
-                resolverQuantidadeEstoque(controlaEstoque, dto.quantidadeEstoque())
-        );
+        ingrediente.setQuantidadeEstoque(quantidadePosteriorEstoque);
 
         ingrediente.setDisponivel(dto.disponivel() != null ? dto.disponivel() : true);
         ingrediente.setAtivo(dto.ativo() != null ? dto.ativo() : true);
@@ -285,6 +292,14 @@ public class IngredienteService {
         }
 
         IngredienteEntity ingredienteSalvo = ingredienteRepository.save(ingrediente);
+        registrarMovimentoEstoqueIngredienteSeNecessario(
+        ingredienteSalvo,
+        controlavaEstoqueAntes,
+        controlaEstoque,
+        quantidadeAnteriorEstoque,
+        quantidadePosteriorEstoque,
+        dto
+);
 
         return new IngredienteResponseDTO(ingredienteSalvo);
     }
@@ -672,6 +687,41 @@ private void aplicarCategoriasNoIngrediente(
         ingrediente.getCategorias().forEach(categoria -> categoria.setIngrediente(null));
         ingrediente.getCategorias().clear();
     }
+}
+
+private void registrarMovimentoEstoqueIngredienteSeNecessario(
+        IngredienteEntity ingrediente,
+        Boolean controlavaEstoqueAntes,
+        Boolean controlaEstoqueAgora,
+        BigDecimal quantidadeAnterior,
+        BigDecimal quantidadePosterior,
+        IngredienteRequestDTO dto
+) {
+    if (!Boolean.TRUE.equals(controlaEstoqueAgora)) {
+        return;
+    }
+
+    BigDecimal anterior = quantidadeAnterior != null
+            ? quantidadeAnterior
+            : BigDecimal.ZERO;
+
+    BigDecimal posterior = quantidadePosterior != null
+            ? quantidadePosterior
+            : BigDecimal.ZERO;
+
+    if (anterior.compareTo(posterior) == 0) {
+        return;
+    }
+
+    movimentoEstoqueService.registrarMovimentoIngredientePorEdicao(
+            ingrediente,
+            anterior,
+            posterior,
+            dto.tipoMovimentoEstoque(),
+            dto.motivoMovimentoEstoque(),
+            dto.observacoesMovimentoEstoque(),
+            dto.idUsuarioMovimentoEstoque()
+    );
 }
 
     // ─────────────────────────────────────────────────────────────

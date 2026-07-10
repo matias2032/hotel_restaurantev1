@@ -1,5 +1,6 @@
 package com.dev258.hotel_restaurante_backend.catalogo.produto.dto;
 
+import com.dev258.hotel_restaurante_backend.administracao.movimento_estoque.entity.MovimentoEstoqueEntity.TipoMovimentoEstoque;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -44,6 +45,14 @@ public record ProdutoRequestDTO(
         Boolean destaque,
 
         Boolean ativo,
+
+        TipoMovimentoEstoque tipoMovimentoEstoque,
+
+        String motivoMovimentoEstoque,
+
+        String observacoesMovimentoEstoque,
+
+        Long idUsuarioMovimentoEstoque,
 
         @Valid
         List<ProdutoImagemRequestDTO> imagens,

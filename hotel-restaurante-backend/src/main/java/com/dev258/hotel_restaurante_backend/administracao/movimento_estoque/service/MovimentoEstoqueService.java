@@ -412,6 +412,190 @@ public class MovimentoEstoqueService {
     // HELPERS
     // ─────────────────────────────────────────────────────────────
 
+    // ─────────────────────────────────────────────────────────────
+// REGISTRO INTERNO — EDIÇÃO DE PRODUTO / INGREDIENTE
+// ─────────────────────────────────────────────────────────────
+
+@Transactional
+public void registrarMovimentoProdutoPorEdicao(
+        ProdutoEntity produto,
+        BigDecimal quantidadeAnterior,
+        BigDecimal quantidadePosterior,
+        TipoMovimentoEstoque tipoMovimento,
+        String motivo,
+        String observacoes,
+        Long idUsuario
+) {
+    if (produto == null || produto.getIdProduto() == null) {
+        throw new MovimentoEstoqueRegraNegocioException(
+                "Produto inválido para registro de movimento de estoque."
+        );
+    }
+
+    BigDecimal anterior = normalizarQuantidadeAtual(quantidadeAnterior);
+    BigDecimal posterior = normalizarQuantidadeAtual(quantidadePosterior);
+
+    if (anterior.compareTo(posterior) == 0) {
+        return;
+    }
+
+    validarDadosMovimentoPorEdicao(
+            tipoMovimento,
+            motivo,
+            idUsuario,
+            anterior,
+            posterior
+    );
+
+    UsuarioEntity usuario = buscarUsuarioObrigatorio(idUsuario);
+
+    BigDecimal quantidadeMovimentada = posterior
+            .subtract(anterior)
+            .abs()
+            .setScale(3, RoundingMode.HALF_UP);
+
+    MovimentoEstoqueEntity movimento = MovimentoEstoqueEntity.builder()
+            .tipoItem(TipoItemEstoque.PRODUTO)
+            .produto(produto)
+            .ingrediente(null)
+            .tipoMovimento(tipoMovimento)
+            .motivo(resolverMotivoMovimento(tipoMovimento, motivo))
+            .observacoes(limparOpcional(observacoes))
+            .quantidadeMovimentada(quantidadeMovimentada)
+            .quantidadeAnterior(anterior)
+            .quantidadePosterior(posterior)
+            .usuario(usuario)
+            .origem(OrigemMovimentoEstoque.MANUAL)
+            .movimentadoEm(LocalDateTime.now())
+            .build();
+
+    movimentoEstoqueRepository.save(movimento);
+}
+
+@Transactional
+public void registrarMovimentoIngredientePorEdicao(
+        IngredienteEntity ingrediente,
+        BigDecimal quantidadeAnterior,
+        BigDecimal quantidadePosterior,
+        TipoMovimentoEstoque tipoMovimento,
+        String motivo,
+        String observacoes,
+        Long idUsuario
+) {
+    if (ingrediente == null || ingrediente.getIdIngrediente() == null) {
+        throw new MovimentoEstoqueRegraNegocioException(
+                "Ingrediente inválido para registro de movimento de estoque."
+        );
+    }
+
+    BigDecimal anterior = normalizarQuantidadeAtual(quantidadeAnterior);
+    BigDecimal posterior = normalizarQuantidadeAtual(quantidadePosterior);
+
+    if (anterior.compareTo(posterior) == 0) {
+        return;
+    }
+
+    validarDadosMovimentoPorEdicao(
+            tipoMovimento,
+            motivo,
+            idUsuario,
+            anterior,
+            posterior
+    );
+
+    UsuarioEntity usuario = buscarUsuarioObrigatorio(idUsuario);
+
+    BigDecimal quantidadeMovimentada = posterior
+            .subtract(anterior)
+            .abs()
+            .setScale(3, RoundingMode.HALF_UP);
+
+    MovimentoEstoqueEntity movimento = MovimentoEstoqueEntity.builder()
+            .tipoItem(TipoItemEstoque.INGREDIENTE)
+            .produto(null)
+            .ingrediente(ingrediente)
+            .tipoMovimento(tipoMovimento)
+            .motivo(resolverMotivoMovimento(tipoMovimento, motivo))
+            .observacoes(limparOpcional(observacoes))
+            .quantidadeMovimentada(quantidadeMovimentada)
+            .quantidadeAnterior(anterior)
+            .quantidadePosterior(posterior)
+            .usuario(usuario)
+            .origem(OrigemMovimentoEstoque.MANUAL)
+            .movimentadoEm(LocalDateTime.now())
+            .build();
+
+    movimentoEstoqueRepository.save(movimento);
+}
+
+private void validarDadosMovimentoPorEdicao(
+        TipoMovimentoEstoque tipoMovimento,
+        String motivo,
+        Long idUsuario,
+        BigDecimal anterior,
+        BigDecimal posterior
+) {
+    if (tipoMovimento == null) {
+        throw new MovimentoEstoqueRegraNegocioException(
+                "Informe o tipo/motivo do movimento de estoque."
+        );
+    }
+
+    if (idUsuario == null) {
+        throw new MovimentoEstoqueRegraNegocioException(
+                "Informe o usuário responsável pelo movimento de estoque."
+        );
+    }
+
+    boolean aumentou = posterior.compareTo(anterior) > 0;
+    boolean reduziu = posterior.compareTo(anterior) < 0;
+
+    if (aumentou && (
+            tipoMovimento == TipoMovimentoEstoque.SAIDA ||
+            tipoMovimento == TipoMovimentoEstoque.PERDA ||
+            tipoMovimento == TipoMovimentoEstoque.VENCIMENTO
+    )) {
+        throw new MovimentoEstoqueRegraNegocioException(
+                "O tipo de movimento selecionado representa redução, mas a quantidade foi aumentada."
+        );
+    }
+
+    if (reduziu && tipoMovimento == TipoMovimentoEstoque.ENTRADA) {
+        throw new MovimentoEstoqueRegraNegocioException(
+                "O tipo de movimento selecionado representa entrada, mas a quantidade foi reduzida."
+        );
+    }
+
+    if (tipoMovimento == TipoMovimentoEstoque.OUTROS &&
+            limparOpcional(motivo) == null) {
+        throw new MovimentoEstoqueRegraNegocioException(
+                "Informe o motivo quando selecionar a opção Outros."
+        );
+    }
+}
+
+private String resolverMotivoMovimento(
+        TipoMovimentoEstoque tipoMovimento,
+        String motivo
+) {
+    String motivoLimpo = limparOpcional(motivo);
+
+    if (motivoLimpo != null) {
+        return motivoLimpo;
+    }
+
+    return switch (tipoMovimento) {
+        case ENTRADA -> "Entrada de estoque";
+        case SAIDA -> "Saída de estoque";
+        case AJUSTE -> "Ajuste de estoque";
+        case PERDA -> "Perda de estoque";
+        case CORRECAO -> "Correção de estoque";
+        case INVENTARIO -> "Inventário de estoque";
+        case VENCIMENTO -> "Vencimento de estoque";
+        case OUTROS -> "Outros";
+    };
+}
+
     private BigDecimal normalizarQuantidadeAtual(BigDecimal quantidade) {
         BigDecimal valor = quantidade != null
                 ? quantidade

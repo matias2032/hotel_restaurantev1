@@ -35,8 +35,11 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
   final _precoPromocionalCtrl = TextEditingController();
   final _quantidadeEstoqueCtrl = TextEditingController();
   final _tempoPreparoCtrl = TextEditingController();
+  final _motivoMovimentoOutroCtrl = TextEditingController();
+  final _observacoesMovimentoEstoqueCtrl = TextEditingController();
 
   ProdutoModel? _produtoEdicao;
+  TipoMovimentoEstoqueModel? _tipoMovimentoEstoqueSelecionado;
 
   bool _carregouArgumentos = false;
   bool _salvando = false;
@@ -61,6 +64,72 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
     return _categoriasSelecionadas.any(
       (categoria) => _isCategoriaPromocao(categoria.nome),
     );
+  }
+
+  double get _quantidadeEstoqueAnterior {
+    return _produtoEdicao?.quantidadeEstoque ?? 0.0;
+  }
+
+  double get _quantidadeEstoqueActualForm {
+    return _parseDoubleNullable(_quantidadeEstoqueCtrl.text) ?? 0.0;
+  }
+
+  bool get _quantidadeEstoqueFoiAlterada {
+    if (!_modoEdicao) return false;
+    if (!_controlaEstoque) return false;
+
+    return _quantidadeEstoqueAnterior != _quantidadeEstoqueActualForm;
+  }
+
+  bool get _estoqueAumentou {
+    return _quantidadeEstoqueActualForm > _quantidadeEstoqueAnterior;
+  }
+
+  bool get _estoqueReduziu {
+    return _quantidadeEstoqueActualForm < _quantidadeEstoqueAnterior;
+  }
+
+  String get _motivoMovimentoEstoque {
+    if (_tipoMovimentoEstoqueSelecionado == TipoMovimentoEstoqueModel.outros) {
+      return _motivoMovimentoOutroCtrl.text.trim();
+    }
+
+    return _tipoMovimentoEstoqueSelecionado?.label ?? '';
+  }
+
+  List<TipoMovimentoEstoqueModel> get _tiposMovimentoPermitidos {
+    if (_estoqueAumentou) {
+      return const [
+        TipoMovimentoEstoqueModel.entrada,
+        TipoMovimentoEstoqueModel.ajuste,
+        TipoMovimentoEstoqueModel.correcao,
+        TipoMovimentoEstoqueModel.inventario,
+        TipoMovimentoEstoqueModel.outros,
+      ];
+    }
+
+    if (_estoqueReduziu) {
+      return const [
+        TipoMovimentoEstoqueModel.saida,
+        TipoMovimentoEstoqueModel.perda,
+        TipoMovimentoEstoqueModel.vencimento,
+        TipoMovimentoEstoqueModel.ajuste,
+        TipoMovimentoEstoqueModel.correcao,
+        TipoMovimentoEstoqueModel.inventario,
+        TipoMovimentoEstoqueModel.outros,
+      ];
+    }
+
+    return const [
+      TipoMovimentoEstoqueModel.entrada,
+      TipoMovimentoEstoqueModel.saida,
+      TipoMovimentoEstoqueModel.perda,
+      TipoMovimentoEstoqueModel.vencimento,
+      TipoMovimentoEstoqueModel.ajuste,
+      TipoMovimentoEstoqueModel.correcao,
+      TipoMovimentoEstoqueModel.inventario,
+      TipoMovimentoEstoqueModel.outros,
+    ];
   }
 
   static const List<String> _extensoesImagem = [
@@ -111,6 +180,8 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
     _precoPromocionalCtrl.dispose();
     _quantidadeEstoqueCtrl.dispose();
     _tempoPreparoCtrl.dispose();
+    _motivoMovimentoOutroCtrl.dispose();
+    _observacoesMovimentoEstoqueCtrl.dispose();
     super.dispose();
   }
 
@@ -125,12 +196,15 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
       _nomeCtrl.text = args.nome;
       _descricaoCtrl.text = args.descricao ?? '';
       _precoCtrl.text = args.preco.toStringAsFixed(2);
-      _precoPromocionalCtrl.text =
-          args.precoPromocional != null ? args.precoPromocional!.toStringAsFixed(2) : '';
-      _quantidadeEstoqueCtrl.text =
-          args.quantidadeEstoque != null ? args.quantidadeEstoque.toString() : '';
-      _tempoPreparoCtrl.text =
-          args.tempoPreparoMinutos != null ? args.tempoPreparoMinutos.toString() : '';
+      _precoPromocionalCtrl.text = args.precoPromocional != null
+          ? args.precoPromocional!.toStringAsFixed(2)
+          : '';
+      _quantidadeEstoqueCtrl.text = args.quantidadeEstoque != null
+          ? args.quantidadeEstoque.toString()
+          : '';
+      _tempoPreparoCtrl.text = args.tempoPreparoMinutos != null
+          ? args.tempoPreparoMinutos.toString()
+          : '';
 
       _ativo = args.ativo;
       _disponivel = args.disponivel;
@@ -157,6 +231,49 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
     }
 
     _carregouArgumentos = true;
+  }
+
+  int? _idUsuarioLogado() {
+    return SessaoService.instance.idUsuario;
+  }
+
+  bool _validarMovimentoEstoque() {
+    if (!_quantidadeEstoqueFoiAlterada) return true;
+
+    if (_tipoMovimentoEstoqueSelecionado == null) {
+      _snack(
+        'Selecione o motivo do movimento de estoque.',
+        erro: true,
+      );
+      return false;
+    }
+
+    if (_tipoMovimentoEstoqueSelecionado == TipoMovimentoEstoqueModel.outros &&
+        _motivoMovimentoOutroCtrl.text.trim().isEmpty) {
+      _snack(
+        'Informe o motivo quando selecionar Outros.',
+        erro: true,
+      );
+      return false;
+    }
+
+    final idUsuario = _idUsuarioLogado();
+
+    if (idUsuario == null) {
+      _snack(
+        'Não foi possível identificar o usuário responsável pelo movimento.',
+        erro: true,
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  void _resetarMovimentoEstoque() {
+    _tipoMovimentoEstoqueSelecionado = null;
+    _motivoMovimentoOutroCtrl.clear();
+    _observacoesMovimentoEstoqueCtrl.clear();
   }
 
   Future<void> _carregarIngredientesPorCategoria(
@@ -413,177 +530,190 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
     });
   }
 
-Future<void> _salvar() async {
-  if (_salvando) return;
+  Future<void> _salvar() async {
+    if (_salvando) return;
 
-  final formState = _formKey.currentState;
+    final formState = _formKey.currentState;
 
-  if (formState == null) {
-    _snack(
-      'Não foi possível validar o formulário. Verifique se a tela carregou corretamente.',
-      erro: true,
-    );
-    return;
-  }
-
-  if (!formState.validate()) return;
-
-  if (_categoriasSelecionadas.isEmpty) {
-    _snack(
-      'Selecione pelo menos uma categoria para o produto.',
-      erro: true,
-    );
-    return;
-  }
-
-  if (_controlaEstoquePorIngredientes &&
-      !_ingredientesSelecionados.any((item) => item.obrigatorio)) {
-    _snack(
-      'Para controlar estoque por ingredientes, associe pelo menos um ingrediente obrigatório.',
-      erro: true,
-    );
-    return;
-  }
-
-  final promocionalReal = _temCategoriaPromocao && _promocional;
-
-  final preco = _parseDouble(_precoCtrl.text);
-
-  if (preco < 0) {
-    _snack(
-      'O preço do produto não pode ser negativo.',
-      erro: true,
-    );
-    return;
-  }
-
-  final precoPromocional = promocionalReal
-      ? _parseDoubleNullable(_precoPromocionalCtrl.text)
-      : null;
-
-  if (promocionalReal) {
-    if (precoPromocional == null || precoPromocional <= 0) {
+    if (formState == null) {
       _snack(
-        'Informe um preço promocional válido.',
+        'Não foi possível validar o formulário. Verifique se a tela carregou corretamente.',
         erro: true,
       );
       return;
     }
 
-    if (precoPromocional >= preco) {
+    if (!formState.validate()) return;
+
+    if (_categoriasSelecionadas.isEmpty) {
       _snack(
-        'O preço promocional deve ser menor que o preço normal.',
+        'Selecione pelo menos uma categoria para o produto.',
         erro: true,
       );
       return;
     }
-  }
 
-  final quantidadeEstoque = _controlaEstoque
-      ? _parseDoubleNullable(_quantidadeEstoqueCtrl.text)
-      : null;
+    if (_controlaEstoquePorIngredientes &&
+        !_ingredientesSelecionados.any((item) => item.obrigatorio)) {
+      _snack(
+        'Para controlar estoque por ingredientes, associe pelo menos um ingrediente obrigatório.',
+        erro: true,
+      );
+      return;
+    }
 
-  if (_controlaEstoque && quantidadeEstoque == null) {
-    _snack(
-      'Informe a quantidade em estoque.',
-      erro: true,
-    );
-    return;
-  }
+    final promocionalReal = _temCategoriaPromocao && _promocional;
+    final preco = _parseDouble(_precoCtrl.text);
 
-  if (_controlaEstoque && quantidadeEstoque! < 0) {
-    _snack(
-      'A quantidade em estoque não pode ser negativa.',
-      erro: true,
-    );
-    return;
-  }
+    if (preco < 0) {
+      _snack(
+        'O preço do produto não pode ser negativo.',
+        erro: true,
+      );
+      return;
+    }
 
-  setState(() => _salvando = true);
+    final precoPromocional = promocionalReal
+        ? _parseDoubleNullable(_precoPromocionalCtrl.text)
+        : null;
 
-  try {
-    final provider = context.read<ProdutoProvider>();
-
-    _garantirImagemPrincipal();
-    _reordenarImagens();
-
-    final produto = ProdutoModel(
-      idProduto: _produtoEdicao?.idProduto,
-      nome: _nomeCtrl.text.trim(),
-      descricao: _nullIfBlank(_descricaoCtrl.text),
-      preco: preco,
-      promocional: promocionalReal,
-      precoPromocional: precoPromocional,
-      imagemPrincipalUrl: _imagemPrincipalUrl(),
-      controlaEstoque: _controlaEstoque,
-      quantidadeEstoque: quantidadeEstoque,
-      controlaEstoquePorIngredientes: _controlaEstoquePorIngredientes,
-      tempoPreparoMinutos: _parseIntNullable(_tempoPreparoCtrl.text),
-      disponivel: _ativo ? _disponivel : false,
-      destaque: _ativo ? _destaque : false,
-      ativo: _ativo,
-      categoriasProduto: _categoriasSelecionadas,
-      imagens: _imagens,
-      ingredientes: _ingredientesSelecionados,
-    );
-
-    final bool sucesso;
-
-    if (_modoEdicao) {
-      final id = _produtoEdicao?.idProduto;
-
-      if (id == null) {
+    if (promocionalReal) {
+      if (precoPromocional == null || precoPromocional <= 0) {
         _snack(
-          'Produto inválido para edição.',
+          'Informe um preço promocional válido.',
           erro: true,
         );
         return;
       }
 
-      sucesso = await provider.editarProduto(
-        id,
-        produto,
-        enviarCategorias: true,
-        enviarImagens: true,
-        enviarIngredientes: true,
-      );
-    } else {
-      sucesso = await provider.criarProduto(produto);
+      if (precoPromocional >= preco) {
+        _snack(
+          'O preço promocional deve ser menor que o preço normal.',
+          erro: true,
+        );
+        return;
+      }
     }
 
-    if (!mounted) return;
+    final quantidadeEstoque = _controlaEstoque
+        ? _parseDoubleNullable(_quantidadeEstoqueCtrl.text)
+        : null;
 
-    if (sucesso) {
+    if (_controlaEstoque && quantidadeEstoque == null) {
       _snack(
-        _modoEdicao
-            ? 'Produto actualizado com sucesso.'
-            : 'Produto cadastrado com sucesso.',
+        'Informe a quantidade em estoque.',
+        erro: true,
       );
-
-      Navigator.of(context).pop(true);
       return;
     }
 
-    _snack(
-      provider.erro ?? 'Não foi possível salvar o produto.',
-      erro: true,
-    );
-  } catch (e, stackTrace) {
-    debugPrint('❌ ProdutoFormScreen — erro ao salvar produto: $e');
-    debugPrintStack(stackTrace: stackTrace);
+    if (_controlaEstoque && quantidadeEstoque! < 0) {
+      _snack(
+        'A quantidade em estoque não pode ser negativa.',
+        erro: true,
+      );
+      return;
+    }
 
-    if (!mounted) return;
+    if (!_validarMovimentoEstoque()) {
+      return;
+    }
 
-    _snack(
-      e.toString().replaceFirst('Exception: ', ''),
-      erro: true,
-    );
-  } finally {
-    if (mounted) {
-      setState(() => _salvando = false);
+    setState(() => _salvando = true);
+
+    try {
+      final provider = context.read<ProdutoProvider>();
+
+      _garantirImagemPrincipal();
+      _reordenarImagens();
+
+      final produto = ProdutoModel(
+        idProduto: _produtoEdicao?.idProduto,
+        nome: _nomeCtrl.text.trim(),
+        descricao: _nullIfBlank(_descricaoCtrl.text),
+        preco: preco,
+        promocional: promocionalReal,
+        precoPromocional: precoPromocional,
+        imagemPrincipalUrl: _imagemPrincipalUrl(),
+        controlaEstoque: _controlaEstoque,
+        quantidadeEstoque: quantidadeEstoque,
+        controlaEstoquePorIngredientes: _controlaEstoquePorIngredientes,
+        tempoPreparoMinutos: _parseIntNullable(_tempoPreparoCtrl.text),
+        disponivel: _ativo ? _disponivel : false,
+        destaque: _ativo ? _destaque : false,
+        ativo: _ativo,
+        categoriasProduto: _categoriasSelecionadas,
+        imagens: _imagens,
+        ingredientes: _ingredientesSelecionados,
+        tipoMovimentoEstoque: _quantidadeEstoqueFoiAlterada
+            ? _tipoMovimentoEstoqueSelecionado
+            : null,
+        motivoMovimentoEstoque:
+            _quantidadeEstoqueFoiAlterada ? _motivoMovimentoEstoque : null,
+        observacoesMovimentoEstoque: _quantidadeEstoqueFoiAlterada
+            ? _nullIfBlank(_observacoesMovimentoEstoqueCtrl.text)
+            : null,
+        idUsuarioMovimentoEstoque:
+            _quantidadeEstoqueFoiAlterada ? _idUsuarioLogado() : null,
+      );
+
+      final bool sucesso;
+
+      if (_modoEdicao) {
+        final id = _produtoEdicao?.idProduto;
+
+        if (id == null) {
+          _snack(
+            'Produto inválido para edição.',
+            erro: true,
+          );
+          return;
+        }
+
+        sucesso = await provider.editarProduto(
+          id,
+          produto,
+          enviarCategorias: true,
+          enviarImagens: true,
+          enviarIngredientes: true,
+        );
+      } else {
+        sucesso = await provider.criarProduto(produto);
+      }
+
+      if (!mounted) return;
+
+      if (sucesso) {
+        _snack(
+          _modoEdicao
+              ? 'Produto actualizado com sucesso.'
+              : 'Produto cadastrado com sucesso.',
+        );
+
+        Navigator.of(context).pop(true);
+        return;
+      }
+
+      _snack(
+        provider.erro ?? 'Não foi possível salvar o produto.',
+        erro: true,
+      );
+    } catch (e, stackTrace) {
+      debugPrint('❌ ProdutoFormScreen — erro ao salvar produto: $e');
+      debugPrintStack(stackTrace: stackTrace);
+
+      if (!mounted) return;
+
+      _snack(
+        e.toString().replaceFirst('Exception: ', ''),
+        erro: true,
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _salvando = false);
+      }
     }
   }
-}
 
   String? _imagemPrincipalUrl() {
     for (final imagem in _imagens) {
@@ -794,17 +924,17 @@ Future<void> _salvar() async {
                     ),
               );
 
-return Form(
-  key: _formKey,
-  child: ListView(
-    padding: const EdgeInsets.all(20),
-    children: [
-                _HeaderFormCard(
-                  titulo: titulo,
-                  modoEdicao: _modoEdicao,
-                ),
-                const SizedBox(height: 16),
-                                Container(
+            return Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+                  _HeaderFormCard(
+                    titulo: titulo,
+                    modoEdicao: _modoEdicao,
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
                     decoration: _cardDecoration(),
                     padding: const EdgeInsets.all(18),
                     child: Column(
@@ -924,6 +1054,7 @@ return Form(
 
                               if (!value) {
                                 _quantidadeEstoqueCtrl.clear();
+                                _resetarMovimentoEstoque();
                               }
                             });
                           },
@@ -941,6 +1072,37 @@ return Form(
                               labelText: 'Quantidade em estoque',
                               prefixIcon: Icon(Icons.inventory_2_outlined),
                             ),
+                            onChanged: (_) {
+                              setState(() {
+                                if (!_tiposMovimentoPermitidos.contains(
+                                  _tipoMovimentoEstoqueSelecionado,
+                                )) {
+                                  _tipoMovimentoEstoqueSelecionado = null;
+                                  _motivoMovimentoOutroCtrl.clear();
+                                }
+                              });
+                            },
+                          ),
+                        ],
+                        if (_quantidadeEstoqueFoiAlterada) ...[
+                          const SizedBox(height: 14),
+                          _MovimentoEstoqueEdicaoCard(
+                            aumentou: _estoqueAumentou,
+                            quantidadeAnterior: _quantidadeEstoqueAnterior,
+                            quantidadeActual: _quantidadeEstoqueActualForm,
+                            tipoSelecionado: _tipoMovimentoEstoqueSelecionado,
+                            tiposPermitidos: _tiposMovimentoPermitidos,
+                            motivoOutroCtrl: _motivoMovimentoOutroCtrl,
+                            observacoesCtrl: _observacoesMovimentoEstoqueCtrl,
+                            onTipoChanged: (value) {
+                              setState(() {
+                                _tipoMovimentoEstoqueSelecionado = value;
+
+                                if (value != TipoMovimentoEstoqueModel.outros) {
+                                  _motivoMovimentoOutroCtrl.clear();
+                                }
+                              });
+                            },
                           ),
                         ],
                         const SizedBox(height: 14),
@@ -1047,91 +1209,190 @@ return Form(
                             });
                           },
                         ),
-                        ],
-    ),
-),
-                const SizedBox(height: 16),
-                _CategoriasProdutoSection(
-                  categorias: categoriasProduto,
-                  selecionadas: _categoriasSelecionadas,
-                  onToggle: _toggleCategoria,
-                  onDefinirPrincipal: _definirCategoriaPrincipal,
-                ),
-                const SizedBox(height: 16),
-                _IngredientesSection(
-                  categoriasIngrediente: categoriasIngrediente,
-                  ingredientesDisponiveis: ingredientesDisponiveis,
-                  idCategoriaSelecionada: _idCategoriaIngredienteSelecionada,
-                  ingredientesSelecionados: _ingredientesSelecionados,
-                  onCategoriaChanged: _carregarIngredientesPorCategoria,
-                  onAdicionar: _adicionarIngrediente,
-                  onRemover: _removerIngrediente,
-                  onActualizar: _actualizarIngrediente,
-                ),
-                const SizedBox(height: 16),
-                _ImagensSection(
-                  imagens: _imagens,
-                  dragging: _dragging,
-                  onChoose: _escolherImagens,
-                  onDrop: _adicionarImagensPorDrop,
-                  onDraggingChanged: (value) {
-                    setState(() => _dragging = value);
-                  },
-                  onRemover: _removerImagem,
-                  onDefinirPrincipal: _definirImagemPrincipal,
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _salvando
-                            ? null
-                            : () => Navigator.of(context).pop(false),
-                        icon: const Icon(Icons.arrow_back),
-                        label: const Text('Cancelar'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          foregroundColor: _kDark,
-                          side: const BorderSide(color: _kBorder),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _CategoriasProdutoSection(
+                    categorias: categoriasProduto,
+                    selecionadas: _categoriasSelecionadas,
+                    onToggle: _toggleCategoria,
+                    onDefinirPrincipal: _definirCategoriaPrincipal,
+                  ),
+                  const SizedBox(height: 16),
+                  _IngredientesSection(
+                    categoriasIngrediente: categoriasIngrediente,
+                    ingredientesDisponiveis: ingredientesDisponiveis,
+                    idCategoriaSelecionada: _idCategoriaIngredienteSelecionada,
+                    ingredientesSelecionados: _ingredientesSelecionados,
+                    onCategoriaChanged: _carregarIngredientesPorCategoria,
+                    onAdicionar: _adicionarIngrediente,
+                    onRemover: _removerIngrediente,
+                    onActualizar: _actualizarIngrediente,
+                  ),
+                  const SizedBox(height: 16),
+                  _ImagensSection(
+                    imagens: _imagens,
+                    dragging: _dragging,
+                    onChoose: _escolherImagens,
+                    onDrop: _adicionarImagensPorDrop,
+                    onDraggingChanged: (value) {
+                      setState(() => _dragging = value);
+                    },
+                    onRemover: _removerImagem,
+                    onDefinirPrincipal: _definirImagemPrincipal,
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _salvando
+                              ? null
+                              : () => Navigator.of(context).pop(false),
+                          icon: const Icon(Icons.arrow_back),
+                          label: const Text('Cancelar'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            foregroundColor: _kDark,
+                            side: const BorderSide(color: _kBorder),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: _salvando ? null : _salvar,
-                        icon: _salvando
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(Icons.save_outlined),
-                        label: Text(
-                          _salvando
-                              ? 'Salvando...'
-                              : _modoEdicao
-                                  ? 'Actualizar'
-                                  : 'Salvar',
-                        ),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          backgroundColor: _kOrange,
-                          foregroundColor: Colors.white,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: _salvando ? null : _salvar,
+                          icon: _salvando
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.save_outlined),
+                          label: Text(
+                            _salvando
+                                ? 'Salvando...'
+                                : _modoEdicao
+                                    ? 'Actualizar'
+                                    : 'Salvar',
+                          ),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: _kOrange,
+                            foregroundColor: Colors.white,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
-               ),
+                    ],
+                  ),
+                ],
+              ),
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class _MovimentoEstoqueEdicaoCard extends StatelessWidget {
+  final bool aumentou;
+  final double quantidadeAnterior;
+  final double quantidadeActual;
+  final TipoMovimentoEstoqueModel? tipoSelecionado;
+  final List<TipoMovimentoEstoqueModel> tiposPermitidos;
+  final TextEditingController motivoOutroCtrl;
+  final TextEditingController observacoesCtrl;
+  final ValueChanged<TipoMovimentoEstoqueModel?> onTipoChanged;
+
+  const _MovimentoEstoqueEdicaoCard({
+    required this.aumentou,
+    required this.quantidadeAnterior,
+    required this.quantidadeActual,
+    required this.tipoSelecionado,
+    required this.tiposPermitidos,
+    required this.motivoOutroCtrl,
+    required this.observacoesCtrl,
+    required this.onTipoChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: aumentou ? _kGreen.withOpacity(0.08) : _kRed.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: aumentou
+              ? _kGreen.withOpacity(0.22)
+              : _kRed.withOpacity(0.22),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            aumentou
+                ? 'Movimento de aumento de estoque'
+                : 'Movimento de redução de estoque',
+            style: TextStyle(
+              color: aumentou ? _kGreen : _kRed,
+              fontWeight: FontWeight.w900,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Anterior: ${quantidadeAnterior.toStringAsFixed(3)} • Nova: ${quantidadeActual.toStringAsFixed(3)}',
+            style: const TextStyle(
+              color: _kMuted,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 14),
+          DropdownButtonFormField<TipoMovimentoEstoqueModel>(
+            value: tipoSelecionado,
+            decoration: const InputDecoration(
+              labelText: 'Motivo do movimento',
+              prefixIcon: Icon(Icons.swap_vert_rounded),
+            ),
+            items: tiposPermitidos.map((tipo) {
+              return DropdownMenuItem<TipoMovimentoEstoqueModel>(
+                value: tipo,
+                child: Text(tipo.label),
+              );
+            }).toList(),
+            onChanged: onTipoChanged,
+          ),
+          if (tipoSelecionado == TipoMovimentoEstoqueModel.outros) ...[
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: motivoOutroCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Descreva o motivo',
+                prefixIcon: Icon(Icons.edit_note_outlined),
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          TextFormField(
+            controller: observacoesCtrl,
+            minLines: 2,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              labelText: 'Observações do movimento',
+              alignLabelWithHint: true,
+              prefixIcon: Icon(Icons.notes_outlined),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2043,4 +2304,3 @@ BoxDecoration _cardDecoration() {
     ],
   );
 }
-

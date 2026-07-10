@@ -98,6 +98,7 @@ class _MovimentoEstoqueListScreenState
       TipoMovimentoEstoqueModel.ajuste => _kBlue,
       TipoMovimentoEstoqueModel.correcao => _kPurple,
       TipoMovimentoEstoqueModel.inventario => _kOrange,
+      TipoMovimentoEstoqueModel.outros => const Color.fromARGB(255, 53, 53, 53),
     };
   }
 
@@ -110,6 +111,7 @@ class _MovimentoEstoqueListScreenState
       TipoMovimentoEstoqueModel.ajuste => Icons.tune_rounded,
       TipoMovimentoEstoqueModel.correcao => Icons.edit_note_rounded,
       TipoMovimentoEstoqueModel.inventario => Icons.fact_check_outlined,
+      TipoMovimentoEstoqueModel.outros => Icons.help_outline,
     };
   }
 
