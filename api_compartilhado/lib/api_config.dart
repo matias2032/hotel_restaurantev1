@@ -298,6 +298,21 @@ static String perfilClientePorIdUrl(int idPerfilCliente) {
     return '$servicosUrl/$idServico/imagens/$idServicoImagem';
   }
 
+// ─────────────────────────────────────────────────────────────
+// ADMINISTRAÇÃO — MOVIMENTOS DE ESTOQUE
+// ─────────────────────────────────────────────────────────────
+
+static const String _movimentosEstoqueAdministracao =
+    '/api/administracao/movimentos-estoque';
+
+static String get movimentosEstoqueUrl {
+  return '$baseUrl$_movimentosEstoqueAdministracao';
+}
+
+static String movimentoEstoquePorIdUrl(int idMovimentoEstoque) {
+  return '$movimentosEstoqueUrl/$idMovimentoEstoque';
+}
+
   // ─────────────────────────────────────────────────────────────
   // CONFIGURAÇÕES GERAIS
   // ─────────────────────────────────────────────────────────────

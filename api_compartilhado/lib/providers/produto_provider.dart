@@ -450,11 +450,13 @@ final editado = await repository.editarProduto(
         _produtos = _produtos
             .map((produto) {
               if (produto.idProduto == idProduto) {
-                return produto.copyWith(
-                  ativo: false,
-                  disponivel: false,
-                  destaque: false,
-                );
+                    return produto.copyWith(
+                    ativo: false,
+                    disponivel: false,
+                    destaque: false,
+                    promocional: false,
+                    precoPromocional: null,
+                  );
               }
 
               return produto;
@@ -467,6 +469,8 @@ final editado = await repository.editarProduto(
             ativo: false,
             disponivel: false,
             destaque: false,
+            promocional: false,
+            precoPromocional: null,
           );
         }
 

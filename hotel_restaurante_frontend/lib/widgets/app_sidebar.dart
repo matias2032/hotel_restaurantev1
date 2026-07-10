@@ -84,15 +84,31 @@ class _AppSidebarState extends State<AppSidebar>
       _SidebarModule(
         icon: Icons.admin_panel_settings_rounded,
         title: 'Administração',
-        routes: [
-          _SidebarRoute(
+        subModules: [
+          _SidebarSubModule(
             icon: Icons.manage_accounts_rounded,
             title: 'Utilizadores',
-            route: '/usuarios',
+            routes: [
+              _SidebarRoute(
+                icon: Icons.manage_accounts_rounded,
+                title: 'Ver utilizadores',
+                route: '/usuarios',
+              ),
+            ],
+          ),
+          _SidebarSubModule(
+            icon: Icons.inventory_2_rounded,
+            title: 'Estoque',
+            routes: [
+              _SidebarRoute(
+                icon: Icons.receipt_long_rounded,
+                title: 'Movimentos de estoque',
+                route: '/movimentos-estoque',
+              ),
+            ],
           ),
         ],
       ),
-
       _SidebarModule(
         icon: Icons.groups_rounded,
         title: 'Clientes',
@@ -125,6 +141,23 @@ class _AppSidebarState extends State<AppSidebar>
         ),
       ],
     ),
+
+    _SidebarSubModule(
+  icon: Icons.fastfood_rounded,
+  title: 'Produtos',
+  routes: [
+    _SidebarRoute(
+      icon: Icons.restaurant_menu_rounded,
+      title: 'Ver produtos',
+      route: '/produtos',
+    ),
+    _SidebarRoute(
+      icon: Icons.category_rounded,
+      title: 'Ver categorias de produtos',
+      route: '/categorias-produto',
+    ),
+  ],
+),
 
     _SidebarSubModule(
       icon: Icons.room_service_rounded,

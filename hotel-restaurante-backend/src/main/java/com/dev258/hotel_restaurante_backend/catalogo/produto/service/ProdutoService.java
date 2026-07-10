@@ -225,12 +225,25 @@ if (idCategoriaProduto != null && Boolean.TRUE.equals(somenteDisponiveis)) {
                 .nome(limparObrigatorio(dto.nome(), "O nome do produto é obrigatório."))
                 .descricao(limparOpcional(dto.descricao()))
                 .preco(resolverPreco(dto.preco()))
+                .promocional(dto.promocional() != null ? dto.promocional() : false)
+                .precoPromocional(
+                        resolverPrecoPromocional(
+                                dto.promocional(),
+                                dto.precoPromocional(),
+                                dto.preco()
+                        )
+                )
                 .imagemPrincipalUrl(limparOpcional(dto.imagemPrincipalUrl()))
                 .controlaEstoque(dto.controlaEstoque() != null ? dto.controlaEstoque() : false)
                 .quantidadeEstoque(resolverQuantidadeEstoque(
                         dto.controlaEstoque(),
                         dto.quantidadeEstoque()
                 ))
+                .controlaEstoquePorIngredientes(
+                        dto.controlaEstoquePorIngredientes() != null
+                                ? dto.controlaEstoquePorIngredientes()
+                                : false
+                )
                 .tempoPreparoMinutos(resolverTempoPreparo(dto.tempoPreparoMinutos()))
                 .disponivel(dto.disponivel() != null ? dto.disponivel() : true)
                 .destaque(dto.destaque() != null ? dto.destaque() : false)
@@ -264,12 +277,29 @@ if (idCategoriaProduto != null && Boolean.TRUE.equals(somenteDisponiveis)) {
         produto.setNome(limparObrigatorio(dto.nome(), "O nome do produto é obrigatório."));
         produto.setDescricao(limparOpcional(dto.descricao()));
         produto.setPreco(resolverPreco(dto.preco()));
+
+        Boolean promocional = dto.promocional() != null ? dto.promocional() : false;
+        produto.setPromocional(promocional);
+        produto.setPrecoPromocional(
+                resolverPrecoPromocional(
+                        promocional,
+                        dto.precoPromocional(),
+                        dto.preco()
+                )
+        );
+
         produto.setImagemPrincipalUrl(limparOpcional(dto.imagemPrincipalUrl()));
 
         Boolean controlaEstoque = dto.controlaEstoque() != null ? dto.controlaEstoque() : false;
         produto.setControlaEstoque(controlaEstoque);
         produto.setQuantidadeEstoque(
                 resolverQuantidadeEstoque(controlaEstoque, dto.quantidadeEstoque())
+        );
+
+        produto.setControlaEstoquePorIngredientes(
+                dto.controlaEstoquePorIngredientes() != null
+                        ? dto.controlaEstoquePorIngredientes()
+                        : false
         );
 
         produto.setTempoPreparoMinutos(resolverTempoPreparo(dto.tempoPreparoMinutos()));
@@ -378,6 +408,8 @@ if (dto.idCategoriasProduto() != null) {
         if (Boolean.FALSE.equals(produto.getAtivo())) {
             produto.setDisponivel(false);
             produto.setDestaque(false);
+            produto.setPromocional(false);
+            produto.setPrecoPromocional(null);
         }
 
         ProdutoEntity produtoSalvo = produtoRepository.save(produto);
@@ -396,6 +428,8 @@ if (dto.idCategoriasProduto() != null) {
         produto.setAtivo(false);
         produto.setDisponivel(false);
         produto.setDestaque(false);
+        produto.setPromocional(false);
+        produto.setPrecoPromocional(null);
 
         produtoRepository.save(produto);
     }
@@ -654,6 +688,38 @@ private void validarCategoriaSemProdutosAtivos(Long idCategoriaProduto) {
     // HELPERS — VALIDAÇÕES
     // ─────────────────────────────────────────────────────────────
 
+    private BigDecimal resolverPrecoPromocional(
+        Boolean promocional,
+        BigDecimal precoPromocional,
+        BigDecimal precoNormal
+) {
+    if (!Boolean.TRUE.equals(promocional)) {
+        return null;
+    }
+
+    if (precoPromocional == null) {
+        throw new ProdutoRegraNegocioException(
+                "O preço promocional é obrigatório para produtos promocionais."
+        );
+    }
+
+    if (precoPromocional.compareTo(BigDecimal.ZERO) < 0) {
+        throw new ProdutoRegraNegocioException(
+                "O preço promocional do produto não pode ser negativo."
+        );
+    }
+
+    BigDecimal precoBase = resolverPreco(precoNormal);
+
+    if (precoPromocional.compareTo(precoBase) >= 0) {
+        throw new ProdutoRegraNegocioException(
+                "O preço promocional deve ser menor que o preço normal."
+        );
+    }
+
+    return precoPromocional;
+}
+
     private void validarNomeCategoriaDuplicado(String nome, Long idCategoriaIgnorada) {
         String nomeLimpo = limparObrigatorio(nome, "O nome da categoria é obrigatório.");
 
@@ -754,11 +820,7 @@ private void aplicarCategoriasNoProduto(
         List<Long> idCategoriasProduto,
         boolean substituirCategoriasAtuais
 ) {
-    if (substituirCategoriasAtuais) {
-        produto.limparCategorias();
-    }
-
-    if (idCategoriasProduto == null || idCategoriasProduto.isEmpty()) {
+    if (idCategoriasProduto == null) {
         return;
     }
 
@@ -768,6 +830,31 @@ private void aplicarCategoriasNoProduto(
         throw new ProdutoRegraNegocioException(
                 "Não é permitido associar a mesma categoria mais de uma vez."
         );
+    }
+
+    /*
+     * Em edição, não limpamos tudo para recriar.
+     * Apenas removemos as categorias que já não vieram no DTO.
+     *
+     * Isto evita NonUniqueObjectException quando a mesma relação
+     * id_produto + id_categoria_produto já está gerida pelo Hibernate
+     * no contexto actual.
+     */
+    if (substituirCategoriasAtuais) {
+        produto.getCategorias().removeIf(categoriaAtual -> {
+            Long idCategoriaAtual = categoriaAtual.getCategoriaProduto() != null
+                    ? categoriaAtual.getCategoriaProduto().getIdCategoriaProduto()
+                    : null;
+
+            boolean deveRemover =
+                    idCategoriaAtual == null || !idsUnicos.contains(idCategoriaAtual);
+
+            if (deveRemover) {
+                categoriaAtual.setProduto(null);
+            }
+
+            return deveRemover;
+        });
     }
 
     int ordem = 0;
@@ -782,17 +869,42 @@ private void aplicarCategoriasNoProduto(
             );
         }
 
-        ProdutoCategoriaEntity produtoCategoria =
-                ProdutoCategoriaEntity.builder()
-                        .produto(produto)
-                        .categoriaProduto(categoria)
-                        .principal(ordem == 0)
-                        .ordem(ordem)
-                        .build();
+        boolean principal = ordem == 0;
 
-        produto.adicionarCategoria(produtoCategoria);
+        ProdutoCategoriaEntity categoriaExistente = produto.getCategorias()
+                .stream()
+                .filter(item -> item.getCategoriaProduto() != null)
+                .filter(item -> item.getCategoriaProduto()
+                        .getIdCategoriaProduto()
+                        .equals(idCategoriaProduto))
+                .findFirst()
+                .orElse(null);
+
+        if (categoriaExistente != null) {
+            categoriaExistente.setPrincipal(principal);
+            categoriaExistente.setOrdem(ordem);
+            categoriaExistente.setProduto(produto);
+            categoriaExistente.setCategoriaProduto(categoria);
+        } else {
+            ProdutoCategoriaEntity produtoCategoria =
+                    ProdutoCategoriaEntity.builder()
+                            .produto(produto)
+                            .categoriaProduto(categoria)
+                            .principal(principal)
+                            .ordem(ordem)
+                            .build();
+
+            produto.adicionarCategoria(produtoCategoria);
+        }
 
         ordem++;
+    }
+
+    if (idsUnicos.isEmpty() && substituirCategoriasAtuais) {
+        produto.getCategorias()
+                .forEach(categoria -> categoria.setProduto(null));
+
+        produto.getCategorias().clear();
     }
 }
 

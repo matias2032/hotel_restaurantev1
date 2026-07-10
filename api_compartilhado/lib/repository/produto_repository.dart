@@ -636,6 +636,35 @@ Future<ProdutoModel> editarProduto(
       throw Exception('O preço do produto não pode ser negativo.');
     }
 
+    if (produto.promocional) {
+  final precoPromocional = produto.precoPromocional;
+
+  if (precoPromocional == null) {
+    throw Exception(
+      'O preço promocional é obrigatório para produtos promocionais.',
+    );
+  }
+
+  if (precoPromocional < 0) {
+    throw Exception(
+      'O preço promocional do produto não pode ser negativo.',
+    );
+  }
+
+  if (precoPromocional >= produto.preco) {
+    throw Exception(
+      'O preço promocional deve ser menor que o preço normal.',
+    );
+  }
+}
+
+if (produto.controlaEstoquePorIngredientes &&
+    produto.ingredientes.where((item) => item.obrigatorio).isEmpty) {
+  throw Exception(
+    'Para controlar estoque por ingredientes, associe pelo menos um ingrediente obrigatório.',
+  );
+}
+
     if (produto.quantidadeEstoque != null &&
         produto.quantidadeEstoque! < 0) {
       throw Exception('A quantidade em estoque não pode ser negativa.');
@@ -682,13 +711,19 @@ return produto.copyWith(
   nome: nome,
   descricao: _normalizarTextoOpcional(produto.descricao),
   preco: produto.preco,
-  imagemPrincipalUrl: _normalizarTextoOpcional(
-    produto.imagemPrincipalUrl,
-  ),
-  controlaEstoque: produto.controlaEstoque,
-  quantidadeEstoque: produto.controlaEstoque
-      ? produto.quantidadeEstoque
-      : null,
+promocional: produto.ativo ? produto.promocional : false,
+precoPromocional:
+    produto.ativo && produto.promocional ? produto.precoPromocional : null,
+imagemPrincipalUrl: _normalizarTextoOpcional(
+  produto.imagemPrincipalUrl,
+),
+controlaEstoque: produto.controlaEstoque,
+quantidadeEstoque: produto.controlaEstoque
+    ? produto.quantidadeEstoque
+    : null,
+controlaEstoquePorIngredientes: produto.controlaEstoquePorIngredientes,
+disponivel: produto.ativo ? produto.disponivel : false,
+destaque: produto.ativo ? produto.destaque : false,
   categoriasProduto: produto.categoriasProduto,
   imagens: imagensNormalizadas,
   ingredientes: ingredientesNormalizados,

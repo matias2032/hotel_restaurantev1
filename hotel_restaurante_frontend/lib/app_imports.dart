@@ -41,6 +41,14 @@ export 'screens/categoria_servico_form_screen.dart';
 export 'screens/servico_list_screen.dart';
 export 'screens/servico_form_screen.dart';
 
+export 'screens/categoria_produto_list_screen.dart';
+export 'screens/categoria_produto_form_screen.dart';
+
+export 'screens/produto_list_screen.dart';
+export 'screens/produto_form_screen.dart';
+
+export  'screens/movimento_estoque_list_screen.dart';
+
 
 
 

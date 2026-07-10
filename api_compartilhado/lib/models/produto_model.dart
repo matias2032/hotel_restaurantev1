@@ -229,9 +229,21 @@ class ProdutoModel {
   final String nome;
   final String? descricao;
   final double preco;
+
+  final bool promocional;
+  final double? precoPromocional;
+
   final String? imagemPrincipalUrl;
+
   final bool controlaEstoque;
   final double? quantidadeEstoque;
+
+  final bool controlaEstoquePorIngredientes;
+
+  final double? quantidadeDisponivelCalculada;
+  final bool disponivelCalculado;
+  final String? motivoIndisponibilidade;
+
   final int? tempoPreparoMinutos;
   final bool disponivel;
   final bool destaque;
@@ -247,9 +259,15 @@ class ProdutoModel {
     required this.nome,
     this.descricao,
     this.preco = 0.0,
+    this.promocional = false,
+    this.precoPromocional,
     this.imagemPrincipalUrl,
     this.controlaEstoque = false,
     this.quantidadeEstoque,
+    this.controlaEstoquePorIngredientes = false,
+    this.quantidadeDisponivelCalculada,
+    this.disponivelCalculado = true,
+    this.motivoIndisponibilidade,
     this.tempoPreparoMinutos,
     this.disponivel = true,
     this.destaque = false,
@@ -270,12 +288,37 @@ class ProdutoModel {
       nome: _parseString(json['nome']),
       descricao: _parseStringOpt(json['descricao']),
       preco: _parseDouble(json['preco']),
+
+      promocional: _parseBool(
+        json['promocional'],
+        defaultValue: false,
+      ),
+      precoPromocional: _parseDoubleOpt(json['precoPromocional']),
+
       imagemPrincipalUrl: _parseStringOpt(json['imagemPrincipalUrl']),
+
       controlaEstoque: _parseBool(
         json['controlaEstoque'],
         defaultValue: false,
       ),
       quantidadeEstoque: _parseDoubleOpt(json['quantidadeEstoque']),
+
+      controlaEstoquePorIngredientes: _parseBool(
+        json['controlaEstoquePorIngredientes'],
+        defaultValue: false,
+      ),
+
+      quantidadeDisponivelCalculada: _parseDoubleOpt(
+        json['quantidadeDisponivelCalculada'],
+      ),
+      disponivelCalculado: _parseBool(
+        json['disponivelCalculado'],
+        defaultValue: true,
+      ),
+      motivoIndisponibilidade: _parseStringOpt(
+        json['motivoIndisponibilidade'],
+      ),
+
       tempoPreparoMinutos: _parseIntOpt(json['tempoPreparoMinutos']),
       disponivel: _parseBool(json['disponivel'], defaultValue: true),
       destaque: _parseBool(json['destaque'], defaultValue: false),
@@ -301,9 +344,12 @@ if (enviarCategorias)
       'nome': nome.trim(),
       'descricao': _nullIfBlank(descricao),
       'preco': preco,
+      'promocional': promocional,
+      'precoPromocional': promocional ? precoPromocional : null,
       'imagemPrincipalUrl': _nullIfBlank(imagemPrincipalUrl),
       'controlaEstoque': controlaEstoque,
       'quantidadeEstoque': controlaEstoque ? quantidadeEstoque : null,
+      'controlaEstoquePorIngredientes': controlaEstoquePorIngredientes,
       'tempoPreparoMinutos': tempoPreparoMinutos,
       'disponivel': disponivel,
       'destaque': destaque,
@@ -316,16 +362,22 @@ if (enviarCategorias)
             .toList(),
     };
   }
-
+static const Object _naoAlterar = Object();
   ProdutoModel copyWith({
     int? idProduto,
-List<CategoriaProdutoResumoModel>? categoriasProduto,
+    List<CategoriaProdutoResumoModel>? categoriasProduto,
     String? nome,
     String? descricao,
     double? preco,
-    String? imagemPrincipalUrl,
+    bool? promocional,
+    Object? precoPromocional = _naoAlterar,
+    Object? imagemPrincipalUrl = _naoAlterar,
     bool? controlaEstoque,
-    double? quantidadeEstoque,
+    Object? quantidadeEstoque = _naoAlterar,
+    bool? controlaEstoquePorIngredientes,
+    Object? quantidadeDisponivelCalculada = _naoAlterar,
+    bool? disponivelCalculado,
+    Object? motivoIndisponibilidade = _naoAlterar,
     int? tempoPreparoMinutos,
     bool? disponivel,
     bool? destaque,
@@ -337,13 +389,30 @@ List<CategoriaProdutoResumoModel>? categoriasProduto,
   }) {
     return ProdutoModel(
       idProduto: idProduto ?? this.idProduto,
-categoriasProduto: categoriasProduto ?? this.categoriasProduto,
+      categoriasProduto: categoriasProduto ?? this.categoriasProduto,
       nome: nome ?? this.nome,
       descricao: descricao ?? this.descricao,
       preco: preco ?? this.preco,
-      imagemPrincipalUrl: imagemPrincipalUrl ?? this.imagemPrincipalUrl,
+      promocional: promocional ?? this.promocional,
+      precoPromocional: precoPromocional == _naoAlterar
+    ? this.precoPromocional
+    : precoPromocional as double?,
+      imagemPrincipalUrl: imagemPrincipalUrl == _naoAlterar
+    ? this.imagemPrincipalUrl
+    : imagemPrincipalUrl as String?,
       controlaEstoque: controlaEstoque ?? this.controlaEstoque,
-      quantidadeEstoque: quantidadeEstoque ?? this.quantidadeEstoque,
+      quantidadeEstoque: quantidadeEstoque == _naoAlterar
+    ? this.quantidadeEstoque
+    : quantidadeEstoque as double?,
+      controlaEstoquePorIngredientes:
+          controlaEstoquePorIngredientes ?? this.controlaEstoquePorIngredientes,
+      quantidadeDisponivelCalculada: quantidadeDisponivelCalculada == _naoAlterar
+    ? this.quantidadeDisponivelCalculada
+    : quantidadeDisponivelCalculada as double?,
+      disponivelCalculado: disponivelCalculado ?? this.disponivelCalculado,
+      motivoIndisponibilidade: motivoIndisponibilidade == _naoAlterar
+    ? this.motivoIndisponibilidade
+    : motivoIndisponibilidade as String?,
       tempoPreparoMinutos:
           tempoPreparoMinutos ?? this.tempoPreparoMinutos,
       disponivel: disponivel ?? this.disponivel,

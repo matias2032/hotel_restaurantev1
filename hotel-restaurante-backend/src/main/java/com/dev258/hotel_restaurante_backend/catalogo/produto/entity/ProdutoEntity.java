@@ -37,19 +37,30 @@ private List<ProdutoCategoriaEntity> categorias = new ArrayList<>();
     @Column(name = "descricao", columnDefinition = "TEXT")
     private String descricao;
 
-    @Column(name = "preco", nullable = false, precision = 12, scale = 2)
-    @Builder.Default
-    private BigDecimal preco = BigDecimal.ZERO;
+@Column(name = "preco", nullable = false, precision = 12, scale = 2)
+@Builder.Default
+private BigDecimal preco = BigDecimal.ZERO;
 
-    @Column(name = "imagem_principal_url", columnDefinition = "TEXT")
-    private String imagemPrincipalUrl;
+@Column(name = "promocional", nullable = false)
+@Builder.Default
+private Boolean promocional = false;
 
-    @Column(name = "controla_estoque", nullable = false)
-    @Builder.Default
-    private Boolean controlaEstoque = false;
+@Column(name = "preco_promocional", precision = 12, scale = 2)
+private BigDecimal precoPromocional;
 
-    @Column(name = "quantidade_estoque", precision = 12, scale = 3)
-    private BigDecimal quantidadeEstoque;
+@Column(name = "imagem_principal_url", columnDefinition = "TEXT")
+private String imagemPrincipalUrl;
+
+@Column(name = "controla_estoque", nullable = false)
+@Builder.Default
+private Boolean controlaEstoque = false;
+
+@Column(name = "quantidade_estoque", precision = 12, scale = 3)
+private BigDecimal quantidadeEstoque;
+
+@Column(name = "controla_estoque_por_ingredientes", nullable = false)
+@Builder.Default
+private Boolean controlaEstoquePorIngredientes = false;
 
     @Column(name = "tempo_preparo_minutos")
     private Integer tempoPreparoMinutos;
@@ -170,17 +181,29 @@ public void limparCategorias() {
 }
 
     private void normalizarDefaults() {
-        if (preco == null) {
-            preco = BigDecimal.ZERO;
-        }
+if (preco == null) {
+    preco = BigDecimal.ZERO;
+}
 
-        if (controlaEstoque == null) {
-            controlaEstoque = false;
-        }
+if (promocional == null) {
+    promocional = false;
+}
 
-        if (disponivel == null) {
-            disponivel = true;
-        }
+if (Boolean.FALSE.equals(promocional)) {
+    precoPromocional = null;
+}
+
+if (controlaEstoque == null) {
+    controlaEstoque = false;
+}
+
+if (controlaEstoquePorIngredientes == null) {
+    controlaEstoquePorIngredientes = false;
+}
+
+if (disponivel == null) {
+    disponivel = true;
+}
 
         if (destaque == null) {
             destaque = false;

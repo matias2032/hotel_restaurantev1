@@ -49,6 +49,10 @@ class HotelRestauranteApp extends StatelessWidget {
       service: ServicoService(),
     );
 
+    final movimentoEstoqueRepository = MovimentoEstoqueRepository(
+      service: MovimentoEstoqueService(),
+    );
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
@@ -76,6 +80,12 @@ class HotelRestauranteApp extends StatelessWidget {
             repository: servicoRepository,
           ),
         ),
+        ChangeNotifierProvider(
+          create: (_) => MovimentoEstoqueProvider(
+            repository: movimentoEstoqueRepository,
+          ),
+        ),
+
       ],
       child: MaterialApp(
         title: 'Hotel Restaurante Admin',
@@ -136,6 +146,11 @@ class HotelRestauranteApp extends StatelessWidget {
           '/categorias-servico/form': (_) => const CategoriaServicoFormScreen(),
           '/servicos': (_) => const ServicoListScreen(),
           '/servicos/form': (_) => const ServicoFormScreen(),
+          '/categorias-produto': (_) => const CategoriaProdutoListScreen(),
+          '/categorias-produto/form': (_) => const CategoriaProdutoFormScreen(),
+          '/produtos': (_) => const ProdutoListScreen(),
+          '/produtos/form': (_) => const ProdutoFormScreen(),
+          '/movimentos-estoque': (_) => const MovimentoEstoqueListScreen(),
           '/login': (_) => const LoginScreen(),
           '/primeira-senha': (_) => const PrimeiraTrocaSenhaScreen(),
         },

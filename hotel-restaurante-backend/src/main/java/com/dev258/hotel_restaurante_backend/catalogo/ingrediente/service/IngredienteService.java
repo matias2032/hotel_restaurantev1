@@ -18,7 +18,7 @@ import com.dev258.hotel_restaurante_backend.catalogo.ingrediente.repository.Ingr
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.ArrayList;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -592,35 +592,68 @@ public class IngredienteService {
     // HELPERS — CATEGORIAS DO INGREDIENTE
     // ─────────────────────────────────────────────────────────────
 
-    private void aplicarCategoriasNoIngrediente(
-            IngredienteEntity ingrediente,
-            List<Long> idCategoriasIngrediente,
-            boolean substituirCategoriasAtuais
-    ) {
-        if (substituirCategoriasAtuais) {
-            ingrediente.limparCategorias();
-        }
+private void aplicarCategoriasNoIngrediente(
+        IngredienteEntity ingrediente,
+        List<Long> idCategoriasIngrediente,
+        boolean substituirCategoriasAtuais
+) {
+    if (idCategoriasIngrediente == null) {
+        return;
+    }
 
-        if (idCategoriasIngrediente == null || idCategoriasIngrediente.isEmpty()) {
-            return;
-        }
+    Set<Long> idsUnicos = new LinkedHashSet<>(idCategoriasIngrediente);
 
-        Set<Long> idsUnicos = new LinkedHashSet<>(idCategoriasIngrediente);
+    if (idsUnicos.size() != idCategoriasIngrediente.size()) {
+        throw new IngredienteRegraNegocioException(
+                "Não é permitido associar a mesma categoria mais de uma vez."
+        );
+    }
 
-        int ordem = 0;
+    if (substituirCategoriasAtuais) {
+        ingrediente.getCategorias().removeIf(categoriaAtual -> {
+            Long idCategoriaAtual = categoriaAtual.getCategoriaIngrediente() != null
+                    ? categoriaAtual.getCategoriaIngrediente().getIdCategoriaIngrediente()
+                    : null;
 
-        for (Long idCategoriaIngrediente : idsUnicos) {
-            CategoriaIngredienteEntity categoria =
-                    buscarCategoriaEntityObrigatoria(idCategoriaIngrediente);
+            boolean deveRemover = idCategoriaAtual == null || !idsUnicos.contains(idCategoriaAtual);
 
-            if (Boolean.FALSE.equals(categoria.getAtivo())) {
-                throw new IngredienteRegraNegocioException(
-                        "Não é possível associar uma categoria de ingrediente inativa."
-                );
+            if (deveRemover) {
+                categoriaAtual.setIngrediente(null);
             }
 
-            boolean principal = ordem == 0;
+            return deveRemover;
+        });
+    }
 
+    int ordem = 0;
+
+    for (Long idCategoriaIngrediente : idsUnicos) {
+        CategoriaIngredienteEntity categoria =
+                buscarCategoriaEntityObrigatoria(idCategoriaIngrediente);
+
+        if (Boolean.FALSE.equals(categoria.getAtivo())) {
+            throw new IngredienteRegraNegocioException(
+                    "Não é possível associar uma categoria de ingrediente inativa."
+            );
+        }
+
+        boolean principal = ordem == 0;
+
+        IngredienteCategoriaEntity categoriaExistente = ingrediente.getCategorias()
+                .stream()
+                .filter(item -> item.getCategoriaIngrediente() != null)
+                .filter(item -> item.getCategoriaIngrediente()
+                        .getIdCategoriaIngrediente()
+                        .equals(idCategoriaIngrediente))
+                .findFirst()
+                .orElse(null);
+
+        if (categoriaExistente != null) {
+            categoriaExistente.setPrincipal(principal);
+            categoriaExistente.setOrdem(ordem);
+            categoriaExistente.setIngrediente(ingrediente);
+            categoriaExistente.setCategoriaIngrediente(categoria);
+        } else {
             IngredienteCategoriaEntity ingredienteCategoria =
                     IngredienteCategoriaEntity.builder()
                             .ingrediente(ingrediente)
@@ -630,10 +663,16 @@ public class IngredienteService {
                             .build();
 
             ingrediente.adicionarCategoria(ingredienteCategoria);
-
-            ordem++;
         }
+
+        ordem++;
     }
+
+    if (idsUnicos.isEmpty() && substituirCategoriasAtuais) {
+        ingrediente.getCategorias().forEach(categoria -> categoria.setIngrediente(null));
+        ingrediente.getCategorias().clear();
+    }
+}
 
     // ─────────────────────────────────────────────────────────────
     // HELPERS — IMAGENS

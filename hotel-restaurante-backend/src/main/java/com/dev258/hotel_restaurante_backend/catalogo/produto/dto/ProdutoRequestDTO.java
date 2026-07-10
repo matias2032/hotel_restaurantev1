@@ -22,12 +22,19 @@ public record ProdutoRequestDTO(
         @DecimalMin(value = "0.00", message = "O preço do produto não pode ser negativo.")
         BigDecimal preco,
 
+        Boolean promocional,
+
+        @DecimalMin(value = "0.00", message = "O preço promocional do produto não pode ser negativo.")
+        BigDecimal precoPromocional,
+
         String imagemPrincipalUrl,
 
         Boolean controlaEstoque,
 
         @DecimalMin(value = "0.000", message = "A quantidade em estoque não pode ser negativa.")
         BigDecimal quantidadeEstoque,
+
+        Boolean controlaEstoquePorIngredientes,
 
         @Min(value = 0, message = "O tempo de preparo não pode ser negativo.")
         Integer tempoPreparoMinutos,
