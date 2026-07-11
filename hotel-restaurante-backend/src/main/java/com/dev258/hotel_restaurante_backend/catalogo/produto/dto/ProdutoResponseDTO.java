@@ -39,7 +39,7 @@ List<CategoriaResumoDTO> categoriasProduto,
 
         Integer tempoPreparoMinutos,
 
-        Boolean disponivel,
+
         Boolean destaque,
         Boolean ativo,
 
@@ -68,7 +68,7 @@ List<CategoriaResumoDTO> categoriasProduto,
                 calcularDisponivel(entity),
                 calcularMotivoIndisponibilidade(entity),
                 entity.getTempoPreparoMinutos(),
-                entity.getDisponivel(),
+               
                 entity.getDestaque(),
                 entity.getAtivo(),
                 entity.getImagens() != null
@@ -152,9 +152,7 @@ private static BigDecimal calcularQuantidadeDisponivel(ProdutoEntity entity) {
         return BigDecimal.ZERO;
     }
 
-    if (Boolean.FALSE.equals(entity.getDisponivel())) {
-        return BigDecimal.ZERO;
-    }
+    
 
     BigDecimal quantidadePorEstoqueProprio = null;
     BigDecimal quantidadePorIngredientes = null;
@@ -215,9 +213,6 @@ private static BigDecimal calcularQuantidadeDisponivelPorIngredientes(
             return BigDecimal.ZERO;
         }
 
-        if (Boolean.FALSE.equals(ingrediente.getDisponivel())) {
-            return BigDecimal.ZERO;
-        }
 
         if (!Boolean.TRUE.equals(ingrediente.getControlaEstoque())) {
             continue;
@@ -264,9 +259,7 @@ private static String calcularMotivoIndisponibilidade(ProdutoEntity entity) {
         return "Produto inativo.";
     }
 
-    if (Boolean.FALSE.equals(entity.getDisponivel())) {
-        return "Produto marcado como indisponível.";
-    }
+
 
     if (Boolean.TRUE.equals(entity.getControlaEstoque())) {
         BigDecimal estoqueProduto = entity.getQuantidadeEstoque();
@@ -317,9 +310,6 @@ private static String calcularMotivoIndisponibilidadePorIngredientes(
             return "Ingrediente obrigatório inativo: " + nomeIngrediente + ".";
         }
 
-        if (Boolean.FALSE.equals(ingrediente.getDisponivel())) {
-            return "Ingrediente obrigatório indisponível: " + nomeIngrediente + ".";
-        }
 
         if (!Boolean.TRUE.equals(ingrediente.getControlaEstoque())) {
             continue;
@@ -448,9 +438,30 @@ public record CategoriaResumoDTO(
             return ingrediente != null ? ingrediente.getPrecoAdicional() : null;
         }
 
-        private static Boolean resolverIngredienteDisponivel(ProdutoIngredienteEntity entity) {
+        private static Boolean resolverIngredienteDisponivel(
+                ProdutoIngredienteEntity entity
+        ) {
             IngredienteEntity ingrediente = entity.getIngrediente();
-            return ingrediente != null ? ingrediente.getDisponivel() : null;
+
+            if (ingrediente == null) {
+                return false;
+            }
+
+            if (Boolean.FALSE.equals(ingrediente.getAtivo())) {
+                return false;
+            }
+
+            if (!Boolean.TRUE.equals(
+                    ingrediente.getControlaEstoque()
+            )) {
+                return true;
+            }
+
+            BigDecimal quantidadeEstoque =
+                    ingrediente.getQuantidadeEstoque();
+
+            return quantidadeEstoque != null
+                    && quantidadeEstoque.compareTo(BigDecimal.ZERO) > 0;
         }
 
         private static Boolean resolverIngredienteAtivo(ProdutoIngredienteEntity entity) {

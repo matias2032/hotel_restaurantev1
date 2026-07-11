@@ -344,40 +344,7 @@ Future<ServicoModel> editarServico(
     return servicoEditado;
   }
 
-  Future<ServicoModel> alterarDisponibilidadeServico(
-    int idServico,
-    bool disponivel,
-  ) async {
-    final uri = Uri.parse(
-      '$_servicosUrl/$idServico/disponibilidade',
-    );
 
-    debugPrint(
-      '[ServicoService] ALTERAR_DISPONIBILIDADE_SERVICO_INICIO — '
-      'id=$idServico disponivel=$disponivel',
-    );
-
-    final response = await http
-        .patch(
-          uri,
-          headers: ApiConfig.authHeaders,
-          body: jsonEncode({
-            'disponivel': disponivel,
-          }),
-        )
-        .timeout(ApiConfig.timeout);
-
-    final data = _tratarRespostaObjeto(response);
-
-    final servico = ServicoModel.fromJson(data);
-
-    debugPrint(
-      '[ServicoService] ALTERAR_DISPONIBILIDADE_SERVICO_SUCESSO — '
-      'id=$idServico disponivel=${servico.disponivel}',
-    );
-
-    return servico;
-  }
 
   Future<ServicoModel> alterarDestaqueServico(
     int idServico,
@@ -414,41 +381,43 @@ Future<ServicoModel> editarServico(
     return servico;
   }
 
-  Future<ServicoModel> alterarEstadoServico(
-    int idServico,
-    bool ativo,
-  ) async {
-    final uri = Uri.parse(
-      '$_servicosUrl/$idServico/estado',
-    );
+Future<ServicoModel> alterarEstadoServico(
+  int idServico,
+  bool ativo,
+) async {
+  final uri = Uri.parse(
+    '$_servicosUrl/$idServico/estado',
+  );
 
-    debugPrint(
-      '[ServicoService] ALTERAR_ESTADO_SERVICO_INICIO — '
-      'id=$idServico ativo=$ativo',
-    );
+  debugPrint(
+    '[ServicoService] ALTERAR_ESTADO_SERVICO_INICIO — '
+    'id=$idServico ativo=$ativo',
+  );
 
-    final response = await http
-        .patch(
-          uri,
-          headers: ApiConfig.authHeaders,
-          body: jsonEncode({
-            'ativo': ativo,
-          }),
-        )
-        .timeout(ApiConfig.timeout);
+  final response = await http
+      .patch(
+        uri,
+        headers: ApiConfig.authHeaders,
+        body: jsonEncode({
+          'ativo': ativo,
+        }),
+      )
+      .timeout(ApiConfig.timeout);
 
-    final data = _tratarRespostaObjeto(response);
+  final data = _tratarRespostaObjeto(response);
 
-    final servico = ServicoModel.fromJson(data);
+  final servico = ServicoModel.fromJson(data);
 
-    debugPrint(
-      '[ServicoService] ALTERAR_ESTADO_SERVICO_SUCESSO — '
-      'id=$idServico ativo=${servico.ativo} '
-      'disponivel=${servico.disponivel} destaque=${servico.destaque}',
-    );
+  debugPrint(
+    '[ServicoService] ALTERAR_ESTADO_SERVICO_SUCESSO — '
+    'id=$idServico '
+    'ativo=${servico.ativo} '
+    'disponivelCalculado=${servico.disponivelCalculado} '
+    'destaque=${servico.destaque}',
+  );
 
-    return servico;
-  }
+  return servico;
+}
 
   Future<void> desativarServico(
     int idServico,

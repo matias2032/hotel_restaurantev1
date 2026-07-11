@@ -22,8 +22,9 @@ List<CategoriaResumoDTO> categoriasServico,
 
         String imagemPrincipalUrl,
 
-        Boolean disponivel,
         Boolean destaque,
+        Boolean disponivelCalculado,
+        String motivoIndisponibilidade,
         Boolean ativo,
 
         List<ServicoImagemResponseDTO> imagens,
@@ -40,8 +41,9 @@ List<CategoriaResumoDTO> categoriasServico,
                 entity.getDescricao(),
                 entity.getPreco(),
                 resolverImagemPrincipal(entity),
-                entity.getDisponivel(),
                 entity.getDestaque(),
+                calcularDisponivel(entity),
+                calcularMotivoIndisponibilidade(entity),
                 entity.getAtivo(),
                 entity.getImagens() != null
                         ? entity.getImagens()
@@ -53,6 +55,27 @@ List<CategoriaResumoDTO> categoriasServico,
                 entity.getUpdatedAt()
         );
     }
+
+    private static Boolean calcularDisponivel(
+        ServicoEntity entity
+) {
+    return entity != null
+            && Boolean.TRUE.equals(entity.getAtivo());
+}
+
+private static String calcularMotivoIndisponibilidade(
+        ServicoEntity entity
+) {
+    if (entity == null) {
+        return "Serviço inválido.";
+    }
+
+    if (Boolean.FALSE.equals(entity.getAtivo())) {
+        return "Serviço inativo.";
+    }
+
+    return null;
+}
 
     private static List<CategoriaResumoDTO> resolverCategorias(
         ServicoEntity entity

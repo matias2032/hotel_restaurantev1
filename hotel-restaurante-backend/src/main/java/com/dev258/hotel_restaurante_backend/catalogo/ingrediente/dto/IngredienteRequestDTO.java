@@ -37,7 +37,7 @@ public record IngredienteRequestDTO(
         @DecimalMin(value = "0.000", message = "A quantidade em estoque não pode ser negativa.")
         BigDecimal quantidadeEstoque,
 
-        Boolean disponivel,
+
 
         Boolean ativo,
         TipoMovimentoEstoque tipoMovimentoEstoque,

@@ -44,9 +44,7 @@ private List<ServicoCategoriaEntity> categorias = new ArrayList<>();
     @Column(name = "imagem_principal_url", columnDefinition = "TEXT")
     private String imagemPrincipalUrl;
 
-    @Column(name = "disponivel", nullable = false)
-    @Builder.Default
-    private Boolean disponivel = true;
+
 
     @Column(name = "destaque", nullable = false)
     @Builder.Default
@@ -138,9 +136,6 @@ public void limparCategorias() {
             preco = BigDecimal.ZERO;
         }
 
-        if (disponivel == null) {
-            disponivel = true;
-        }
 
         if (destaque == null) {
             destaque = false;

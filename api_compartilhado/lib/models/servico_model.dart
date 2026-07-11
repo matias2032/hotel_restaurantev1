@@ -168,7 +168,8 @@ final List<CategoriaServicoResumoModel> categoriasServico;
   final String? descricao;
   final double preco;
   final String? imagemPrincipalUrl;
-  final bool disponivel;
+  final bool disponivelCalculado;
+final String? motivoIndisponibilidade;
   final bool destaque;
   final bool ativo;
   final List<ServicoImagemModel> imagens;
@@ -182,7 +183,8 @@ this.categoriasServico = const [],
     this.descricao,
     this.preco = 0.0,
     this.imagemPrincipalUrl,
-    this.disponivel = true,
+    this.disponivelCalculado = true,
+this.motivoIndisponibilidade,
     this.destaque = false,
     this.ativo = true,
     this.imagens = const [],
@@ -201,7 +203,13 @@ this.categoriasServico = const [],
       descricao: _parseStringOpt(json['descricao']),
       preco: _parseDouble(json['preco']),
       imagemPrincipalUrl: _parseStringOpt(json['imagemPrincipalUrl']),
-      disponivel: _parseBool(json['disponivel'], defaultValue: true),
+      disponivelCalculado: _parseBool(
+  json['disponivelCalculado'],
+  defaultValue: true,
+),
+motivoIndisponibilidade: _parseStringOpt(
+  json['motivoIndisponibilidade'],
+),
       destaque: _parseBool(json['destaque'], defaultValue: false),
       ativo: _parseBool(json['ativo'], defaultValue: true),
       imagens: _parseImagensServico(json['imagens']),
@@ -224,14 +232,14 @@ if (enviarCategorias)
       'descricao': _nullIfBlank(descricao),
       'preco': preco,
       'imagemPrincipalUrl': _nullIfBlank(imagemPrincipalUrl),
-      'disponivel': disponivel,
+      
       'destaque': destaque,
       'ativo': ativo,
       if (enviarImagens)
         'imagens': imagens.map((imagem) => imagem.toJson()).toList(),
     };
   }
-
+static const Object _naoAlterar = Object();
   ServicoModel copyWith({
     int? idServico,
 List<CategoriaServicoResumoModel>? categoriasServico,
@@ -239,7 +247,8 @@ List<CategoriaServicoResumoModel>? categoriasServico,
     String? descricao,
     double? preco,
     String? imagemPrincipalUrl,
-    bool? disponivel,
+    bool? disponivelCalculado,
+    Object? motivoIndisponibilidade = _naoAlterar,
     bool? destaque,
     bool? ativo,
     List<ServicoImagemModel>? imagens,
@@ -253,7 +262,14 @@ categoriasServico: categoriasServico ?? this.categoriasServico,
       descricao: descricao ?? this.descricao,
       preco: preco ?? this.preco,
       imagemPrincipalUrl: imagemPrincipalUrl ?? this.imagemPrincipalUrl,
-      disponivel: disponivel ?? this.disponivel,
+     disponivelCalculado:
+    disponivelCalculado ??
+        this.disponivelCalculado,
+
+motivoIndisponibilidade:
+    motivoIndisponibilidade == _naoAlterar
+        ? this.motivoIndisponibilidade
+        : motivoIndisponibilidade as String?,
       destaque: destaque ?? this.destaque,
       ativo: ativo ?? this.ativo,
       imagens: imagens ?? this.imagens,

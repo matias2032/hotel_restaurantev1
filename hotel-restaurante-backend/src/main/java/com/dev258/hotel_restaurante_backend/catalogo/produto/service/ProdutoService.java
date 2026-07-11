@@ -155,52 +155,54 @@ validarCategoriaSemProdutosAtivos(idCategoriaProduto);
     // PRODUTOS — LISTAR
     // ─────────────────────────────────────────────────────────────
 
-    @Transactional(readOnly = true)
-    public List<ProdutoResponseDTO> listarProdutos(
-            Boolean somenteAtivos,
-            Boolean somenteDisponiveis,
-            Boolean somenteDestaques,
-            Long idCategoriaProduto
-    ) {
-        List<ProdutoEntity> produtos;
+@Transactional(readOnly = true)
+public List<ProdutoResponseDTO> listarProdutos(
+        Boolean somenteAtivos,
+        Boolean somenteDisponiveis,
+        Boolean somenteDestaques,
+        Long idCategoriaProduto
+) {
+    List<ProdutoEntity> produtos;
 
-if (idCategoriaProduto != null && Boolean.TRUE.equals(somenteDisponiveis)) {
-    produtos = produtoRepository
-            .findDistinctByCategorias_CategoriaProduto_IdCategoriaProdutoAndDisponivelTrueAndAtivoTrueOrderByNomeAsc(
-                    idCategoriaProduto
-            );
-} else if (idCategoriaProduto != null) {
-    produtos = Boolean.TRUE.equals(somenteAtivos)
-            ? produtoRepository
-            .findDistinctByCategorias_CategoriaProduto_IdCategoriaProdutoAndAtivoTrueOrderByNomeAsc(
-                    idCategoriaProduto
-            )
-            : produtoRepository
-            .findDistinctByCategorias_CategoriaProduto_IdCategoriaProdutoOrderByNomeAsc(
-                    idCategoriaProduto
-            );
-} else if (Boolean.TRUE.equals(somenteDestaques)) {
-            produtos = produtoRepository.findByDestaqueTrueAndAtivoTrueOrderByNomeAsc();
-        } else if (Boolean.TRUE.equals(somenteDisponiveis)) {
-            produtos = produtoRepository.findByDisponivelTrueAndAtivoTrueOrderByNomeAsc();
-        } else if (Boolean.TRUE.equals(somenteAtivos)) {
-            produtos = produtoRepository.findByAtivoTrueOrderByNomeAsc();
-        } else {
-            produtos = produtoRepository.findAllByOrderByNomeAsc();
-        }
-
-        if (Boolean.TRUE.equals(somenteDestaques) && idCategoriaProduto != null) {
-            produtos = produtos
-                    .stream()
-                    .filter(produto -> Boolean.TRUE.equals(produto.getDestaque()))
-                    .toList();
-        }
-
-        return produtos
-                .stream()
-                .map(ProdutoResponseDTO::new)
-                .toList();
+    if (idCategoriaProduto != null) {
+        produtos = Boolean.TRUE.equals(somenteAtivos) ||
+                Boolean.TRUE.equals(somenteDisponiveis)
+                ? produtoRepository
+                .findDistinctByCategorias_CategoriaProduto_IdCategoriaProdutoAndAtivoTrueOrderByNomeAsc(
+                        idCategoriaProduto
+                )
+                : produtoRepository
+                .findDistinctByCategorias_CategoriaProduto_IdCategoriaProdutoOrderByNomeAsc(
+                        idCategoriaProduto
+                );
+    } else if (Boolean.TRUE.equals(somenteDestaques)) {
+        produtos =
+                produtoRepository
+                        .findByDestaqueTrueAndAtivoTrueOrderByNomeAsc();
+    } else if (Boolean.TRUE.equals(somenteAtivos) ||
+            Boolean.TRUE.equals(somenteDisponiveis)) {
+        produtos =
+                produtoRepository
+                        .findByAtivoTrueOrderByNomeAsc();
+    } else {
+        produtos =
+                produtoRepository
+                        .findAllByOrderByNomeAsc();
     }
+
+    return produtos
+            .stream()
+            .map(ProdutoResponseDTO::new)
+            .filter(dto ->
+                    !Boolean.TRUE.equals(somenteDestaques) ||
+                    Boolean.TRUE.equals(dto.destaque())
+            )
+            .filter(dto ->
+                    !Boolean.TRUE.equals(somenteDisponiveis) ||
+                    Boolean.TRUE.equals(dto.disponivelCalculado())
+            )
+            .toList();
+}
 
     // ─────────────────────────────────────────────────────────────
     // PRODUTOS — BUSCAR POR ID
@@ -247,7 +249,7 @@ if (idCategoriaProduto != null && Boolean.TRUE.equals(somenteDisponiveis)) {
                                 : false
                 )
                 .tempoPreparoMinutos(resolverTempoPreparo(dto.tempoPreparoMinutos()))
-                .disponivel(dto.disponivel() != null ? dto.disponivel() : true)
+                
                 .destaque(dto.destaque() != null ? dto.destaque() : false)
                 .ativo(dto.ativo() != null ? dto.ativo() : true)
                 .build();
@@ -309,8 +311,7 @@ if (idCategoriaProduto != null && Boolean.TRUE.equals(somenteDisponiveis)) {
         );
 
         produto.setTempoPreparoMinutos(resolverTempoPreparo(dto.tempoPreparoMinutos()));
-        produto.setDisponivel(dto.disponivel() != null ? dto.disponivel() : true);
-        produto.setDestaque(dto.destaque() != null ? dto.destaque() : false);
+           produto.setDestaque(dto.destaque() != null ? dto.destaque() : false);
         produto.setAtivo(dto.ativo() != null ? dto.ativo() : true);
 
 
@@ -366,30 +367,6 @@ if (dto.idCategoriasProduto() != null) {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // PRODUTOS — DISPONIBILIDADE
-    // ─────────────────────────────────────────────────────────────
-
-    @Transactional
-    public ProdutoResponseDTO alterarDisponibilidadeProduto(
-            Long idProduto,
-            Boolean disponivel
-    ) {
-        ProdutoEntity produto = buscarProdutoEntityObrigatorio(idProduto);
-
-        if (Boolean.FALSE.equals(produto.getAtivo()) && Boolean.TRUE.equals(disponivel)) {
-            throw new ProdutoRegraNegocioException(
-                    "Não é possível disponibilizar um produto inativo."
-            );
-        }
-
-        produto.setDisponivel(disponivel != null ? disponivel : true);
-
-        ProdutoEntity produtoSalvo = produtoRepository.save(produto);
-
-        return new ProdutoResponseDTO(produtoSalvo);
-    }
-
-    // ─────────────────────────────────────────────────────────────
     // PRODUTOS — DESTAQUE
     // ─────────────────────────────────────────────────────────────
 
@@ -411,43 +388,38 @@ if (dto.idCategoriasProduto() != null) {
     // PRODUTOS — ACTIVAR / DESACTIVAR
     // ─────────────────────────────────────────────────────────────
 
-    @Transactional
-    public ProdutoResponseDTO alterarEstadoProduto(
-            Long idProduto,
-            Boolean ativo
-    ) {
-        ProdutoEntity produto = buscarProdutoEntityObrigatorio(idProduto);
+@Transactional
+public ProdutoResponseDTO alterarEstadoProduto(
+        Long idProduto,
+        Boolean ativo
+) {
+    ProdutoEntity produto =
+            buscarProdutoEntityObrigatorio(idProduto);
 
-        produto.setAtivo(ativo != null ? ativo : true);
+    boolean novoEstado =
+            ativo != null ? ativo : true;
 
-        if (Boolean.FALSE.equals(produto.getAtivo())) {
-            produto.setDisponivel(false);
-            produto.setDestaque(false);
-            produto.setPromocional(false);
-            produto.setPrecoPromocional(null);
-        }
+    produto.setAtivo(novoEstado);
 
-        ProdutoEntity produtoSalvo = produtoRepository.save(produto);
+    ProdutoEntity produtoSalvo =
+            produtoRepository.save(produto);
 
-        return new ProdutoResponseDTO(produtoSalvo);
-    }
+    return new ProdutoResponseDTO(produtoSalvo);
+}
 
     // ─────────────────────────────────────────────────────────────
     // PRODUTOS — REMOVER LÓGICO
     // ─────────────────────────────────────────────────────────────
 
-    @Transactional
-    public void desativarProduto(Long idProduto) {
-        ProdutoEntity produto = buscarProdutoEntityObrigatorio(idProduto);
+@Transactional
+public void desativarProduto(Long idProduto) {
+    ProdutoEntity produto =
+            buscarProdutoEntityObrigatorio(idProduto);
 
-        produto.setAtivo(false);
-        produto.setDisponivel(false);
-        produto.setDestaque(false);
-        produto.setPromocional(false);
-        produto.setPrecoPromocional(null);
+    produto.setAtivo(false);
 
-        produtoRepository.save(produto);
-    }
+    produtoRepository.save(produto);
+}
 
     // ─────────────────────────────────────────────────────────────
     // IMAGENS — LISTAR

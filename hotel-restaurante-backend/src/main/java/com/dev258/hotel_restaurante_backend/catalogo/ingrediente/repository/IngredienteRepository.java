@@ -19,7 +19,6 @@ public interface IngredienteRepository
 
     List<IngredienteEntity> findAllByOrderByNomeAsc();
 
-    List<IngredienteEntity> findByDisponivelTrueAndAtivoTrueOrderByNomeAsc();
 
     List<IngredienteEntity> findDistinctByCategorias_CategoriaIngrediente_IdCategoriaIngredienteOrderByNomeAsc(
             Long idCategoriaIngrediente

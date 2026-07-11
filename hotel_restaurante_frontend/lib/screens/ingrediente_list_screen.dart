@@ -69,8 +69,11 @@ class _IngredienteListScreenState extends State<IngredienteListScreen> {
         _FiltroIngrediente.todos => true,
         _FiltroIngrediente.activos => ingrediente.ativo,
         _FiltroIngrediente.inactivos => !ingrediente.ativo,
-        _FiltroIngrediente.disponiveis => ingrediente.disponivel,
-        _FiltroIngrediente.indisponiveis => !ingrediente.disponivel,
+_FiltroIngrediente.disponiveis =>
+    ingrediente.disponivelCalculado,
+
+_FiltroIngrediente.indisponiveis =>
+    !ingrediente.disponivelCalculado,
         _FiltroIngrediente.comCategorias =>
           ingrediente.categoriasIngrediente.isNotEmpty,
         _FiltroIngrediente.semCategorias =>
@@ -124,57 +127,6 @@ class _IngredienteListScreenState extends State<IngredienteListScreen> {
     }
   }
 
-  Future<void> _alterarDisponibilidade(
-    IngredienteModel ingrediente,
-  ) async {
-    final id = ingrediente.idIngrediente;
-
-    if (id == null) {
-      _snack(
-        'Ingrediente inválido.',
-        erro: true,
-      );
-      return;
-    }
-
-    final novoEstado = !ingrediente.disponivel;
-
-    final confirmado = await _confirmar(
-      titulo: novoEstado
-          ? 'Tornar ingrediente disponível?'
-          : 'Tornar ingrediente indisponível?',
-      mensagem: novoEstado
-          ? 'O ingrediente voltará a ficar disponível para uso.'
-          : 'O ingrediente ficará indisponível, mas não será eliminado.',
-      textoConfirmar: novoEstado ? 'Disponibilizar' : 'Indisponibilizar',
-      corConfirmar: novoEstado ? _kGreen : _kRed,
-    );
-
-    if (!confirmado || !mounted) return;
-
-    final provider = context.read<IngredienteProvider>();
-
-    final sucesso = await provider.alterarDisponibilidadeIngrediente(
-      id,
-      novoEstado,
-    );
-
-    if (!mounted) return;
-
-    if (sucesso) {
-      _snack(
-        novoEstado
-            ? 'Ingrediente disponível com sucesso.'
-            : 'Ingrediente indisponível com sucesso.',
-      );
-    } else {
-      _snack(
-        provider.erro ??
-            'Não foi possível alterar a disponibilidade do ingrediente.',
-        erro: true,
-      );
-    }
-  }
 
   Future<void> _alterarEstado(
     IngredienteModel ingrediente,
@@ -225,44 +177,7 @@ class _IngredienteListScreenState extends State<IngredienteListScreen> {
     }
   }
 
-  Future<void> _desativarIngrediente(
-    IngredienteModel ingrediente,
-  ) async {
-    final id = ingrediente.idIngrediente;
 
-    if (id == null) {
-      _snack(
-        'Ingrediente inválido.',
-        erro: true,
-      );
-      return;
-    }
-
-    final confirmado = await _confirmar(
-      titulo: 'Desactivar ingrediente?',
-      mensagem:
-          'O ingrediente será desactivado e ficará indisponível. As categorias associadas não serão eliminadas.',
-      textoConfirmar: 'Desactivar',
-      corConfirmar: _kRed,
-    );
-
-    if (!confirmado || !mounted) return;
-
-    final provider = context.read<IngredienteProvider>();
-
-    final sucesso = await provider.desativarIngrediente(id);
-
-    if (!mounted) return;
-
-    if (sucesso) {
-      _snack('Ingrediente desactivado com sucesso.');
-    } else {
-      _snack(
-        provider.erro ?? 'Não foi possível desactivar o ingrediente.',
-        erro: true,
-      );
-    }
-  }
 
   Future<bool> _confirmar({
     required String titulo,
@@ -333,8 +248,9 @@ class _IngredienteListScreenState extends State<IngredienteListScreen> {
 
         final total = provider.ingredientes.length;
         final activos = provider.ingredientes.where((i) => i.ativo).length;
-        final disponiveis =
-            provider.ingredientes.where((i) => i.disponivel).length;
+final disponiveis = provider.ingredientes
+    .where((i) => i.disponivelCalculado)
+    .length;
         final comEstoque =
             provider.ingredientes.where((i) => i.controlaEstoque).length;
 
@@ -403,13 +319,10 @@ class _IngredienteListScreenState extends State<IngredienteListScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _IngredienteCard(
-                          ingrediente: ingrediente,
-                          onEditar: () => _abrirEdicao(ingrediente),
-                          onAlterarEstado: () => _alterarEstado(ingrediente),
-                          onAlterarDisponibilidade: () =>
-                              _alterarDisponibilidade(ingrediente),
-                          onDesativar: () => _desativarIngrediente(ingrediente),
-                        ),
+  ingrediente: ingrediente,
+  onEditar: () => _abrirEdicao(ingrediente),
+  onAlterarEstado: () => _alterarEstado(ingrediente),
+),
                       );
                     }),
                 ],
@@ -453,7 +366,7 @@ class _HeaderCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Cadastre ingredientes, controle disponibilidade, estoque, imagens e categorias associadas.',
+'Cadastre ingredientes, controle estoque, estado, imagens e categorias associadas.',
             style: TextStyle(
               color: _kMuted,
               fontSize: 13,
@@ -621,25 +534,22 @@ class _SearchAndFilters extends StatelessWidget {
 }
 
 class _IngredienteCard extends StatelessWidget {
-  final IngredienteModel ingrediente;
-  final VoidCallback onEditar;
-  final VoidCallback onAlterarEstado;
-  final VoidCallback onAlterarDisponibilidade;
-  final VoidCallback onDesativar;
+final IngredienteModel ingrediente;
+final VoidCallback onEditar;
+final VoidCallback onAlterarEstado;
 
-  const _IngredienteCard({
-    required this.ingrediente,
-    required this.onEditar,
-    required this.onAlterarEstado,
-    required this.onAlterarDisponibilidade,
-    required this.onDesativar,
-  });
+const _IngredienteCard({
+  required this.ingrediente,
+  required this.onEditar,
+  required this.onAlterarEstado,
+});
 
   @override
   Widget build(BuildContext context) {
-    final categorias = ingrediente.categoriasIngrediente;
-    final ativo = ingrediente.ativo;
-    final disponivel = ingrediente.disponivel;
+final categorias = ingrediente.categoriasIngrediente;
+final ativo = ingrediente.ativo;
+final disponivel = ingrediente.disponivelCalculado;
+final motivo = ingrediente.motivoIndisponibilidade?.trim();
 
     return Container(
       decoration: _cardDecoration(),
@@ -684,32 +594,57 @@ class _IngredienteCard extends StatelessWidget {
                           color: ativo ? _kGreen : _kRed,
                         ),
                         _StatusBadge(
-                          label: disponivel ? 'Disponível' : 'Indisponível',
-                          color: disponivel ? _kBlue : _kRed,
-                        ),
+      label: disponivel
+          ? 'Disponível'
+          : 'Indisponível',
+      color: disponivel ? _kGreen : _kRed,
+    ),
                       ],
                     ),
+
+                    if (!disponivel &&
+    motivo != null &&
+    motivo.isNotEmpty) ...[
+  const SizedBox(height: 8),
+  Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(
+      horizontal: 10,
+      vertical: 8,
+    ),
+    decoration: BoxDecoration(
+      color: _kRed.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(
+        color: _kRed.withOpacity(0.18),
+      ),
+    ),
+    child: Text(
+      motivo,
+      style: const TextStyle(
+        color: _kRed,
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  ),
+],
                   ],
                 ),
               ),
               PopupMenuButton<String>(
                 tooltip: 'Opções',
                 onSelected: (value) {
-                  switch (value) {
-                    case 'editar':
-                      onEditar();
-                      break;
-                    case 'disponibilidade':
-                      onAlterarDisponibilidade();
-                      break;
-                    case 'estado':
-                      onAlterarEstado();
-                      break;
-                    case 'desativar':
-                      onDesativar();
-                      break;
-                  }
-                },
+  switch (value) {
+    case 'editar':
+      onEditar();
+      break;
+
+    case 'estado':
+      onAlterarEstado();
+      break;
+  }
+},
                 itemBuilder: (context) {
                   return [
                     const PopupMenuItem(
@@ -720,22 +655,7 @@ class _IngredienteCard extends StatelessWidget {
                         title: Text('Editar'),
                       ),
                     ),
-                    PopupMenuItem(
-                      value: 'disponibilidade',
-                      child: ListTile(
-                        dense: true,
-                        leading: Icon(
-                          disponivel
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                        ),
-                        title: Text(
-                          disponivel
-                              ? 'Tornar indisponível'
-                              : 'Tornar disponível',
-                        ),
-                      ),
-                    ),
+                
                     PopupMenuItem(
                       value: 'estado',
                       child: ListTile(
@@ -750,21 +670,6 @@ class _IngredienteCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (ativo)
-                      const PopupMenuItem(
-                        value: 'desativar',
-                        child: ListTile(
-                          dense: true,
-                          leading: Icon(
-                            Icons.delete_outline,
-                            color: _kRed,
-                          ),
-                          title: Text(
-                            'Desactivar ingrediente',
-                            style: TextStyle(color: _kRed),
-                          ),
-                        ),
-                      ),
                   ];
                 },
               ),

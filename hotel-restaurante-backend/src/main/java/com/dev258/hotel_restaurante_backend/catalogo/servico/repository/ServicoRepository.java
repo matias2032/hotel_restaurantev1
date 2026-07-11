@@ -19,7 +19,6 @@ public interface ServicoRepository
 
     List<ServicoEntity> findAllByOrderByNomeAsc();
 
-    List<ServicoEntity> findByDisponivelTrueAndAtivoTrueOrderByNomeAsc();
 
     List<ServicoEntity> findByDestaqueTrueAndAtivoTrueOrderByNomeAsc();
 
@@ -31,7 +30,5 @@ List<ServicoEntity> findDistinctByCategorias_CategoriaServico_IdCategoriaServico
         Long idCategoriaServico
 );
 
-List<ServicoEntity> findDistinctByCategorias_CategoriaServico_IdCategoriaServicoAndDisponivelTrueAndAtivoTrueOrderByNomeAsc(
-        Long idCategoriaServico
-);
+
 }

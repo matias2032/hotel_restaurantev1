@@ -165,24 +165,6 @@ public class ProdutoController {
         return produtoService.editarProduto(idProduto, dto);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // PRODUTOS — ALTERAR DISPONIBILIDADE
-    // PATCH /api/catalogo/produtos/{idProduto}/disponibilidade
-    // Body: { "disponivel": true }
-    // ─────────────────────────────────────────────────────────────
-
-    @PatchMapping("/{idProduto}/disponibilidade")
-    public ProdutoResponseDTO alterarDisponibilidadeProduto(
-            @PathVariable Long idProduto,
-            @RequestBody Map<String, Boolean> body
-    ) {
-        Boolean disponivel = body != null ? body.get("disponivel") : null;
-
-        return produtoService.alterarDisponibilidadeProduto(
-                idProduto,
-                disponivel
-        );
-    }
 
     // ─────────────────────────────────────────────────────────────
     // PRODUTOS — ALTERAR DESTAQUE

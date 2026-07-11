@@ -335,37 +335,7 @@ final editado = await repository.editarServico(
     return sucesso;
   }
 
-  Future<bool> alterarDisponibilidadeServico(
-    int idServico,
-    bool disponivel,
-  ) async {
-    var sucesso = false;
 
-    await _executar(
-      'ALTERAR_DISPONIBILIDADE_SERVICO',
-      () async {
-        final servico = await repository.alterarDisponibilidadeServico(
-          idServico,
-          disponivel,
-        );
-
-        _actualizarServicoNaLista(servico);
-
-        if (_servicoSelecionado?.idServico == idServico) {
-          _servicoSelecionado = servico;
-        }
-
-        sucesso = true;
-
-        debugPrint(
-          '[ServicoProvider] ALTERAR_DISPONIBILIDADE_SERVICO_SUCESSO — '
-          'id=$idServico disponivel=${servico.disponivel}',
-        );
-      },
-    );
-
-    return sucesso;
-  }
 
   Future<bool> alterarDestaqueServico(
     int idServico,
@@ -400,84 +370,89 @@ final editado = await repository.editarServico(
   }
 
   Future<bool> alterarEstadoServico(
-    int idServico,
-    bool ativo,
-  ) async {
-    var sucesso = false;
+  int idServico,
+  bool ativo,
+) async {
+  var sucesso = false;
 
-    await _executar(
-      'ALTERAR_ESTADO_SERVICO',
-      () async {
-        final servico = await repository.alterarEstadoServico(
-          idServico,
-          ativo,
-        );
+  await _executar(
+    'ALTERAR_ESTADO_SERVICO',
+    () async {
+      final servico = await repository.alterarEstadoServico(
+        idServico,
+        ativo,
+      );
 
-        _actualizarServicoNaLista(servico);
+      _actualizarServicoNaLista(servico);
 
-        if (_servicoSelecionado?.idServico == idServico) {
-          _servicoSelecionado = servico;
-        }
+      if (_servicoSelecionado?.idServico == idServico) {
+        _servicoSelecionado = servico;
+      }
 
-        sucesso = true;
+      sucesso = true;
 
-        debugPrint(
-          '[ServicoProvider] ALTERAR_ESTADO_SERVICO_SUCESSO — '
-          'id=$idServico ativo=${servico.ativo} '
-          'disponivel=${servico.disponivel} destaque=${servico.destaque}',
-        );
-      },
-    );
+      debugPrint(
+        '[ServicoProvider] ALTERAR_ESTADO_SERVICO_SUCESSO — '
+        'id=$idServico '
+        'ativo=${servico.ativo} '
+        'disponivelCalculado=${servico.disponivelCalculado} '
+        'destaque=${servico.destaque}',
+      );
+    },
+  );
 
-    return sucesso;
-  }
-
+  return sucesso;
+}
   Future<bool> desativarServico(
-    int idServico,
-  ) async {
-    var sucesso = false;
+  int idServico,
+) async {
+  var sucesso = false;
 
-    await _executar(
-      'DESATIVAR_SERVICO',
-      () async {
-        await repository.desativarServico(
-          idServico,
-        );
+  await _executar(
+    'DESATIVAR_SERVICO',
+    () async {
+      await repository.desativarServico(
+        idServico,
+      );
 
-        _servicos = _servicos
-            .map((servico) {
-              if (servico.idServico == idServico) {
-                return servico.copyWith(
-                  ativo: false,
-                  disponivel: false,
-                  destaque: false,
-                );
-              }
-
+      _servicos = _servicos
+          .map((servico) {
+            if (servico.idServico != idServico) {
               return servico;
-            })
-            .toList()
-          ..sort(_compararServicos);
+            }
 
-        if (_servicoSelecionado?.idServico == idServico) {
-          _servicoSelecionado = _servicoSelecionado?.copyWith(
-            ativo: false,
-            disponivel: false,
-            destaque: false,
-          );
-        }
+            return servico.copyWith(
+              ativo: false,
+              disponivelCalculado: false,
+              motivoIndisponibilidade:
+                  'Serviço inativo.',
+            );
+          })
+          .toList()
+        ..sort(_compararServicos);
 
-        sucesso = true;
-
-        debugPrint(
-          '[ServicoProvider] DESATIVAR_SERVICO_SUCESSO — id=$idServico',
+      if (_servicoSelecionado?.idServico == idServico) {
+        _servicoSelecionado =
+            _servicoSelecionado?.copyWith(
+          ativo: false,
+          disponivelCalculado: false,
+          motivoIndisponibilidade:
+              'Serviço inativo.',
         );
-      },
-    );
+      }
 
-    return sucesso;
-  }
+      sucesso = true;
 
+      debugPrint(
+        '[ServicoProvider] '
+        'DESATIVAR_SERVICO_SUCESSO — '
+        'id=$idServico',
+      );
+    },
+  );
+
+  return sucesso;
+}
   // ─────────────────────────────────────────────────────────────
   // IMAGENS DO SERVIÇO
   // ─────────────────────────────────────────────────────────────

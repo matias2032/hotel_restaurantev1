@@ -248,7 +248,6 @@ class ProdutoModel {
   final String? motivoIndisponibilidade;
 
   final int? tempoPreparoMinutos;
-  final bool disponivel;
   final bool destaque;
   final bool ativo;
   final List<ProdutoImagemModel> imagens;
@@ -276,7 +275,6 @@ class ProdutoModel {
     this.disponivelCalculado = true,
     this.motivoIndisponibilidade,
     this.tempoPreparoMinutos,
-    this.disponivel = true,
     this.destaque = false,
     this.ativo = true,
     this.imagens = const [],
@@ -331,8 +329,7 @@ class ProdutoModel {
       ),
 
       tempoPreparoMinutos: _parseIntOpt(json['tempoPreparoMinutos']),
-      disponivel: _parseBool(json['disponivel'], defaultValue: true),
-      destaque: _parseBool(json['destaque'], defaultValue: false),
+           destaque: _parseBool(json['destaque'], defaultValue: false),
       ativo: _parseBool(json['ativo'], defaultValue: true),
       imagens: _parseImagensProduto(json['imagens']),
       ingredientes: _parseIngredientesProduto(json['ingredientes']),
@@ -369,8 +366,7 @@ if (enviarCategorias)
       'quantidadeEstoque': controlaEstoque ? quantidadeEstoque : null,
       'controlaEstoquePorIngredientes': controlaEstoquePorIngredientes,
       'tempoPreparoMinutos': tempoPreparoMinutos,
-      'disponivel': disponivel,
-      'destaque': destaque,
+       'destaque': destaque,
       'ativo': ativo,
       'tipoMovimentoEstoque': tipoMovimentoEstoque?.apiValue,
 'motivoMovimentoEstoque': _nullIfBlank(motivoMovimentoEstoque),
@@ -441,8 +437,7 @@ int? idUsuarioMovimentoEstoque,
     : motivoIndisponibilidade as String?,
       tempoPreparoMinutos:
           tempoPreparoMinutos ?? this.tempoPreparoMinutos,
-      disponivel: disponivel ?? this.disponivel,
-      destaque: destaque ?? this.destaque,
+           destaque: destaque ?? this.destaque,
       ativo: ativo ?? this.ativo,
       tipoMovimentoEstoque:
     tipoMovimentoEstoque ?? this.tipoMovimentoEstoque,

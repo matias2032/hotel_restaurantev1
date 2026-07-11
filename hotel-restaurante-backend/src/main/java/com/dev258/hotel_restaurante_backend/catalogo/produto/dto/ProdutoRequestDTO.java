@@ -40,7 +40,7 @@ public record ProdutoRequestDTO(
         @Min(value = 0, message = "O tempo de preparo não pode ser negativo.")
         Integer tempoPreparoMinutos,
 
-        Boolean disponivel,
+
 
         Boolean destaque,
 

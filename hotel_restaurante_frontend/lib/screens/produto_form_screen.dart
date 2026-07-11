@@ -46,7 +46,6 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
   bool _dragging = false;
 
   bool _ativo = true;
-  bool _disponivel = true;
   bool _destaque = false;
   bool _promocional = false;
   bool _controlaEstoque = false;
@@ -88,6 +87,41 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
   bool get _estoqueReduziu {
     return _quantidadeEstoqueActualForm < _quantidadeEstoqueAnterior;
   }
+
+  void _alterarControleEstoqueProprio(bool value) {
+  setState(() {
+    _controlaEstoque = value;
+
+    if (value) {
+      // Os dois tipos de controle não podem coexistir.
+      _controlaEstoquePorIngredientes = false;
+
+      // Não deve permanecer nenhuma associação de ingredientes.
+      _idCategoriaIngredienteSelecionada = null;
+      _ingredientesSelecionados = [];
+    } else {
+      _quantidadeEstoqueCtrl.clear();
+      _resetarMovimentoEstoque();
+    }
+  });
+}
+
+void _alterarControlePorIngredientes(bool value) {
+  setState(() {
+    _controlaEstoquePorIngredientes = value;
+
+    if (value) {
+      // Ao controlar por ingredientes, o estoque próprio é desligado.
+      _controlaEstoque = false;
+      _quantidadeEstoqueCtrl.clear();
+      _resetarMovimentoEstoque();
+    } else {
+      // Ao desligar, remove a selecção da categoria e os ingredientes.
+      _idCategoriaIngredienteSelecionada = null;
+      _ingredientesSelecionados = [];
+    }
+  });
+}
 
   String get _motivoMovimentoEstoque {
     if (_tipoMovimentoEstoqueSelecionado == TipoMovimentoEstoqueModel.outros) {
@@ -207,7 +241,6 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
           : '';
 
       _ativo = args.ativo;
-      _disponivel = args.disponivel;
       _destaque = args.destaque;
       _promocional = args.promocional;
       _controlaEstoque = args.controlaEstoque;
@@ -553,14 +586,14 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
       return;
     }
 
-    if (_controlaEstoquePorIngredientes &&
-        !_ingredientesSelecionados.any((item) => item.obrigatorio)) {
-      _snack(
-        'Para controlar estoque por ingredientes, associe pelo menos um ingrediente obrigatório.',
-        erro: true,
-      );
-      return;
-    }
+            if (_controlaEstoquePorIngredientes &&
+            _ingredientesSelecionados.isEmpty) {
+          _snack(
+            'Associe pelo menos um ingrediente para controlar o estoque por ingredientes.',
+            erro: true,
+          );
+          return;
+        }
 
     final promocionalReal = _temCategoriaPromocao && _promocional;
     final preco = _parseDouble(_precoCtrl.text);
@@ -627,6 +660,17 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
       _garantirImagemPrincipal();
       _reordenarImagens();
 
+      if (_controlaEstoque) {
+  _controlaEstoquePorIngredientes = false;
+  _idCategoriaIngredienteSelecionada = null;
+  _ingredientesSelecionados = [];
+}
+
+if (_controlaEstoquePorIngredientes) {
+  _controlaEstoque = false;
+  _quantidadeEstoqueCtrl.clear();
+}
+
       final produto = ProdutoModel(
         idProduto: _produtoEdicao?.idProduto,
         nome: _nomeCtrl.text.trim(),
@@ -639,7 +683,6 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
         quantidadeEstoque: quantidadeEstoque,
         controlaEstoquePorIngredientes: _controlaEstoquePorIngredientes,
         tempoPreparoMinutos: _parseIntNullable(_tempoPreparoCtrl.text),
-        disponivel: _ativo ? _disponivel : false,
         destaque: _ativo ? _destaque : false,
         ativo: _ativo,
         categoriasProduto: _categoriasSelecionadas,
@@ -991,17 +1034,15 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
                                 fontSize: 13,
                               ),
                             ),
-                            onChanged: _ativo
-                                ? (value) {
-                                    setState(() {
-                                      _promocional = value;
+onChanged: (value) {
+  setState(() {
+    _promocional = value;
 
-                                      if (!value) {
-                                        _precoPromocionalCtrl.clear();
-                                      }
-                                    });
-                                  }
-                                : null,
+    if (!value) {
+      _precoPromocionalCtrl.clear();
+    }
+  });
+},
                           ),
                           if (_promocional) ...[
                             const SizedBox(height: 14),
@@ -1029,131 +1070,112 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
                             prefixIcon: Icon(Icons.timer_outlined),
                           ),
                         ),
-                        const SizedBox(height: 14),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          value: _controlaEstoque,
-                          activeColor: _kBlue,
-                          title: const Text(
-                            'Controla estoque próprio',
-                            style: TextStyle(
-                              color: _kDark,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          subtitle: const Text(
-                            'Use para produtos embalados ou itens com quantidade própria.',
-                            style: TextStyle(
-                              color: _kMuted,
-                              fontSize: 13,
-                            ),
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              _controlaEstoque = value;
+                                  const SizedBox(height: 14),
 
-                              if (!value) {
-                                _quantidadeEstoqueCtrl.clear();
-                                _resetarMovimentoEstoque();
-                              }
-                            });
-                          },
-                        ),
-                        if (_controlaEstoque) ...[
-                          const SizedBox(height: 14),
-                          TextFormField(
-                            controller: _quantidadeEstoqueCtrl,
-                            validator: _validarQuantidadeEstoque,
-                            keyboardType:
-                                const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            decoration: const InputDecoration(
-                              labelText: 'Quantidade em estoque',
-                              prefixIcon: Icon(Icons.inventory_2_outlined),
-                            ),
-                            onChanged: (_) {
-                              setState(() {
-                                if (!_tiposMovimentoPermitidos.contains(
-                                  _tipoMovimentoEstoqueSelecionado,
-                                )) {
-                                  _tipoMovimentoEstoqueSelecionado = null;
-                                  _motivoMovimentoOutroCtrl.clear();
-                                }
-                              });
-                            },
-                          ),
-                        ],
-                        if (_quantidadeEstoqueFoiAlterada) ...[
-                          const SizedBox(height: 14),
-                          _MovimentoEstoqueEdicaoCard(
-                            aumentou: _estoqueAumentou,
-                            quantidadeAnterior: _quantidadeEstoqueAnterior,
-                            quantidadeActual: _quantidadeEstoqueActualForm,
-                            tipoSelecionado: _tipoMovimentoEstoqueSelecionado,
-                            tiposPermitidos: _tiposMovimentoPermitidos,
-                            motivoOutroCtrl: _motivoMovimentoOutroCtrl,
-                            observacoesCtrl: _observacoesMovimentoEstoqueCtrl,
-                            onTipoChanged: (value) {
-                              setState(() {
-                                _tipoMovimentoEstoqueSelecionado = value;
+          // O controle de estoque próprio desaparece quando o produto
+          // passa a ser controlado por ingredientes.
+          if (!_controlaEstoquePorIngredientes) ...[
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _controlaEstoque,
+              activeColor: _kBlue,
+              title: const Text(
+                'Controla estoque próprio',
+                style: TextStyle(
+                  color: _kDark,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              subtitle: const Text(
+                'Use para produtos embalados ou itens com quantidade própria.',
+                style: TextStyle(
+                  color: _kMuted,
+                  fontSize: 13,
+                ),
+              ),
+              onChanged: _alterarControleEstoqueProprio,
+            ),
 
-                                if (value != TipoMovimentoEstoqueModel.outros) {
-                                  _motivoMovimentoOutroCtrl.clear();
-                                }
-                              });
-                            },
-                          ),
-                        ],
-                        const SizedBox(height: 14),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          value: _controlaEstoquePorIngredientes,
-                          activeColor: _kPurple,
-                          title: const Text(
-                            'Controla estoque por ingredientes',
-                            style: TextStyle(
-                              color: _kDark,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          subtitle: const Text(
-                            'A disponibilidade real será calculada com base nos ingredientes obrigatórios.',
-                            style: TextStyle(
-                              color: _kMuted,
-                              fontSize: 13,
-                            ),
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              _controlaEstoquePorIngredientes = value;
-                            });
-                          },
-                        ),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          value: _disponivel,
-                          activeColor: _kBlue,
-                          title: const Text(
-                            'Disponível manualmente',
-                            style: TextStyle(
-                              color: _kDark,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          subtitle: const Text(
-                            'Mesmo activo, o produto pode ficar indisponível por estoque.',
-                            style: TextStyle(
-                              color: _kMuted,
-                              fontSize: 13,
-                            ),
-                          ),
-                          onChanged: _ativo
-                              ? (value) {
-                                  setState(() => _disponivel = value);
-                                }
-                              : null,
-                        ),
+            if (_controlaEstoque) ...[
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _quantidadeEstoqueCtrl,
+                validator: _validarQuantidadeEstoque,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Quantidade em estoque',
+                  prefixIcon: Icon(Icons.inventory_2_outlined),
+                ),
+                onChanged: (_) {
+                  setState(() {
+                    if (!_tiposMovimentoPermitidos.contains(
+                      _tipoMovimentoEstoqueSelecionado,
+                    )) {
+                      _tipoMovimentoEstoqueSelecionado = null;
+                      _motivoMovimentoOutroCtrl.clear();
+                    }
+                  });
+                },
+              ),
+            ],
+
+            if (_quantidadeEstoqueFoiAlterada) ...[
+              const SizedBox(height: 14),
+              _MovimentoEstoqueEdicaoCard(
+                aumentou: _estoqueAumentou,
+                quantidadeAnterior: _quantidadeEstoqueAnterior,
+                quantidadeActual: _quantidadeEstoqueActualForm,
+                tipoSelecionado: _tipoMovimentoEstoqueSelecionado,
+                tiposPermitidos: _tiposMovimentoPermitidos,
+                motivoOutroCtrl: _motivoMovimentoOutroCtrl,
+                observacoesCtrl: _observacoesMovimentoEstoqueCtrl,
+                onTipoChanged: (value) {
+                  setState(() {
+                    _tipoMovimentoEstoqueSelecionado = value;
+
+                    if (value != TipoMovimentoEstoqueModel.outros) {
+                      _motivoMovimentoOutroCtrl.clear();
+                    }
+                  });
+                },
+              ),
+            ],
+          ],
+
+          const SizedBox(height: 8),
+
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _controlaEstoquePorIngredientes,
+            activeColor: _kPurple,
+            title: const Text(
+              'Controla estoque por ingredientes',
+              style: TextStyle(
+                color: _kDark,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            subtitle: Text(
+              _controlaEstoque
+                  ? 'Desactive o estoque próprio para controlar este produto por ingredientes.'
+                  : _controlaEstoquePorIngredientes
+                      ? 'A disponibilidade será calculada com base nos ingredientes associados.'
+                      : 'Active para associar ingredientes e calcular a disponibilidade da receita.',
+              style: const TextStyle(
+                color: _kMuted,
+                fontSize: 13,
+              ),
+            ),
+
+            // Quando o estoque próprio estiver activo, este toggle
+            // permanece visível, mas fica desabilitado.
+            onChanged: _controlaEstoque
+                ? null
+                : _alterarControlePorIngredientes,
+          ),
+                      
                         SwitchListTile(
                           contentPadding: EdgeInsets.zero,
                           value: _destaque,
@@ -1172,43 +1194,34 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
                               fontSize: 13,
                             ),
                           ),
-                          onChanged: _ativo
-                              ? (value) {
-                                  setState(() => _destaque = value);
-                                }
-                              : null,
-                        ),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          value: _ativo,
-                          activeColor: _kGreen,
-                          title: const Text(
-                            'Activo',
-                            style: TextStyle(
-                              color: _kDark,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          subtitle: const Text(
-                            'Ao desactivar, o produto fica indisponível, sem destaque e sem promoção.',
-                            style: TextStyle(
-                              color: _kMuted,
-                              fontSize: 13,
-                            ),
-                          ),
                           onChanged: (value) {
-                            setState(() {
-                              _ativo = value;
-
-                              if (!value) {
-                                _disponivel = false;
-                                _destaque = false;
-                                _promocional = false;
-                                _precoPromocionalCtrl.clear();
-                              }
-                            });
+                            setState(() => _destaque = value);
                           },
                         ),
+SwitchListTile(
+  contentPadding: EdgeInsets.zero,
+  value: _ativo,
+  activeColor: _kGreen,
+  title: const Text(
+    'Activo',
+    style: TextStyle(
+      color: _kDark,
+      fontWeight: FontWeight.w700,
+    ),
+  ),
+  subtitle: Text(
+    _ativo
+        ? 'O produto está activo. A disponibilidade real depende do estoque configurado.'
+        : 'O produto está inactivo e não ficará disponível para venda.',
+    style: const TextStyle(
+      color: _kMuted,
+      fontSize: 13,
+    ),
+  ),
+  onChanged: (value) {
+    setState(() => _ativo = value);
+  },
+),
                       ],
                     ),
                   ),
@@ -1217,12 +1230,14 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
                     categorias: categoriasProduto,
                     selecionadas: _categoriasSelecionadas,
                     onToggle: _toggleCategoria,
-                    onDefinirPrincipal: _definirCategoriaPrincipal,
+                    // onDefinirPrincipal: _definirCategoriaPrincipal,
                   ),
+
+                  if (_controlaEstoquePorIngredientes) ...[
                   const SizedBox(height: 16),
                   _IngredientesSection(
-                    categoriasIngrediente: categoriasIngrediente,
-                    ingredientesDisponiveis: ingredientesDisponiveis,
+                    categoriasIngrediente: ingredienteProvider.categorias,
+                    ingredientesDisponiveis: ingredienteProvider.ingredientes,
                     idCategoriaSelecionada: _idCategoriaIngredienteSelecionada,
                     ingredientesSelecionados: _ingredientesSelecionados,
                     onCategoriaChanged: _carregarIngredientesPorCategoria,
@@ -1230,6 +1245,7 @@ class _ProdutoFormScreenState extends State<ProdutoFormScreen> {
                     onRemover: _removerIngrediente,
                     onActualizar: _actualizarIngrediente,
                   ),
+                ],
                   const SizedBox(height: 16),
                   _ImagensSection(
                     imagens: _imagens,
@@ -1462,13 +1478,13 @@ class _CategoriasProdutoSection extends StatelessWidget {
   final List<CategoriaProdutoModel> categorias;
   final List<CategoriaProdutoResumoModel> selecionadas;
   final ValueChanged<CategoriaProdutoModel> onToggle;
-  final ValueChanged<CategoriaProdutoResumoModel> onDefinirPrincipal;
+  // final ValueChanged<CategoriaProdutoResumoModel> onDefinirPrincipal;
 
   const _CategoriasProdutoSection({
     required this.categorias,
     required this.selecionadas,
     required this.onToggle,
-    required this.onDefinirPrincipal,
+    // required this.onDefinirPrincipal,
   });
 
   @override
@@ -1550,69 +1566,69 @@ class _CategoriasProdutoSection extends StatelessWidget {
                 );
               }).toList(),
             ),
-          if (selecionadas.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            const Divider(height: 1),
-            const SizedBox(height: 12),
-            const Text(
-              'Seleccionadas:',
-              style: TextStyle(
-                color: _kText,
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: selecionadas.map((categoria) {
-                final promocao = _isCategoriaPromocaoLocal(categoria.nome);
+          // if (selecionadas.isNotEmpty) ...[
+          //   const SizedBox(height: 16),
+          //   const Divider(height: 1),
+          //   const SizedBox(height: 12),
+          //   const Text(
+          //     'Seleccionadas:',
+          //     style: TextStyle(
+          //       color: _kText,
+          //       fontWeight: FontWeight.w800,
+          //       fontSize: 13,
+          //     ),
+          //   ),
+          //   const SizedBox(height: 8),
+          //   Wrap(
+          //     spacing: 8,
+          //     runSpacing: 8,
+          //     children: selecionadas.map((categoria) {
+          //       final promocao = _isCategoriaPromocaoLocal(categoria.nome);
 
-                return ActionChip(
-                  avatar: Icon(
-                    categoria.principal
-                        ? Icons.star
-                        : promocao
-                            ? Icons.local_offer_outlined
-                            : Icons.star_border,
-                    size: 17,
-                    color: categoria.principal
-                        ? _kOrange
-                        : promocao
-                            ? _kGreen
-                            : _kMuted,
-                  ),
-                  label: Text(
-                    categoria.principal
-                        ? '${categoria.nome} — principal'
-                        : categoria.nome,
-                  ),
-                  backgroundColor: categoria.principal
-                      ? _kOrange.withOpacity(0.12)
-                      : promocao
-                          ? _kGreen.withOpacity(0.10)
-                          : const Color(0xFFF9FAFB),
-                  side: BorderSide(
-                    color: categoria.principal
-                        ? _kOrange
-                        : promocao
-                            ? _kGreen
-                            : _kBorder,
-                  ),
-                  labelStyle: TextStyle(
-                    color: categoria.principal
-                        ? _kOrange
-                        : promocao
-                            ? _kGreen
-                            : _kText,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  onPressed: () => onDefinirPrincipal(categoria),
-                );
-              }).toList(),
-            ),
-          ],
+          //       return ActionChip(
+          //         avatar: Icon(
+          //           categoria.principal
+          //               ? Icons.star
+          //               : promocao
+          //                   ? Icons.local_offer_outlined
+          //                   : Icons.star_border,
+          //           size: 17,
+          //           color: categoria.principal
+          //               ? _kOrange
+          //               : promocao
+          //                   ? _kGreen
+          //                   : _kMuted,
+          //         ),
+          //         label: Text(
+          //           categoria.principal
+          //               ? '${categoria.nome} — principal'
+          //               : categoria.nome,
+          //         ),
+          //         backgroundColor: categoria.principal
+          //             ? _kOrange.withOpacity(0.12)
+          //             : promocao
+          //                 ? _kGreen.withOpacity(0.10)
+          //                 : const Color(0xFFF9FAFB),
+          //         side: BorderSide(
+          //           color: categoria.principal
+          //               ? _kOrange
+          //               : promocao
+          //                   ? _kGreen
+          //                   : _kBorder,
+          //         ),
+          //         labelStyle: TextStyle(
+          //           color: categoria.principal
+          //               ? _kOrange
+          //               : promocao
+          //                   ? _kGreen
+          //                   : _kText,
+          //           fontWeight: FontWeight.w700,
+          //         ),
+          //         onPressed: () => onDefinirPrincipal(categoria),
+          //       );
+          //     }).toList(),
+          //   ),
+          // ],
         ],
       ),
     );
@@ -1665,6 +1681,22 @@ class _IngredientesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ingredientesNaoSeleccionados = ingredientesDisponiveis.where(
+      (ingrediente) {
+        final id = ingrediente.idIngrediente;
+
+        return id != null &&
+            !ingredientesSelecionados.any(
+              (selecionado) => selecionado.idIngrediente == id,
+            );
+      },
+    ).toList()
+      ..sort(
+        (a, b) => a.nome.toLowerCase().compareTo(
+              b.nome.toLowerCase(),
+            ),
+      );
+
     return Container(
       decoration: _cardDecoration(),
       padding: const EdgeInsets.all(18),
@@ -1681,13 +1713,14 @@ class _IngredientesSection extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Primeiro escolha a categoria de ingredientes. Depois associe os ingredientes e defina a quantidade usada em cada produto.',
+            'Seleccione uma categoria, associe os ingredientes e informe apenas a quantidade utilizada.',
             style: TextStyle(
               color: _kMuted,
               fontSize: 13,
             ),
           ),
           const SizedBox(height: 14),
+
           DropdownButtonFormField<int?>(
             value: idCategoriaSelecionada,
             decoration: const InputDecoration(
@@ -1708,22 +1741,24 @@ class _IngredientesSection extends StatelessWidget {
             ],
             onChanged: onCategoriaChanged,
           ),
+
           const SizedBox(height: 14),
+
           if (idCategoriaSelecionada == null)
             const _InfoBox(
               icon: Icons.info_outline,
               mensagem:
                   'Seleccione uma categoria para visualizar os ingredientes disponíveis.',
             )
-          else if (ingredientesDisponiveis.isEmpty)
+          else if (ingredientesNaoSeleccionados.isEmpty)
             const _InfoBox(
-              icon: Icons.kitchen_outlined,
+              icon: Icons.check_circle_outline,
               mensagem:
-                  'Nenhum ingrediente disponível encontrado nesta categoria.',
+                  'Todos os ingredientes disponíveis desta categoria já foram associados.',
             )
           else ...[
             const Text(
-              'Ingredientes disponíveis:',
+              'Ingredientes disponíveis',
               style: TextStyle(
                 color: _kText,
                 fontSize: 13,
@@ -1734,42 +1769,32 @@ class _IngredientesSection extends StatelessWidget {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: ingredientesDisponiveis.map((ingrediente) {
-                final jaSelecionado = ingredientesSelecionados.any(
-                  (item) => item.idIngrediente == ingrediente.idIngrediente,
-                );
-
+              children: ingredientesNaoSeleccionados.map((ingrediente) {
                 return ActionChip(
-                  avatar: Icon(
-                    jaSelecionado
-                        ? Icons.check_circle
-                        : Icons.add_circle_outline,
-                    size: 17,
-                    color: jaSelecionado ? _kGreen : _kOrange,
+                  avatar: const Icon(
+                    Icons.add_circle_outline,
+                    size: 18,
+                    color: _kGreen,
                   ),
                   label: Text(ingrediente.nome),
-                  backgroundColor: jaSelecionado
-                      ? _kGreen.withOpacity(0.10)
-                      : const Color(0xFFF9FAFB),
-                  side: BorderSide(
-                    color: jaSelecionado ? _kGreen : _kBorder,
-                  ),
-                  labelStyle: TextStyle(
-                    color: jaSelecionado ? _kGreen : _kText,
+                  backgroundColor: const Color(0xFFF9FAFB),
+                  side: const BorderSide(color: _kBorder),
+                  labelStyle: const TextStyle(
+                    color: _kText,
                     fontWeight: FontWeight.w700,
                   ),
-                  onPressed:
-                      jaSelecionado ? null : () => onAdicionar(ingrediente),
+                  onPressed: () => onAdicionar(ingrediente),
                 );
               }).toList(),
             ),
           ],
+
           if (ingredientesSelecionados.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             const Divider(height: 1),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             const Text(
-              'Ingredientes associados:',
+              'Ingredientes associados',
               style: TextStyle(
                 color: _kText,
                 fontSize: 13,
@@ -1777,10 +1802,11 @@ class _IngredientesSection extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
+
             ...ingredientesSelecionados.map((ingrediente) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: _IngredienteReceitaCard(
+                child: _IngredienteQuantidadeCard(
                   ingrediente: ingrediente,
                   onRemover: () => onRemover(ingrediente),
                   onActualizar: onActualizar,
@@ -1788,6 +1814,194 @@ class _IngredientesSection extends StatelessWidget {
               );
             }),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _IngredienteQuantidadeCard extends StatefulWidget {
+  final ProdutoIngredienteModel ingrediente;
+  final VoidCallback onRemover;
+  final ValueChanged<ProdutoIngredienteModel> onActualizar;
+
+  const _IngredienteQuantidadeCard({
+    required this.ingrediente,
+    required this.onRemover,
+    required this.onActualizar,
+  });
+
+  @override
+  State<_IngredienteQuantidadeCard> createState() =>
+      _IngredienteQuantidadeCardState();
+}
+
+class _IngredienteQuantidadeCardState
+    extends State<_IngredienteQuantidadeCard> {
+  late final TextEditingController _quantidadeCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _quantidadeCtrl = TextEditingController(
+      text: _formatarQuantidade(
+        widget.ingrediente.quantidadePadrao,
+      ),
+    );
+  }
+
+  @override
+  void didUpdateWidget(
+    covariant _IngredienteQuantidadeCard oldWidget,
+  ) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.ingrediente.quantidadePadrao !=
+        widget.ingrediente.quantidadePadrao) {
+      _quantidadeCtrl.text = _formatarQuantidade(
+        widget.ingrediente.quantidadePadrao,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _quantidadeCtrl.dispose();
+    super.dispose();
+  }
+
+  void _diminuir() {
+    final actual = _lerQuantidade();
+    final novaQuantidade = actual > 1 ? actual - 1 : 0.1;
+
+    _actualizar(novaQuantidade);
+  }
+
+  void _aumentar() {
+    final actual = _lerQuantidade();
+    _actualizar(actual + 1);
+  }
+
+  void _actualizarPeloCampo(String value) {
+    final quantidade = double.tryParse(
+      value.trim().replaceAll(',', '.'),
+    );
+
+    if (quantidade == null || quantidade <= 0) return;
+
+    widget.onActualizar(
+      widget.ingrediente.copyWith(
+        quantidadePadrao: quantidade,
+      ),
+    );
+  }
+
+  void _actualizar(double quantidade) {
+    final quantidadeValida = quantidade <= 0 ? 0.1 : quantidade;
+
+    _quantidadeCtrl.text = _formatarQuantidade(quantidadeValida);
+    _quantidadeCtrl.selection = TextSelection.collapsed(
+      offset: _quantidadeCtrl.text.length,
+    );
+
+    widget.onActualizar(
+      widget.ingrediente.copyWith(
+        quantidadePadrao: quantidadeValida,
+      ),
+    );
+  }
+
+  double _lerQuantidade() {
+    return double.tryParse(
+          _quantidadeCtrl.text.trim().replaceAll(',', '.'),
+        ) ??
+        widget.ingrediente.quantidadePadrao;
+  }
+
+  static String _formatarQuantidade(double quantidade) {
+    if (quantidade == quantidade.truncateToDouble()) {
+      return quantidade.toStringAsFixed(0);
+    }
+
+    return quantidade.toStringAsFixed(2);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: _kBorder),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: _kPurple.withOpacity(0.10),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.restaurant_outlined,
+              color: _kPurple,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 10),
+
+          Expanded(
+            child: Text(
+              widget.ingrediente.nomeIngrediente,
+              style: const TextStyle(
+                color: _kDark,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+
+          IconButton(
+            tooltip: 'Diminuir quantidade',
+            onPressed: _diminuir,
+            icon: const Icon(Icons.remove_rounded),
+            color: _kDark,
+          ),
+
+          SizedBox(
+            width: 88,
+            child: TextFormField(
+              controller: _quantidadeCtrl,
+              textAlign: TextAlign.center,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 11,
+                ),
+              ),
+              onChanged: _actualizarPeloCampo,
+            ),
+          ),
+
+          IconButton(
+            tooltip: 'Aumentar quantidade',
+            onPressed: _aumentar,
+            icon: const Icon(Icons.add_rounded),
+            color: _kGreen,
+          ),
+
+          IconButton(
+            tooltip: 'Remover ingrediente',
+            onPressed: widget.onRemover,
+            icon: const Icon(Icons.close_rounded),
+            color: _kRed,
+          ),
         ],
       ),
     );

@@ -162,24 +162,6 @@ public class IngredienteController {
         return ingredienteService.editarIngrediente(idIngrediente, dto);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // INGREDIENTES — ALTERAR DISPONIBILIDADE
-    // PATCH /api/catalogo/ingredientes/{idIngrediente}/disponibilidade
-    // Body: { "disponivel": true }
-    // ─────────────────────────────────────────────────────────────
-
-    @PatchMapping("/{idIngrediente}/disponibilidade")
-    public IngredienteResponseDTO alterarDisponibilidadeIngrediente(
-            @PathVariable Long idIngrediente,
-            @RequestBody Map<String, Boolean> body
-    ) {
-        Boolean disponivel = body != null ? body.get("disponivel") : null;
-
-        return ingredienteService.alterarDisponibilidadeIngrediente(
-                idIngrediente,
-                disponivel
-        );
-    }
 
     // ─────────────────────────────────────────────────────────────
     // INGREDIENTES — ALTERAR ESTADO

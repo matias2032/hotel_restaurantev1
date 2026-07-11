@@ -65,9 +65,7 @@ private Boolean controlaEstoquePorIngredientes = false;
     @Column(name = "tempo_preparo_minutos")
     private Integer tempoPreparoMinutos;
 
-    @Column(name = "disponivel", nullable = false)
-    @Builder.Default
-    private Boolean disponivel = true;
+
 
     @Column(name = "destaque", nullable = false)
     @Builder.Default
@@ -181,29 +179,27 @@ public void limparCategorias() {
 }
 
     private void normalizarDefaults() {
-if (preco == null) {
-    preco = BigDecimal.ZERO;
-}
+        if (preco == null) {
+            preco = BigDecimal.ZERO;
+        }
 
-if (promocional == null) {
-    promocional = false;
-}
+        if (promocional == null) {
+            promocional = false;
+        }
 
-if (Boolean.FALSE.equals(promocional)) {
-    precoPromocional = null;
-}
+        if (Boolean.FALSE.equals(promocional)) {
+            precoPromocional = null;
+        }
 
-if (controlaEstoque == null) {
-    controlaEstoque = false;
-}
+        if (controlaEstoque == null) {
+            controlaEstoque = false;
+        }
 
-if (controlaEstoquePorIngredientes == null) {
-    controlaEstoquePorIngredientes = false;
-}
+        if (controlaEstoquePorIngredientes == null) {
+            controlaEstoquePorIngredientes = false;
+        }
 
-if (disponivel == null) {
-    disponivel = true;
-}
+
 
         if (destaque == null) {
             destaque = false;

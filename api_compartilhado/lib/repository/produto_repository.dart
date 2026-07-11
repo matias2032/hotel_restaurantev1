@@ -181,7 +181,6 @@ class ProdutoRepository {
 
     final produtos = await service.listarProdutos(
       somenteAtivos: somenteAtivos,
-      somenteDisponiveis: somenteDisponiveis,
       somenteDestaques: somenteDestaques,
       idCategoriaProduto: idCategoriaProduto,
     );
@@ -280,32 +279,7 @@ Future<ProdutoModel> editarProduto(
     return produtoEditado;
   }
 
-  Future<ProdutoModel> alterarDisponibilidadeProduto(
-    int idProduto,
-    bool disponivel,
-  ) async {
-    _validarId(
-      idProduto,
-      'ID do produto inválido para alteração de disponibilidade.',
-    );
 
-    debugPrint(
-      '[ProdutoRepository] ALTERAR_DISPONIBILIDADE_PRODUTO_INICIO — '
-      'id=$idProduto disponivel=$disponivel',
-    );
-
-    final produto = await service.alterarDisponibilidadeProduto(
-      idProduto,
-      disponivel,
-    );
-
-    debugPrint(
-      '[ProdutoRepository] ALTERAR_DISPONIBILIDADE_PRODUTO_SUCESSO — '
-      'id=$idProduto disponivel=${produto.disponivel}',
-    );
-
-    return produto;
-  }
 
   Future<ProdutoModel> alterarDestaqueProduto(
     int idProduto,
@@ -353,11 +327,13 @@ Future<ProdutoModel> editarProduto(
       ativo,
     );
 
-    debugPrint(
-      '[ProdutoRepository] ALTERAR_ESTADO_PRODUTO_SUCESSO — '
-      'id=$idProduto ativo=${produto.ativo} '
-      'disponivel=${produto.disponivel} destaque=${produto.destaque}',
-    );
+debugPrint(
+  '[ProdutoRepository] ALTERAR_ESTADO_PRODUTO_SUCESSO — '
+  'id=$idProduto '
+  'ativo=${produto.ativo} '
+  'disponivelCalculado=${produto.disponivelCalculado} '
+  'destaque=${produto.destaque}',
+);
 
     return produto;
   }
@@ -658,10 +634,17 @@ Future<ProdutoModel> editarProduto(
   }
 }
 
-if (produto.controlaEstoquePorIngredientes &&
-    produto.ingredientes.where((item) => item.obrigatorio).isEmpty) {
+if (produto.controlaEstoque &&
+    produto.controlaEstoquePorIngredientes) {
   throw Exception(
-    'Para controlar estoque por ingredientes, associe pelo menos um ingrediente obrigatório.',
+    'O produto não pode controlar estoque próprio e estoque por ingredientes ao mesmo tempo.',
+  );
+}
+
+if (produto.controlaEstoquePorIngredientes &&
+    produto.ingredientes.isEmpty) {
+  throw Exception(
+    'Associe pelo menos um ingrediente para controlar o estoque por ingredientes.',
   );
 }
 
@@ -711,19 +694,27 @@ return produto.copyWith(
   nome: nome,
   descricao: _normalizarTextoOpcional(produto.descricao),
   preco: produto.preco,
-promocional: produto.ativo ? produto.promocional : false,
-precoPromocional:
-    produto.ativo && produto.promocional ? produto.precoPromocional : null,
-imagemPrincipalUrl: _normalizarTextoOpcional(
-  produto.imagemPrincipalUrl,
-),
-controlaEstoque: produto.controlaEstoque,
-quantidadeEstoque: produto.controlaEstoque
-    ? produto.quantidadeEstoque
-    : null,
-controlaEstoquePorIngredientes: produto.controlaEstoquePorIngredientes,
-disponivel: produto.ativo ? produto.disponivel : false,
-destaque: produto.ativo ? produto.destaque : false,
+  promocional: produto.promocional,
+  precoPromocional:
+      produto.promocional
+          ? produto.precoPromocional
+          : null,
+  imagemPrincipalUrl: _normalizarTextoOpcional(
+    produto.imagemPrincipalUrl,
+  ),
+controlaEstoque:
+    produto.controlaEstoque &&
+    !produto.controlaEstoquePorIngredientes,
+
+quantidadeEstoque:
+    produto.controlaEstoque &&
+            !produto.controlaEstoquePorIngredientes
+        ? produto.quantidadeEstoque
+        : null,
+
+controlaEstoquePorIngredientes:
+    produto.controlaEstoquePorIngredientes,
+  destaque: produto.destaque,
   categoriasProduto: produto.categoriasProduto,
   imagens: imagensNormalizadas,
   ingredientes: ingredientesNormalizados,
@@ -795,9 +786,14 @@ destaque: produto.ativo ? produto.destaque : false,
       idIngrediente: idIngrediente,
       nomeIngrediente: ingrediente.nomeIngrediente.trim(),
       quantidadePadrao: ingrediente.quantidadePadrao,
-      obrigatorio: ingrediente.obrigatorio,
-      removivel: ingrediente.removivel,
-      permiteExtra: ingrediente.permiteExtra,
+
+      // Todo ingrediente associado compõe a receita e participa
+      // do cálculo de disponibilidade.
+      obrigatorio: true,
+
+      // Mantidos como regras padrão internas, sem toggles na UI.
+      removivel: true,
+      permiteExtra: true,
     );
   }
 

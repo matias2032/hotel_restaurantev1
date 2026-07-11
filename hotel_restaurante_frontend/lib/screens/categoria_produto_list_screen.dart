@@ -188,44 +188,6 @@ class _CategoriaProdutoListScreenState
     }
   }
 
-  Future<void> _desativarCategoria(
-    CategoriaProdutoModel categoria,
-  ) async {
-    final id = categoria.idCategoriaProduto;
-
-    if (id == null) {
-      _snack(
-        'Categoria inválida.',
-        erro: true,
-      );
-      return;
-    }
-
-    final confirmado = await _confirmar(
-      titulo: 'Desactivar categoria?',
-      mensagem:
-          'A categoria será desactivada. Os produtos associados não serão eliminados; apenas o vínculo deve ser tratado pelo backend quando aplicável.',
-      textoConfirmar: 'Desactivar',
-      corConfirmar: _kRed,
-    );
-
-    if (!confirmado || !mounted) return;
-
-    final provider = context.read<ProdutoProvider>();
-
-    final sucesso = await provider.desativarCategoria(id);
-
-    if (!mounted) return;
-
-    if (sucesso) {
-      _snack('Categoria desactivada com sucesso.');
-    } else {
-      _snack(
-        provider.erro ?? 'Não foi possível desactivar a categoria.',
-        erro: true,
-      );
-    }
-  }
 
   Future<bool> _confirmar({
     required String titulo,
@@ -355,13 +317,12 @@ class _CategoriaProdutoListScreenState
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: _CategoriaCard(
-                          categoria: categoria,
-                          associados: associados,
-                          onEditar: () => _abrirEdicao(categoria),
-                          onAlterarEstado: () => _alterarEstado(categoria),
-                          onDesativar: () => _desativarCategoria(categoria),
-                        ),
+                      child: _CategoriaCard(
+                      categoria: categoria,
+                      associados: associados,
+                      onEditar: () => _abrirEdicao(categoria),
+                      onAlterarEstado: () => _alterarEstado(categoria),
+                    ),
                       );
                     }),
                 ],
@@ -563,14 +524,12 @@ class _CategoriaCard extends StatelessWidget {
   final List<ProdutoModel> associados;
   final VoidCallback onEditar;
   final VoidCallback onAlterarEstado;
-  final VoidCallback onDesativar;
 
   const _CategoriaCard({
     required this.categoria,
     required this.associados,
     required this.onEditar,
     required this.onAlterarEstado,
-    required this.onDesativar,
   });
 
   @override
@@ -616,79 +575,70 @@ class _CategoriaCard extends StatelessWidget {
                   ],
                 ),
               ),
-              _StatusBadge(
-                label: ativo ? 'Activa' : 'Inactiva',
-                color: ativo ? _kGreen : _kRed,
+                        _StatusBadge(
+            label: ativo ? 'Activa' : 'Inactiva',
+            color: ativo ? _kGreen : _kRed,
+          ),
+          const SizedBox(width: 10),
+
+          Container(
+            height: 42,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            decoration: BoxDecoration(
+              color: ativo
+                  ? _kGreen.withOpacity(0.08)
+                  : _kRed.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: ativo
+                    ? _kGreen.withOpacity(0.20)
+                    : _kRed.withOpacity(0.20),
               ),
-              const SizedBox(width: 8),
-              PopupMenuButton<String>(
-                tooltip: 'Opções',
-                onSelected: (value) {
-                  switch (value) {
-                    case 'editar':
-                      onEditar();
-                      break;
-                    case 'estado':
-                      onAlterarEstado();
-                      break;
-                    case 'desativar':
-                      onDesativar();
-                      break;
-                  }
-                },
-                itemBuilder: (context) {
-                  return [
-                    const PopupMenuItem(
-                      value: 'editar',
-                      child: ListTile(
-                        dense: true,
-                        leading: Icon(Icons.edit_outlined),
-                        title: Text('Editar'),
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'estado',
-                      child: ListTile(
-                        dense: true,
-                        leading: Icon(
-                          ativo
-                              ? Icons.toggle_off_outlined
-                              : Icons.toggle_on_outlined,
-                        ),
-                        title: Text(
-                          ativo ? 'Desactivar' : 'Activar',
-                        ),
-                      ),
-                    ),
-                    if (ativo)
-                      const PopupMenuItem(
-                        value: 'desativar',
-                        child: ListTile(
-                          dense: true,
-                          leading: Icon(
-                            Icons.delete_outline,
-                            color: _kRed,
-                          ),
-                          title: Text(
-                            'Desactivar categoria',
-                            style: TextStyle(color: _kRed),
-                          ),
-                        ),
-                      ),
-                  ];
-                },
+            ),
+            child: Switch(
+              value: ativo,
+              activeColor: _kGreen,
+              inactiveThumbColor: _kRed,
+              inactiveTrackColor: _kRed.withOpacity(0.20),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              onChanged: (_) => onAlterarEstado(),
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          Tooltip(
+            message: 'Editar categoria',
+            child: Material(
+              color: _kOrange.withOpacity(0.10),
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: onEditar,
+                child: const SizedBox(
+                  width: 42,
+                  height: 42,
+                  child: Icon(
+                    Icons.edit_outlined,
+                    color: _kOrange,
+                    size: 21,
+                  ),
+                ),
               ),
+            ),
+          ),
             ],
           ),
           const SizedBox(height: 14),
-          Wrap(
+                    Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              _SmallInfoChip(
-                icon: Icons.sort,
-                label: 'Ordem: ${categoria.ordem}',
-              ),
+              // _SmallInfoChip(
+              //   icon: Icons.sort,
+              //   label: 'Ordem: ${categoria.ordem}',
+              // ),
+
               _SmallInfoChip(
                 icon: Icons.fastfood_rounded,
                 label:

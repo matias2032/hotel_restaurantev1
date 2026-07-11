@@ -252,18 +252,18 @@ class _CategoriaProdutoFormScreenState
                         prefixIcon: Icon(Icons.description_outlined),
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    TextFormField(
-                      controller: _ordemCtrl,
-                      validator: _validarOrdem,
-                      keyboardType: TextInputType.number,
-                      textInputAction: TextInputAction.done,
-                      decoration: const InputDecoration(
-                        labelText: 'Ordem',
-                        prefixIcon: Icon(Icons.sort),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
+                  // const SizedBox(height: 14),
+                  // TextFormField(
+                  //   controller: _ordemCtrl,
+                  //   validator: _validarOrdem,
+                  //   keyboardType: TextInputType.number,
+                  //   textInputAction: TextInputAction.done,
+                  //   decoration: const InputDecoration(
+                  //     labelText: 'Ordem',
+                  //     prefixIcon: Icon(Icons.sort),
+                  //   ),
+                  // ),
+                  const SizedBox(height: 14),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       value: _ativo,

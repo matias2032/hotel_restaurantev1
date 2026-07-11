@@ -173,7 +173,8 @@ final List<CategoriaIngredienteResumoModel> categoriasIngrediente;
   final double precoAdicional;
   final bool controlaEstoque;
   final double? quantidadeEstoque;
-  final bool disponivel;
+  final bool disponivelCalculado;
+final String? motivoIndisponibilidade;
   final bool ativo;
   final TipoMovimentoEstoqueModel? tipoMovimentoEstoque;
 final String? motivoMovimentoEstoque;
@@ -192,7 +193,8 @@ this.categoriasIngrediente = const [],
     this.precoAdicional = 0.0,
     this.controlaEstoque = false,
     this.quantidadeEstoque,
-    this.disponivel = true,
+    this.disponivelCalculado = true,
+    this.motivoIndisponibilidade,
     this.ativo = true,
     this.tipoMovimentoEstoque,
 this.motivoMovimentoEstoque,
@@ -219,7 +221,13 @@ this.idUsuarioMovimentoEstoque,
         defaultValue: false,
       ),
       quantidadeEstoque: _parseDoubleOpt(json['quantidadeEstoque']),
-      disponivel: _parseBool(json['disponivel'], defaultValue: true),
+      disponivelCalculado: _parseBool(
+  json['disponivelCalculado'],
+  defaultValue: true,
+),
+motivoIndisponibilidade: _parseStringOpt(
+  json['motivoIndisponibilidade'],
+),
       ativo: _parseBool(json['ativo'], defaultValue: true),
       tipoMovimentoEstoque:
     TipoMovimentoEstoqueModel.fromJson(json['tipoMovimentoEstoque']),
@@ -250,7 +258,7 @@ idUsuarioMovimentoEstoque:
     'precoAdicional': precoAdicional,
     'controlaEstoque': controlaEstoque,
     'quantidadeEstoque': controlaEstoque ? quantidadeEstoque : null,
-    'disponivel': disponivel,
+   
     'ativo': ativo,
     'tipoMovimentoEstoque': tipoMovimentoEstoque?.apiValue,
 'motivoMovimentoEstoque': _nullIfBlank(motivoMovimentoEstoque),
@@ -260,6 +268,7 @@ idUsuarioMovimentoEstoque:
       'imagens': imagens.map((imagem) => imagem.toJson()).toList(),
   };
 }
+static const Object _naoAlterar = Object();
 
   IngredienteModel copyWith({
     int? idIngrediente,
@@ -269,7 +278,8 @@ List<CategoriaIngredienteResumoModel>? categoriasIngrediente,
     double? precoAdicional,
     bool? controlaEstoque,
     double? quantidadeEstoque,
-    bool? disponivel,
+    bool? disponivelCalculado,
+    Object? motivoIndisponibilidade = _naoAlterar,
     bool? ativo,
     TipoMovimentoEstoqueModel? tipoMovimentoEstoque,
 String? motivoMovimentoEstoque,
@@ -289,7 +299,13 @@ categoriasIngrediente:
       precoAdicional: precoAdicional ?? this.precoAdicional,
       controlaEstoque: controlaEstoque ?? this.controlaEstoque,
       quantidadeEstoque: quantidadeEstoque ?? this.quantidadeEstoque,
-      disponivel: disponivel ?? this.disponivel,
+      disponivelCalculado:
+    disponivelCalculado ?? this.disponivelCalculado,
+
+motivoIndisponibilidade:
+    motivoIndisponibilidade == _naoAlterar
+        ? this.motivoIndisponibilidade
+        : motivoIndisponibilidade as String?,
       ativo: ativo ?? this.ativo,
       tipoMovimentoEstoque:
     tipoMovimentoEstoque ?? this.tipoMovimentoEstoque,

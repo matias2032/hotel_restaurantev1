@@ -147,45 +147,47 @@ public class IngredienteService {
     // INGREDIENTES — LISTAR
     // ─────────────────────────────────────────────────────────────
 
-    @Transactional(readOnly = true)
-    public List<IngredienteResponseDTO> listarIngredientes(
-            Boolean somenteAtivos,
-            Boolean somenteDisponiveis,
-            Long idCategoriaIngrediente
-    ) {
-        List<IngredienteEntity> ingredientes;
+@Transactional(readOnly = true)
+public List<IngredienteResponseDTO> listarIngredientes(
+        Boolean somenteAtivos,
+        Boolean somenteDisponiveis,
+        Long idCategoriaIngrediente
+) {
+    List<IngredienteEntity> ingredientes;
 
-        if (idCategoriaIngrediente != null) {
-            ingredientes = Boolean.TRUE.equals(somenteAtivos)
-                    ? ingredienteRepository
-                    .findDistinctByCategorias_CategoriaIngrediente_IdCategoriaIngredienteAndAtivoTrueOrderByNomeAsc(
-                            idCategoriaIngrediente
-                    )
-                    : ingredienteRepository
-                    .findDistinctByCategorias_CategoriaIngrediente_IdCategoriaIngredienteOrderByNomeAsc(
-                            idCategoriaIngrediente
-                    );
-        } else if (Boolean.TRUE.equals(somenteDisponiveis)) {
-            ingredientes = ingredienteRepository.findByDisponivelTrueAndAtivoTrueOrderByNomeAsc();
-        } else if (Boolean.TRUE.equals(somenteAtivos)) {
-            ingredientes = ingredienteRepository.findByAtivoTrueOrderByNomeAsc();
-        } else {
-            ingredientes = ingredienteRepository.findAllByOrderByNomeAsc();
-        }
+    boolean deveBuscarSomenteAtivos =
+            Boolean.TRUE.equals(somenteAtivos)
+                    || Boolean.TRUE.equals(somenteDisponiveis);
 
-        if (Boolean.TRUE.equals(somenteDisponiveis) && idCategoriaIngrediente != null) {
-            ingredientes = ingredientes
-                    .stream()
-                    .filter(ingrediente -> Boolean.TRUE.equals(ingrediente.getDisponivel()))
-                    .filter(ingrediente -> Boolean.TRUE.equals(ingrediente.getAtivo()))
-                    .toList();
-        }
-
-        return ingredientes
-                .stream()
-                .map(IngredienteResponseDTO::new)
-                .toList();
+    if (idCategoriaIngrediente != null) {
+        ingredientes = deveBuscarSomenteAtivos
+                ? ingredienteRepository
+                .findDistinctByCategorias_CategoriaIngrediente_IdCategoriaIngredienteAndAtivoTrueOrderByNomeAsc(
+                        idCategoriaIngrediente
+                )
+                : ingredienteRepository
+                .findDistinctByCategorias_CategoriaIngrediente_IdCategoriaIngredienteOrderByNomeAsc(
+                        idCategoriaIngrediente
+                );
+    } else if (deveBuscarSomenteAtivos) {
+        ingredientes =
+                ingredienteRepository.findByAtivoTrueOrderByNomeAsc();
+    } else {
+        ingredientes =
+                ingredienteRepository.findAllByOrderByNomeAsc();
     }
+
+    return ingredientes
+            .stream()
+            .map(IngredienteResponseDTO::new)
+            .filter(dto ->
+                    !Boolean.TRUE.equals(somenteDisponiveis)
+                            || Boolean.TRUE.equals(
+                                    dto.disponivelCalculado()
+                            )
+            )
+            .toList();
+}
 
     // ─────────────────────────────────────────────────────────────
     // INGREDIENTES — BUSCAR POR ID
@@ -214,7 +216,6 @@ public class IngredienteService {
                         dto.controlaEstoque(),
                         dto.quantidadeEstoque()
                 ))
-                .disponivel(dto.disponivel() != null ? dto.disponivel() : true)
                 .ativo(dto.ativo() != null ? dto.ativo() : true)
                 .build();
 
@@ -259,12 +260,7 @@ public class IngredienteService {
         ingrediente.setControlaEstoque(controlaEstoque);
         ingrediente.setQuantidadeEstoque(quantidadePosteriorEstoque);
 
-        ingrediente.setDisponivel(dto.disponivel() != null ? dto.disponivel() : true);
-        ingrediente.setAtivo(dto.ativo() != null ? dto.ativo() : true);
 
-        if (Boolean.FALSE.equals(ingrediente.getAtivo())) {
-            ingrediente.setDisponivel(false);
-        }
 
         /*
          * Regra:
@@ -304,66 +300,43 @@ public class IngredienteService {
         return new IngredienteResponseDTO(ingredienteSalvo);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // INGREDIENTES — DISPONIBILIDADE
-    // ─────────────────────────────────────────────────────────────
 
-    @Transactional
-    public IngredienteResponseDTO alterarDisponibilidadeIngrediente(
-            Long idIngrediente,
-            Boolean disponivel
-    ) {
-        IngredienteEntity ingrediente = buscarIngredienteEntityObrigatorio(idIngrediente);
-
-        if (Boolean.FALSE.equals(ingrediente.getAtivo()) && Boolean.TRUE.equals(disponivel)) {
-            throw new IngredienteRegraNegocioException(
-                    "Não é possível disponibilizar um ingrediente inativo."
-            );
-        }
-
-        ingrediente.setDisponivel(disponivel != null ? disponivel : true);
-
-        IngredienteEntity ingredienteSalvo = ingredienteRepository.save(ingrediente);
-
-        return new IngredienteResponseDTO(ingredienteSalvo);
-    }
 
     // ─────────────────────────────────────────────────────────────
     // INGREDIENTES — ACTIVAR / DESACTIVAR
     // ─────────────────────────────────────────────────────────────
 
-    @Transactional
-    public IngredienteResponseDTO alterarEstadoIngrediente(
-            Long idIngrediente,
-            Boolean ativo
-    ) {
-        IngredienteEntity ingrediente = buscarIngredienteEntityObrigatorio(idIngrediente);
+@Transactional
+public IngredienteResponseDTO alterarEstadoIngrediente(
+        Long idIngrediente,
+        Boolean ativo
+) {
+    IngredienteEntity ingrediente =
+            buscarIngredienteEntityObrigatorio(idIngrediente);
 
-        ingrediente.setAtivo(ativo != null ? ativo : true);
+    ingrediente.setAtivo(
+            ativo != null ? ativo : true
+    );
 
-        if (Boolean.FALSE.equals(ingrediente.getAtivo())) {
-            ingrediente.setDisponivel(false);
-        }
+    IngredienteEntity ingredienteSalvo =
+            ingredienteRepository.save(ingrediente);
 
-        IngredienteEntity ingredienteSalvo = ingredienteRepository.save(ingrediente);
-
-        return new IngredienteResponseDTO(ingredienteSalvo);
-    }
+    return new IngredienteResponseDTO(ingredienteSalvo);
+}
 
     // ─────────────────────────────────────────────────────────────
     // INGREDIENTES — REMOVER LÓGICO
     // ─────────────────────────────────────────────────────────────
 
-    @Transactional
-    public void desativarIngrediente(Long idIngrediente) {
-        IngredienteEntity ingrediente = buscarIngredienteEntityObrigatorio(idIngrediente);
+@Transactional
+public void desativarIngrediente(Long idIngrediente) {
+    IngredienteEntity ingrediente =
+            buscarIngredienteEntityObrigatorio(idIngrediente);
 
-        ingrediente.setAtivo(false);
-        ingrediente.setDisponivel(false);
+    ingrediente.setAtivo(false);
 
-        ingredienteRepository.save(ingrediente);
-    }
-
+    ingredienteRepository.save(ingrediente);
+}
     // ─────────────────────────────────────────────────────────────
     // IMAGENS — LISTAR
     // ─────────────────────────────────────────────────────────────

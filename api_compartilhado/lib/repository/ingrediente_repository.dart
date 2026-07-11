@@ -267,32 +267,7 @@ final ingredienteEditado = await service.editarIngrediente(
     return ingredienteEditado;
   }
 
-  Future<IngredienteModel> alterarDisponibilidadeIngrediente(
-    int idIngrediente,
-    bool disponivel,
-  ) async {
-    _validarId(
-      idIngrediente,
-      'ID do ingrediente inválido para alteração de disponibilidade.',
-    );
 
-    debugPrint(
-      '[IngredienteRepository] ALTERAR_DISPONIBILIDADE_INGREDIENTE_INICIO — '
-      'id=$idIngrediente disponivel=$disponivel',
-    );
-
-    final ingrediente = await service.alterarDisponibilidadeIngrediente(
-      idIngrediente,
-      disponivel,
-    );
-
-    debugPrint(
-      '[IngredienteRepository] ALTERAR_DISPONIBILIDADE_INGREDIENTE_SUCESSO — '
-      'id=$idIngrediente disponivel=${ingrediente.disponivel}',
-    );
-
-    return ingrediente;
-  }
 
   Future<IngredienteModel> alterarEstadoIngrediente(
     int idIngrediente,
@@ -313,10 +288,12 @@ final ingredienteEditado = await service.editarIngrediente(
       ativo,
     );
 
-    debugPrint(
-      '[IngredienteRepository] ALTERAR_ESTADO_INGREDIENTE_SUCESSO — '
-      'id=$idIngrediente ativo=${ingrediente.ativo} disponivel=${ingrediente.disponivel}',
-    );
+debugPrint(
+  '[IngredienteRepository] ALTERAR_ESTADO_INGREDIENTE_SUCESSO — '
+  'id=$idIngrediente '
+  'ativo=${ingrediente.ativo} '
+  'disponivelCalculado=${ingrediente.disponivelCalculado}',
+);
 
     return ingrediente;
   }

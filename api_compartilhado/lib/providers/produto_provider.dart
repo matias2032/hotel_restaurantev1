@@ -338,37 +338,7 @@ final editado = await repository.editarProduto(
     return sucesso;
   }
 
-  Future<bool> alterarDisponibilidadeProduto(
-    int idProduto,
-    bool disponivel,
-  ) async {
-    var sucesso = false;
 
-    await _executar(
-      'ALTERAR_DISPONIBILIDADE_PRODUTO',
-      () async {
-        final produto = await repository.alterarDisponibilidadeProduto(
-          idProduto,
-          disponivel,
-        );
-
-        _actualizarProdutoNaLista(produto);
-
-        if (_produtoSelecionado?.idProduto == idProduto) {
-          _produtoSelecionado = produto;
-        }
-
-        sucesso = true;
-
-        debugPrint(
-          '[ProdutoProvider] ALTERAR_DISPONIBILIDADE_PRODUTO_SUCESSO — '
-          'id=$idProduto disponivel=${produto.disponivel}',
-        );
-      },
-    );
-
-    return sucesso;
-  }
 
   Future<bool> alterarDestaqueProduto(
     int idProduto,
@@ -402,88 +372,89 @@ final editado = await repository.editarProduto(
     return sucesso;
   }
 
-  Future<bool> alterarEstadoProduto(
-    int idProduto,
-    bool ativo,
-  ) async {
-    var sucesso = false;
+Future<bool> alterarEstadoProduto(
+  int idProduto,
+  bool ativo,
+) async {
+  var sucesso = false;
 
-    await _executar(
-      'ALTERAR_ESTADO_PRODUTO',
-      () async {
-        final produto = await repository.alterarEstadoProduto(
-          idProduto,
-          ativo,
-        );
+  await _executar(
+    'ALTERAR_ESTADO_PRODUTO',
+    () async {
+      final produto = await repository.alterarEstadoProduto(
+        idProduto,
+        ativo,
+      );
 
-        _actualizarProdutoNaLista(produto);
+      _actualizarProdutoNaLista(produto);
 
-        if (_produtoSelecionado?.idProduto == idProduto) {
-          _produtoSelecionado = produto;
-        }
+      if (_produtoSelecionado?.idProduto == idProduto) {
+        _produtoSelecionado = produto;
+      }
 
-        sucesso = true;
+      sucesso = true;
 
-        debugPrint(
-          '[ProdutoProvider] ALTERAR_ESTADO_PRODUTO_SUCESSO — '
-          'id=$idProduto ativo=${produto.ativo} '
-          'disponivel=${produto.disponivel} destaque=${produto.destaque}',
-        );
-      },
-    );
+      debugPrint(
+        '[ProdutoProvider] ALTERAR_ESTADO_PRODUTO_SUCESSO — '
+        'id=$idProduto '
+        'ativo=${produto.ativo} '
+        'disponivelCalculado=${produto.disponivelCalculado} '
+        'destaque=${produto.destaque}',
+      );
+    },
+  );
 
-    return sucesso;
-  }
+  return sucesso;
+}
 
-  Future<bool> desativarProduto(
-    int idProduto,
-  ) async {
-    var sucesso = false;
+Future<bool> desativarProduto(
+  int idProduto,
+) async {
+  var sucesso = false;
 
-    await _executar(
-      'DESATIVAR_PRODUTO',
-      () async {
-        await repository.desativarProduto(
-          idProduto,
-        );
+  await _executar(
+    'DESATIVAR_PRODUTO',
+    () async {
+      await repository.desativarProduto(
+        idProduto,
+      );
 
-        _produtos = _produtos
-            .map((produto) {
-              if (produto.idProduto == idProduto) {
-                    return produto.copyWith(
-                    ativo: false,
-                    disponivel: false,
-                    destaque: false,
-                    promocional: false,
-                    precoPromocional: null,
-                  );
-              }
-
+      _produtos = _produtos
+          .map((produto) {
+            if (produto.idProduto != idProduto) {
               return produto;
-            })
-            .toList()
-          ..sort(_compararProdutos);
+            }
 
-        if (_produtoSelecionado?.idProduto == idProduto) {
-          _produtoSelecionado = _produtoSelecionado?.copyWith(
-            ativo: false,
-            disponivel: false,
-            destaque: false,
-            promocional: false,
-            precoPromocional: null,
-          );
-        }
+            return produto.copyWith(
+              ativo: false,
+              disponivelCalculado: false,
+              quantidadeDisponivelCalculada: 0.0,
+              motivoIndisponibilidade: 'Produto inativo.',
+            );
+          })
+          .toList()
+        ..sort(_compararProdutos);
 
-        sucesso = true;
-
-        debugPrint(
-          '[ProdutoProvider] DESATIVAR_PRODUTO_SUCESSO — id=$idProduto',
+      if (_produtoSelecionado?.idProduto == idProduto) {
+        _produtoSelecionado = _produtoSelecionado?.copyWith(
+          ativo: false,
+          disponivelCalculado: false,
+          quantidadeDisponivelCalculada: 0.0,
+          motivoIndisponibilidade: 'Produto inativo.',
         );
-      },
-    );
+      }
 
-    return sucesso;
-  }
+      sucesso = true;
+
+      debugPrint(
+        '[ProdutoProvider] DESATIVAR_PRODUTO_SUCESSO — '
+        'id=$idProduto',
+      );
+    },
+  );
+
+  return sucesso;
+}
 
   // ─────────────────────────────────────────────────────────────
   // IMAGENS DO PRODUTO

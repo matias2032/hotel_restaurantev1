@@ -23,7 +23,10 @@ public record IngredienteResponseDTO(
         Boolean controlaEstoque,
         BigDecimal quantidadeEstoque,
 
-        Boolean disponivel,
+        Boolean disponivelCalculado,
+        String motivoIndisponibilidade,
+
+
         Boolean ativo,
 
         String imagemPrincipalUrl,
@@ -43,7 +46,8 @@ public record IngredienteResponseDTO(
                 entity.getPrecoAdicional(),
                 entity.getControlaEstoque(),
                 entity.getQuantidadeEstoque(),
-                entity.getDisponivel(),
+                calcularDisponivel(entity),
+                calcularMotivoIndisponibilidade(entity),
                 entity.getAtivo(),
                 resolverImagemPrincipal(entity),
                 entity.getImagens() != null
@@ -56,6 +60,51 @@ public record IngredienteResponseDTO(
                 entity.getUpdatedAt()
         );
     }
+
+
+    private static Boolean calcularDisponivel(
+        IngredienteEntity entity
+) {
+    if (entity == null) {
+        return false;
+    }
+
+    if (Boolean.FALSE.equals(entity.getAtivo())) {
+        return false;
+    }
+
+    if (!Boolean.TRUE.equals(entity.getControlaEstoque())) {
+        return true;
+    }
+
+    BigDecimal quantidadeEstoque = entity.getQuantidadeEstoque();
+
+    return quantidadeEstoque != null
+            && quantidadeEstoque.compareTo(BigDecimal.ZERO) > 0;
+}
+
+private static String calcularMotivoIndisponibilidade(
+        IngredienteEntity entity
+) {
+    if (entity == null) {
+        return "Ingrediente inválido.";
+    }
+
+    if (Boolean.FALSE.equals(entity.getAtivo())) {
+        return "Ingrediente inativo.";
+    }
+
+    if (Boolean.TRUE.equals(entity.getControlaEstoque())) {
+        BigDecimal quantidadeEstoque = entity.getQuantidadeEstoque();
+
+        if (quantidadeEstoque == null
+                || quantidadeEstoque.compareTo(BigDecimal.ZERO) <= 0) {
+            return "Estoque do ingrediente insuficiente.";
+        }
+    }
+
+    return null;
+}
 
     private static List<CategoriaResumoDTO> resolverCategorias(
             IngredienteEntity entity

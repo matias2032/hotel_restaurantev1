@@ -40,7 +40,6 @@ class _ServicoFormScreenState extends State<ServicoFormScreen> {
   bool _dragging = false;
 
   bool _ativo = true;
-  bool _disponivel = true;
   bool _destaque = false;
 
   List<CategoriaServicoResumoModel> _categoriasSelecionadas = [];
@@ -105,7 +104,6 @@ class _ServicoFormScreenState extends State<ServicoFormScreen> {
       _precoCtrl.text = args.preco.toStringAsFixed(2);
 
       _ativo = args.ativo;
-      _disponivel = args.disponivel;
       _destaque = args.destaque;
 
       _categoriasSelecionadas = [...args.categoriasServico];
@@ -325,7 +323,6 @@ class _ServicoFormScreenState extends State<ServicoFormScreen> {
         descricao: _nullIfBlank(_descricaoCtrl.text),
         preco: _parseDouble(_precoCtrl.text),
         imagemPrincipalUrl: imagemPrincipalUrl,
-        disponivel: _ativo ? _disponivel : false,
         destaque: _ativo ? _destaque : false,
         ativo: _ativo,
         categoriasServico: _categoriasSelecionadas,
@@ -490,7 +487,7 @@ class _ServicoFormScreenState extends State<ServicoFormScreen> {
                       Text(
                         _modoEdicao
                             ? 'Actualize os dados, categorias e imagens do serviço.'
-                            : 'Cadastre um serviço com preço, categorias, disponibilidade, destaque e imagens.',
+: 'Cadastre um serviço com preço, categorias, destaque e imagens.',
                         style: const TextStyle(
                           color: _kMuted,
                           fontSize: 13,
@@ -540,33 +537,7 @@ class _ServicoFormScreenState extends State<ServicoFormScreen> {
                           ),
                         ),
                         const SizedBox(height: 14),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          value: _disponivel,
-                          activeColor: _kBlue,
-                          title: const Text(
-                            'Disponível',
-                            style: TextStyle(
-                              color: _kDark,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          subtitle: Text(
-                            _disponivel
-                                ? 'O serviço pode ser exibido e usado normalmente.'
-                                : 'O serviço ficará indisponível.',
-                            style: const TextStyle(
-                              color: _kMuted,
-                              fontSize: 13,
-                            ),
-                          ),
-                          onChanged: _ativo
-                              ? (value) {
-                                  setState(() => _disponivel = value);
-                                }
-                              : null,
-                        ),
-                        SwitchListTile(
+                                                SwitchListTile(
                           contentPadding: EdgeInsets.zero,
                           value: _destaque,
                           activeColor: _kPurple,
@@ -586,43 +557,34 @@ class _ServicoFormScreenState extends State<ServicoFormScreen> {
                               fontSize: 13,
                             ),
                           ),
-                          onChanged: _ativo
-                              ? (value) {
-                                  setState(() => _destaque = value);
-                                }
-                              : null,
+onChanged: (value) {
+  setState(() => _destaque = value);
+},
                         ),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          value: _ativo,
-                          activeColor: _kGreen,
-                          title: const Text(
-                            'Activo',
-                            style: TextStyle(
-                              color: _kDark,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          subtitle: Text(
-                            _ativo
-                                ? 'O serviço ficará activo no sistema.'
-                                : 'O serviço ficará inactivo, indisponível e sem destaque.',
-                            style: const TextStyle(
-                              color: _kMuted,
-                              fontSize: 13,
-                            ),
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              _ativo = value;
-
-                              if (!value) {
-                                _disponivel = false;
-                                _destaque = false;
-                              }
-                            });
-                          },
-                        ),
+SwitchListTile(
+  contentPadding: EdgeInsets.zero,
+  value: _ativo,
+  activeColor: _kGreen,
+  title: const Text(
+    'Activo',
+    style: TextStyle(
+      color: _kDark,
+      fontWeight: FontWeight.w700,
+    ),
+  ),
+  subtitle: Text(
+    _ativo
+        ? 'O serviço está activo e disponível para utilização.'
+        : 'O serviço está inactivo e ficará indisponível.',
+    style: const TextStyle(
+      color: _kMuted,
+      fontSize: 13,
+    ),
+  ),
+  onChanged: (value) {
+    setState(() => _ativo = value);
+  },
+),
                       ],
                     ),
                   ),
@@ -1108,3 +1070,5 @@ BoxDecoration _cardDecoration() {
     ],
   );
 }
+
+

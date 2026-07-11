@@ -338,40 +338,7 @@ Future<IngredienteModel> editarIngrediente(
     return ingredienteEditado;
   }
 
-  Future<IngredienteModel> alterarDisponibilidadeIngrediente(
-    int idIngrediente,
-    bool disponivel,
-  ) async {
-    final uri = Uri.parse(
-      '$_ingredientesUrl/$idIngrediente/disponibilidade',
-    );
 
-    debugPrint(
-      '[IngredienteService] ALTERAR_DISPONIBILIDADE_INGREDIENTE_INICIO — '
-      'id=$idIngrediente disponivel=$disponivel',
-    );
-
-    final response = await http
-        .patch(
-          uri,
-          headers: ApiConfig.authHeaders,
-          body: jsonEncode({
-            'disponivel': disponivel,
-          }),
-        )
-        .timeout(ApiConfig.timeout);
-
-    final data = _tratarRespostaObjeto(response);
-
-    final ingrediente = IngredienteModel.fromJson(data);
-
-    debugPrint(
-      '[IngredienteService] ALTERAR_DISPONIBILIDADE_INGREDIENTE_SUCESSO — '
-      'id=$idIngrediente disponivel=${ingrediente.disponivel}',
-    );
-
-    return ingrediente;
-  }
 
   Future<IngredienteModel> alterarEstadoIngrediente(
     int idIngrediente,
@@ -400,10 +367,12 @@ Future<IngredienteModel> editarIngrediente(
 
     final ingrediente = IngredienteModel.fromJson(data);
 
-    debugPrint(
-      '[IngredienteService] ALTERAR_ESTADO_INGREDIENTE_SUCESSO — '
-      'id=$idIngrediente ativo=${ingrediente.ativo} disponivel=${ingrediente.disponivel}',
-    );
+debugPrint(
+  '[IngredienteService] ALTERAR_ESTADO_INGREDIENTE_SUCESSO — '
+  'id=$idIngrediente '
+  'ativo=${ingrediente.ativo} '
+  'disponivelCalculado=${ingrediente.disponivelCalculado}',
+);
 
     return ingrediente;
   }

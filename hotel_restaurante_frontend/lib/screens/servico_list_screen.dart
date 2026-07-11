@@ -69,8 +69,11 @@ class _ServicoListScreenState extends State<ServicoListScreen> {
         _FiltroServico.todos => true,
         _FiltroServico.activos => servico.ativo,
         _FiltroServico.inactivos => !servico.ativo,
-        _FiltroServico.disponiveis => servico.disponivel,
-        _FiltroServico.indisponiveis => !servico.disponivel,
+_FiltroServico.disponiveis =>
+    servico.disponivelCalculado,
+
+_FiltroServico.indisponiveis =>
+    !servico.disponivelCalculado,
         _FiltroServico.destaques => servico.destaque,
         _FiltroServico.comCategorias => servico.categoriasServico.isNotEmpty,
         _FiltroServico.semCategorias => servico.categoriasServico.isEmpty,
@@ -122,56 +125,7 @@ class _ServicoListScreenState extends State<ServicoListScreen> {
     }
   }
 
-  Future<void> _alterarDisponibilidade(
-    ServicoModel servico,
-  ) async {
-    final id = servico.idServico;
 
-    if (id == null) {
-      _snack(
-        'Serviço inválido.',
-        erro: true,
-      );
-      return;
-    }
-
-    final novoEstado = !servico.disponivel;
-
-    final confirmado = await _confirmar(
-      titulo: novoEstado
-          ? 'Tornar serviço disponível?'
-          : 'Tornar serviço indisponível?',
-      mensagem: novoEstado
-          ? 'O serviço voltará a ficar disponível para uso.'
-          : 'O serviço ficará indisponível, mas não será eliminado.',
-      textoConfirmar: novoEstado ? 'Disponibilizar' : 'Indisponibilizar',
-      corConfirmar: novoEstado ? _kGreen : _kRed,
-    );
-
-    if (!confirmado || !mounted) return;
-
-    final provider = context.read<ServicoProvider>();
-
-    final sucesso = await provider.alterarDisponibilidadeServico(
-      id,
-      novoEstado,
-    );
-
-    if (!mounted) return;
-
-    if (sucesso) {
-      _snack(
-        novoEstado
-            ? 'Serviço disponível com sucesso.'
-            : 'Serviço indisponível com sucesso.',
-      );
-    } else {
-      _snack(
-        provider.erro ?? 'Não foi possível alterar a disponibilidade.',
-        erro: true,
-      );
-    }
-  }
 
   Future<void> _alterarDestaque(
     ServicoModel servico,
@@ -228,9 +182,9 @@ class _ServicoListScreenState extends State<ServicoListScreen> {
 
     final confirmado = await _confirmar(
       titulo: novoEstado ? 'Activar serviço?' : 'Desactivar serviço?',
-      mensagem: novoEstado
-          ? 'O serviço voltará a ficar activo.'
-          : 'O serviço será desactivado, ficará indisponível e sairá dos destaques.',
+mensagem: novoEstado
+    ? 'O serviço voltará a ficar activo e disponível.'
+    : 'O serviço será desactivado e ficará indisponível. A configuração de destaque será preservada.',
       textoConfirmar: novoEstado ? 'Activar' : 'Desactivar',
       corConfirmar: novoEstado ? _kGreen : _kRed,
     );
@@ -260,44 +214,7 @@ class _ServicoListScreenState extends State<ServicoListScreen> {
     }
   }
 
-  Future<void> _desativarServico(
-    ServicoModel servico,
-  ) async {
-    final id = servico.idServico;
 
-    if (id == null) {
-      _snack(
-        'Serviço inválido.',
-        erro: true,
-      );
-      return;
-    }
-
-    final confirmado = await _confirmar(
-      titulo: 'Desactivar serviço?',
-      mensagem:
-          'O serviço será desactivado, ficará indisponível e será removido dos destaques. As categorias associadas não serão eliminadas.',
-      textoConfirmar: 'Desactivar',
-      corConfirmar: _kRed,
-    );
-
-    if (!confirmado || !mounted) return;
-
-    final provider = context.read<ServicoProvider>();
-
-    final sucesso = await provider.desativarServico(id);
-
-    if (!mounted) return;
-
-    if (sucesso) {
-      _snack('Serviço desactivado com sucesso.');
-    } else {
-      _snack(
-        provider.erro ?? 'Não foi possível desactivar o serviço.',
-        erro: true,
-      );
-    }
-  }
 
   Future<bool> _confirmar({
     required String titulo,
@@ -368,7 +285,9 @@ class _ServicoListScreenState extends State<ServicoListScreen> {
 
         final total = provider.servicos.length;
         final activos = provider.servicos.where((s) => s.ativo).length;
-        final disponiveis = provider.servicos.where((s) => s.disponivel).length;
+final disponiveis = provider.servicos
+    .where((s) => s.disponivelCalculado)
+    .length;
         final destaques = provider.servicos.where((s) => s.destaque).length;
 
         return Scaffold(
@@ -427,14 +346,11 @@ class _ServicoListScreenState extends State<ServicoListScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _ServicoCard(
-                          servico: servico,
-                          onEditar: () => _abrirEdicao(servico),
-                          onAlterarEstado: () => _alterarEstado(servico),
-                          onAlterarDisponibilidade: () =>
-                              _alterarDisponibilidade(servico),
-                          onAlterarDestaque: () => _alterarDestaque(servico),
-                          onDesativar: () => _desativarServico(servico),
-                        ),
+  servico: servico,
+  onEditar: () => _abrirEdicao(servico),
+  onAlterarEstado: () => _alterarEstado(servico),
+  onAlterarDestaque: () => _alterarDestaque(servico),
+),
                       );
                     }),
                 ],
@@ -509,7 +425,7 @@ class _HeaderCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Cadastre serviços, controle disponibilidade, destaque, imagens e categorias associadas.',
+'Cadastre serviços, controle o estado, destaque, imagens e categorias associadas.',
                   style: TextStyle(
                     color: _kMuted,
                     fontSize: 13,
@@ -683,28 +599,24 @@ class _SearchAndFilters extends StatelessWidget {
 }
 
 class _ServicoCard extends StatelessWidget {
-  final ServicoModel servico;
-  final VoidCallback onEditar;
-  final VoidCallback onAlterarEstado;
-  final VoidCallback onAlterarDisponibilidade;
-  final VoidCallback onAlterarDestaque;
-  final VoidCallback onDesativar;
+final ServicoModel servico;
+final VoidCallback onEditar;
+final VoidCallback onAlterarEstado;
+final VoidCallback onAlterarDestaque;
 
-  const _ServicoCard({
-    required this.servico,
-    required this.onEditar,
-    required this.onAlterarEstado,
-    required this.onAlterarDisponibilidade,
-    required this.onAlterarDestaque,
-    required this.onDesativar,
-  });
-
+const _ServicoCard({
+  required this.servico,
+  required this.onEditar,
+  required this.onAlterarEstado,
+  required this.onAlterarDestaque,
+});
   @override
   Widget build(BuildContext context) {
-    final categorias = servico.categoriasServico;
-    final ativo = servico.ativo;
-    final disponivel = servico.disponivel;
-    final destaque = servico.destaque;
+final categorias = servico.categoriasServico;
+final ativo = servico.ativo;
+final disponivel = servico.disponivelCalculado;
+final motivo = servico.motivoIndisponibilidade?.trim();
+final destaque = servico.destaque;
 
     return Container(
       decoration: _cardDecoration(),
@@ -748,10 +660,14 @@ class _ServicoCard extends StatelessWidget {
                           label: ativo ? 'Activo' : 'Inactivo',
                           color: ativo ? _kGreen : _kRed,
                         ),
-                        _StatusBadge(
-                          label: disponivel ? 'Disponível' : 'Indisponível',
-                          color: disponivel ? _kBlue : _kRed,
-                        ),
+                       _StatusBadge(
+                      label: disponivel
+                          ? 'Disponível'
+                          : 'Indisponível',
+                      color: disponivel ? _kGreen : _kRed,
+                    ),
+
+
                         if (destaque)
                           const _StatusBadge(
                             label: 'Destaque',
@@ -759,6 +675,34 @@ class _ServicoCard extends StatelessWidget {
                           ),
                       ],
                     ),
+
+                    if (!disponivel &&
+    motivo != null &&
+    motivo.isNotEmpty) ...[
+  const SizedBox(height: 8),
+  Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(
+      horizontal: 10,
+      vertical: 8,
+    ),
+    decoration: BoxDecoration(
+      color: _kRed.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(
+        color: _kRed.withOpacity(0.18),
+      ),
+    ),
+    child: Text(
+      motivo,
+      style: const TextStyle(
+        color: _kRed,
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  ),
+],
                   ],
                 ),
               ),
@@ -769,17 +713,13 @@ class _ServicoCard extends StatelessWidget {
                     case 'editar':
                       onEditar();
                       break;
-                    case 'disponibilidade':
-                      onAlterarDisponibilidade();
-                      break;
+
                     case 'destaque':
                       onAlterarDestaque();
                       break;
+
                     case 'estado':
                       onAlterarEstado();
-                      break;
-                    case 'desativar':
-                      onDesativar();
                       break;
                   }
                 },
@@ -835,21 +775,7 @@ class _ServicoCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (ativo)
-                      const PopupMenuItem(
-                        value: 'desativar',
-                        child: ListTile(
-                          dense: true,
-                          leading: Icon(
-                            Icons.delete_outline,
-                            color: _kRed,
-                          ),
-                          title: Text(
-                            'Desactivar serviço',
-                            style: TextStyle(color: _kRed),
-                          ),
-                        ),
-                      ),
+              
                   ];
                 },
               ),

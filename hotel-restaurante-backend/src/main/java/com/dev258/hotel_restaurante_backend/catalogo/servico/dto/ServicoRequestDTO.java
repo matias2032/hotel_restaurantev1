@@ -24,7 +24,6 @@ List<Long> idCategoriasServico,
 
         String imagemPrincipalUrl,
 
-        Boolean disponivel,
 
         Boolean destaque,
 

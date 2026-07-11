@@ -19,7 +19,7 @@ public interface ProdutoRepository
 
     List<ProdutoEntity> findAllByOrderByNomeAsc();
 
-    List<ProdutoEntity> findByDisponivelTrueAndAtivoTrueOrderByNomeAsc();
+
 
     List<ProdutoEntity> findByDestaqueTrueAndAtivoTrueOrderByNomeAsc();
 
@@ -31,7 +31,5 @@ List<ProdutoEntity> findDistinctByCategorias_CategoriaProduto_IdCategoriaProduto
         Long idCategoriaProduto
 );
 
-List<ProdutoEntity> findDistinctByCategorias_CategoriaProduto_IdCategoriaProdutoAndDisponivelTrueAndAtivoTrueOrderByNomeAsc(
-        Long idCategoriaProduto
-);
+
 }

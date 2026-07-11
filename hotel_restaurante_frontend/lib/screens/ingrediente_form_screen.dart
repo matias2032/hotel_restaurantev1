@@ -43,7 +43,6 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
   bool _dragging = false;
 
   bool _ativo = true;
-  bool _disponivel = true;
   bool _controlaEstoque = false;
 
   List<CategoriaIngredienteResumoModel> _categoriasSelecionadas = [];
@@ -180,7 +179,6 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
           : '';
 
       _ativo = args.ativo;
-      _disponivel = args.disponivel;
       _controlaEstoque = args.controlaEstoque;
 
       _categoriasSelecionadas = [...args.categoriasIngrediente];
@@ -478,7 +476,6 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
         precoAdicional: precoAdicional,
         controlaEstoque: _controlaEstoque,
         quantidadeEstoque: quantidadeEstoque,
-        disponivel: _ativo ? _disponivel : false,
         ativo: _ativo,
         categoriasIngrediente: _categoriasSelecionadas,
         imagens: _imagens,
@@ -778,58 +775,30 @@ class _IngredienteFormScreenState extends State<IngredienteFormScreen> {
                           ),
                         ],
                         const SizedBox(height: 14),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          value: _disponivel,
-                          activeColor: _kBlue,
-                          title: const Text(
-                            'Disponível manualmente',
-                            style: TextStyle(
-                              color: _kDark,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          subtitle: const Text(
-                            'Mesmo activo, o ingrediente pode ficar indisponível.',
-                            style: TextStyle(
-                              color: _kMuted,
-                              fontSize: 13,
-                            ),
-                          ),
-                          onChanged: _ativo
-                              ? (value) {
-                                  setState(() => _disponivel = value);
-                                }
-                              : null,
-                        ),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          value: _ativo,
-                          activeColor: _kGreen,
-                          title: const Text(
-                            'Activo',
-                            style: TextStyle(
-                              color: _kDark,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          subtitle: const Text(
-                            'Ao desactivar, o ingrediente fica indisponível.',
-                            style: TextStyle(
-                              color: _kMuted,
-                              fontSize: 13,
-                            ),
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              _ativo = value;
-
-                              if (!value) {
-                                _disponivel = false;
-                              }
-                            });
-                          },
-                        ),
+                          SwitchListTile(
+  contentPadding: EdgeInsets.zero,
+  value: _ativo,
+  activeColor: _kGreen,
+  title: const Text(
+    'Activo',
+    style: TextStyle(
+      color: _kDark,
+      fontWeight: FontWeight.w700,
+    ),
+  ),
+  subtitle: Text(
+    _ativo
+        ? 'O ingrediente está activo. A disponibilidade depende do estoque configurado.'
+        : 'O ingrediente está inactivo e não poderá ser utilizado.',
+    style: const TextStyle(
+      color: _kMuted,
+      fontSize: 13,
+    ),
+  ),
+  onChanged: (value) {
+    setState(() => _ativo = value);
+  },
+),
                       ],
                     ),
                   ),
@@ -1473,3 +1442,4 @@ BoxDecoration _cardDecoration() {
     ],
   );
 }
+

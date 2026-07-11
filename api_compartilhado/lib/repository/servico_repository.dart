@@ -275,32 +275,7 @@ Future<ServicoModel> editarServico(
     return servicoEditado;
   }
 
-  Future<ServicoModel> alterarDisponibilidadeServico(
-    int idServico,
-    bool disponivel,
-  ) async {
-    _validarId(
-      idServico,
-      'ID do serviço inválido para alteração de disponibilidade.',
-    );
-
-    debugPrint(
-      '[ServicoRepository] ALTERAR_DISPONIBILIDADE_SERVICO_INICIO — '
-      'id=$idServico disponivel=$disponivel',
-    );
-
-    final servico = await service.alterarDisponibilidadeServico(
-      idServico,
-      disponivel,
-    );
-
-    debugPrint(
-      '[ServicoRepository] ALTERAR_DISPONIBILIDADE_SERVICO_SUCESSO — '
-      'id=$idServico disponivel=${servico.disponivel}',
-    );
-
-    return servico;
-  }
+  
 
   Future<ServicoModel> alterarDestaqueServico(
     int idServico,
@@ -329,33 +304,35 @@ Future<ServicoModel> editarServico(
     return servico;
   }
 
-  Future<ServicoModel> alterarEstadoServico(
-    int idServico,
-    bool ativo,
-  ) async {
-    _validarId(
-      idServico,
-      'ID do serviço inválido para alteração de estado.',
-    );
+Future<ServicoModel> alterarEstadoServico(
+  int idServico,
+  bool ativo,
+) async {
+  _validarId(
+    idServico,
+    'ID do serviço inválido para alteração de estado.',
+  );
 
-    debugPrint(
-      '[ServicoRepository] ALTERAR_ESTADO_SERVICO_INICIO — '
-      'id=$idServico ativo=$ativo',
-    );
+  debugPrint(
+    '[ServicoRepository] ALTERAR_ESTADO_SERVICO_INICIO — '
+    'id=$idServico ativo=$ativo',
+  );
 
-    final servico = await service.alterarEstadoServico(
-      idServico,
-      ativo,
-    );
+  final servico = await service.alterarEstadoServico(
+    idServico,
+    ativo,
+  );
 
-    debugPrint(
-      '[ServicoRepository] ALTERAR_ESTADO_SERVICO_SUCESSO — '
-      'id=$idServico ativo=${servico.ativo} '
-      'disponivel=${servico.disponivel} destaque=${servico.destaque}',
-    );
+  debugPrint(
+    '[ServicoRepository] ALTERAR_ESTADO_SERVICO_SUCESSO — '
+    'id=$idServico '
+    'ativo=${servico.ativo} '
+    'disponivelCalculado=${servico.disponivelCalculado} '
+    'destaque=${servico.destaque}',
+  );
 
-    return servico;
-  }
+  return servico;
+}
 
   Future<void> desativarServico(
     int idServico,
@@ -563,26 +540,22 @@ if (idsCategorias.length != idsUnicos.length) {
   throw Exception('Não é permitido associar a mesma categoria mais de uma vez.');
 }
 
-    if (!servico.ativo && servico.disponivel) {
-      throw Exception(
-        'Não é possível disponibilizar um serviço inativo.',
-      );
-    }
 
     final imagensNormalizadas = validarImagens
         ? servico.imagens.map(_normalizarImagem).toList()
         : servico.imagens;
 
-    return servico.copyWith(
+return servico.copyWith(
   nome: nome,
-  descricao: _normalizarTextoOpcional(servico.descricao),
+  descricao: _normalizarTextoOpcional(
+    servico.descricao,
+  ),
   preco: servico.preco,
   imagemPrincipalUrl: _normalizarTextoOpcional(
     servico.imagemPrincipalUrl,
   ),
   categoriasServico: servico.categoriasServico,
-  disponivel: servico.ativo ? servico.disponivel : false,
-  destaque: servico.ativo ? servico.destaque : false,
+  destaque: servico.destaque,
   imagens: imagensNormalizadas,
 );
   }

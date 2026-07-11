@@ -165,24 +165,7 @@ public class ServicoController {
         return servicoService.editarServico(idServico, dto);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // SERVIÇOS — ALTERAR DISPONIBILIDADE
-    // PATCH /api/catalogo/servicos/{idServico}/disponibilidade
-    // Body: { "disponivel": true }
-    // ─────────────────────────────────────────────────────────────
 
-    @PatchMapping("/{idServico}/disponibilidade")
-    public ServicoResponseDTO alterarDisponibilidadeServico(
-            @PathVariable Long idServico,
-            @RequestBody Map<String, Boolean> body
-    ) {
-        Boolean disponivel = body != null ? body.get("disponivel") : null;
-
-        return servicoService.alterarDisponibilidadeServico(
-                idServico,
-                disponivel
-        );
-    }
 
     // ─────────────────────────────────────────────────────────────
     // SERVIÇOS — ALTERAR DESTAQUE

@@ -335,114 +335,98 @@ Future<bool> editarIngrediente(
     return sucesso;
   }
 
-  Future<bool> alterarDisponibilidadeIngrediente(
-    int idIngrediente,
-    bool disponivel,
-  ) async {
-    var sucesso = false;
 
-    await _executar(
-      'ALTERAR_DISPONIBILIDADE_INGREDIENTE',
-      () async {
-        final ingrediente = await repository.alterarDisponibilidadeIngrediente(
-          idIngrediente,
-          disponivel,
-        );
 
-        _actualizarIngredienteNaLista(ingrediente);
+Future<bool> alterarEstadoIngrediente(
+  int idIngrediente,
+  bool ativo,
+) async {
+  var sucesso = false;
 
-        if (_ingredienteSelecionado?.idIngrediente == idIngrediente) {
-          _ingredienteSelecionado = ingrediente;
-        }
+  await _executar(
+    'ALTERAR_ESTADO_INGREDIENTE',
+    () async {
+      final ingrediente =
+          await repository.alterarEstadoIngrediente(
+        idIngrediente,
+        ativo,
+      );
 
-        sucesso = true;
+      _actualizarIngredienteNaLista(ingrediente);
 
-        debugPrint(
-          '[IngredienteProvider] ALTERAR_DISPONIBILIDADE_INGREDIENTE_SUCESSO — '
-          'id=$idIngrediente disponivel=${ingrediente.disponivel}',
-        );
-      },
-    );
+      if (_ingredienteSelecionado?.idIngrediente ==
+          idIngrediente) {
+        _ingredienteSelecionado = ingrediente;
+      }
 
-    return sucesso;
-  }
+      sucesso = true;
 
-  Future<bool> alterarEstadoIngrediente(
-    int idIngrediente,
-    bool ativo,
-  ) async {
-    var sucesso = false;
+      debugPrint(
+        '[IngredienteProvider] '
+        'ALTERAR_ESTADO_INGREDIENTE_SUCESSO — '
+        'id=$idIngrediente '
+        'ativo=${ingrediente.ativo} '
+        'disponivelCalculado='
+        '${ingrediente.disponivelCalculado}',
+      );
+    },
+  );
 
-    await _executar(
-      'ALTERAR_ESTADO_INGREDIENTE',
-      () async {
-        final ingrediente = await repository.alterarEstadoIngrediente(
-          idIngrediente,
-          ativo,
-        );
+  return sucesso;
+}
 
-        _actualizarIngredienteNaLista(ingrediente);
+ Future<bool> desativarIngrediente(
+  int idIngrediente,
+) async {
+  var sucesso = false;
 
-        if (_ingredienteSelecionado?.idIngrediente == idIngrediente) {
-          _ingredienteSelecionado = ingrediente;
-        }
+  await _executar(
+    'DESATIVAR_INGREDIENTE',
+    () async {
+      await repository.desativarIngrediente(
+        idIngrediente,
+      );
 
-        sucesso = true;
-
-        debugPrint(
-          '[IngredienteProvider] ALTERAR_ESTADO_INGREDIENTE_SUCESSO — '
-          'id=$idIngrediente ativo=${ingrediente.ativo} disponivel=${ingrediente.disponivel}',
-        );
-      },
-    );
-
-    return sucesso;
-  }
-
-  Future<bool> desativarIngrediente(
-    int idIngrediente,
-  ) async {
-    var sucesso = false;
-
-    await _executar(
-      'DESATIVAR_INGREDIENTE',
-      () async {
-        await repository.desativarIngrediente(
-          idIngrediente,
-        );
-
-        _ingredientes = _ingredientes
-            .map((ingrediente) {
-              if (ingrediente.idIngrediente == idIngrediente) {
-                return ingrediente.copyWith(
-                  ativo: false,
-                  disponivel: false,
-                );
-              }
-
+      _ingredientes = _ingredientes
+          .map((ingrediente) {
+            if (ingrediente.idIngrediente !=
+                idIngrediente) {
               return ingrediente;
-            })
-            .toList()
-          ..sort(_compararIngredientes);
+            }
 
-        if (_ingredienteSelecionado?.idIngrediente == idIngrediente) {
-          _ingredienteSelecionado = _ingredienteSelecionado?.copyWith(
-            ativo: false,
-            disponivel: false,
-          );
-        }
+            return ingrediente.copyWith(
+              ativo: false,
+              disponivelCalculado: false,
+              motivoIndisponibilidade:
+                  'Ingrediente inativo.',
+            );
+          })
+          .toList()
+        ..sort(_compararIngredientes);
 
-        sucesso = true;
-
-        debugPrint(
-          '[IngredienteProvider] DESATIVAR_INGREDIENTE_SUCESSO — id=$idIngrediente',
+      if (_ingredienteSelecionado?.idIngrediente ==
+          idIngrediente) {
+        _ingredienteSelecionado =
+            _ingredienteSelecionado?.copyWith(
+          ativo: false,
+          disponivelCalculado: false,
+          motivoIndisponibilidade:
+              'Ingrediente inativo.',
         );
-      },
-    );
+      }
 
-    return sucesso;
-  }
+      sucesso = true;
 
+      debugPrint(
+        '[IngredienteProvider] '
+        'DESATIVAR_INGREDIENTE_SUCESSO — '
+        'id=$idIngrediente',
+      );
+    },
+  );
+
+  return sucesso;
+}
   // ─────────────────────────────────────────────────────────────
   // IMAGENS
   // ─────────────────────────────────────────────────────────────

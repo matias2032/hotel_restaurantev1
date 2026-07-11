@@ -48,9 +48,6 @@ private List<IngredienteCategoriaEntity> categorias = new ArrayList<>();
     @Column(name = "quantidade_estoque", precision = 12, scale = 3)
     private BigDecimal quantidadeEstoque;
 
-    @Column(name = "disponivel", nullable = false)
-    @Builder.Default
-    private Boolean disponivel = true;
 
     @Column(name = "ativo", nullable = false)
     @Builder.Default
@@ -142,9 +139,6 @@ public void limparCategorias() {
             controlaEstoque = false;
         }
 
-        if (disponivel == null) {
-            disponivel = true;
-        }
 
         if (ativo == null) {
             ativo = true;

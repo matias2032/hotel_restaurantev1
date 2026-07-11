@@ -143,10 +143,6 @@ static String perfilClientePorIdUrl(int idPerfilCliente) {
     return '$categoriasIngredienteUrl/$idCategoriaIngrediente';
   }
 
-  static String ingredienteDisponibilidadeUrl(int idIngrediente) {
-    return '$ingredientesUrl/$idIngrediente/disponibilidade';
-  }
-
   static String ingredienteEstadoUrl(int idIngrediente) {
     return '$ingredientesUrl/$idIngrediente/estado';
   }
@@ -196,9 +192,6 @@ static String perfilClientePorIdUrl(int idPerfilCliente) {
     return '$categoriasProdutoUrl/$idCategoriaProduto';
   }
 
-  static String produtoDisponibilidadeUrl(int idProduto) {
-    return '$produtosUrl/$idProduto/disponibilidade';
-  }
 
   static String produtoDestaqueUrl(int idProduto) {
     return '$produtosUrl/$idProduto/destaque';
@@ -264,9 +257,7 @@ static String perfilClientePorIdUrl(int idPerfilCliente) {
     return '$categoriasServicoUrl/$idCategoriaServico';
   }
 
-  static String servicoDisponibilidadeUrl(int idServico) {
-    return '$servicosUrl/$idServico/disponibilidade';
-  }
+
 
   static String servicoDestaqueUrl(int idServico) {
     return '$servicosUrl/$idServico/destaque';

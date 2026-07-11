@@ -145,52 +145,58 @@ public class ServicoService {
     // SERVIÇOS — LISTAR
     // ─────────────────────────────────────────────────────────────
 
-    @Transactional(readOnly = true)
-    public List<ServicoResponseDTO> listarServicos(
-            Boolean somenteAtivos,
-            Boolean somenteDisponiveis,
-            Boolean somenteDestaques,
-            Long idCategoriaServico
-    ) {
-        List<ServicoEntity> servicos;
+@Transactional(readOnly = true)
+public List<ServicoResponseDTO> listarServicos(
+        Boolean somenteAtivos,
+        Boolean somenteDisponiveis,
+        Boolean somenteDestaques,
+        Long idCategoriaServico
+) {
+    List<ServicoEntity> servicos;
 
-if (idCategoriaServico != null && Boolean.TRUE.equals(somenteDisponiveis)) {
-    servicos = servicoRepository
-            .findDistinctByCategorias_CategoriaServico_IdCategoriaServicoAndDisponivelTrueAndAtivoTrueOrderByNomeAsc(
-                    idCategoriaServico
-            );
-} else if (idCategoriaServico != null) {
-    servicos = Boolean.TRUE.equals(somenteAtivos)
-            ? servicoRepository
-            .findDistinctByCategorias_CategoriaServico_IdCategoriaServicoAndAtivoTrueOrderByNomeAsc(
-                    idCategoriaServico
-            )
-            : servicoRepository
-            .findDistinctByCategorias_CategoriaServico_IdCategoriaServicoOrderByNomeAsc(
-                    idCategoriaServico
-            );
-} else if (Boolean.TRUE.equals(somenteDestaques)) {
-            servicos = servicoRepository.findByDestaqueTrueAndAtivoTrueOrderByNomeAsc();
-        } else if (Boolean.TRUE.equals(somenteDisponiveis)) {
-            servicos = servicoRepository.findByDisponivelTrueAndAtivoTrueOrderByNomeAsc();
-        } else if (Boolean.TRUE.equals(somenteAtivos)) {
-            servicos = servicoRepository.findByAtivoTrueOrderByNomeAsc();
-        } else {
-            servicos = servicoRepository.findAllByOrderByNomeAsc();
-        }
+    boolean deveBuscarSomenteAtivos =
+            Boolean.TRUE.equals(somenteAtivos)
+                    || Boolean.TRUE.equals(somenteDisponiveis);
 
-        if (Boolean.TRUE.equals(somenteDestaques) && idCategoriaServico != null) {
-            servicos = servicos
-                    .stream()
-                    .filter(servico -> Boolean.TRUE.equals(servico.getDestaque()))
-                    .toList();
-        }
-
-        return servicos
-                .stream()
-                .map(ServicoResponseDTO::new)
-                .toList();
+    if (idCategoriaServico != null) {
+        servicos = deveBuscarSomenteAtivos
+                ? servicoRepository
+                .findDistinctByCategorias_CategoriaServico_IdCategoriaServicoAndAtivoTrueOrderByNomeAsc(
+                        idCategoriaServico
+                )
+                : servicoRepository
+                .findDistinctByCategorias_CategoriaServico_IdCategoriaServicoOrderByNomeAsc(
+                        idCategoriaServico
+                );
+    } else if (Boolean.TRUE.equals(somenteDestaques)) {
+        servicos =
+                servicoRepository
+                        .findByDestaqueTrueAndAtivoTrueOrderByNomeAsc();
+    } else if (deveBuscarSomenteAtivos) {
+        servicos =
+                servicoRepository
+                        .findByAtivoTrueOrderByNomeAsc();
+    } else {
+        servicos =
+                servicoRepository
+                        .findAllByOrderByNomeAsc();
     }
+
+    return servicos
+            .stream()
+            .map(ServicoResponseDTO::new)
+            .filter(dto ->
+                    !Boolean.TRUE.equals(somenteDestaques)
+                            || Boolean.TRUE.equals(dto.destaque())
+            )
+            .filter(dto ->
+                    !Boolean.TRUE.equals(somenteDisponiveis)
+                            || Boolean.TRUE.equals(
+                                    dto.disponivelCalculado()
+                            )
+            )
+            .toList();
+}
 
     // ─────────────────────────────────────────────────────────────
     // SERVIÇOS — BUSCAR POR ID
@@ -218,16 +224,12 @@ if (idCategoriaServico != null && Boolean.TRUE.equals(somenteDisponiveis)) {
                 .descricao(limparOpcional(dto.descricao()))
                 .preco(resolverPreco(dto.preco()))
                 .imagemPrincipalUrl(limparOpcional(dto.imagemPrincipalUrl()))
-                .disponivel(dto.disponivel() != null ? dto.disponivel() : true)
+
                 .destaque(dto.destaque() != null ? dto.destaque() : false)
                 .ativo(dto.ativo() != null ? dto.ativo() : true)
                 .build();
 
-        if (Boolean.FALSE.equals(servico.getAtivo()) && Boolean.TRUE.equals(servico.getDisponivel())) {
-            throw new ServicoRegraNegocioException(
-                    "Não é possível disponibilizar um serviço inativo."
-            );
-        }
+
 aplicarCategoriasNoServico(servico,dto.idCategoriasServico(),false);
         aplicarImagensNoServico(servico, dto.imagens());
 
@@ -252,20 +254,14 @@ aplicarCategoriasNoServico(servico,dto.idCategoriasServico(),false);
 
 
         Boolean ativo = dto.ativo() != null ? dto.ativo() : true;
-        Boolean disponivel = dto.disponivel() != null ? dto.disponivel() : true;
 
-        if (Boolean.FALSE.equals(ativo) && Boolean.TRUE.equals(disponivel)) {
-            throw new ServicoRegraNegocioException(
-                    "Não é possível disponibilizar um serviço inativo."
-            );
-        }
+
 
 
         servico.setNome(limparObrigatorio(dto.nome(), "O nome do serviço é obrigatório."));
         servico.setDescricao(limparOpcional(dto.descricao()));
         servico.setPreco(resolverPreco(dto.preco()));
         servico.setImagemPrincipalUrl(limparOpcional(dto.imagemPrincipalUrl()));
-        servico.setDisponivel(disponivel);
         servico.setDestaque(dto.destaque() != null ? dto.destaque() : false);
         servico.setAtivo(ativo);
 
@@ -284,10 +280,7 @@ if (dto.idCategoriasServico() != null) {
     );
 }
 
-        if (Boolean.FALSE.equals(ativo)) {
-            servico.setDisponivel(false);
-            servico.setDestaque(false);
-        }
+
 
         /*
          * Regra:
@@ -305,29 +298,6 @@ if (dto.idCategoriasServico() != null) {
         return new ServicoResponseDTO(servicoSalvo);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // SERVIÇOS — DISPONIBILIDADE
-    // ─────────────────────────────────────────────────────────────
-
-    @Transactional
-    public ServicoResponseDTO alterarDisponibilidadeServico(
-            Long idServico,
-            Boolean disponivel
-    ) {
-        ServicoEntity servico = buscarServicoEntityObrigatorio(idServico);
-
-        if (Boolean.FALSE.equals(servico.getAtivo()) && Boolean.TRUE.equals(disponivel)) {
-            throw new ServicoRegraNegocioException(
-                    "Não é possível disponibilizar um serviço inativo."
-            );
-        }
-
-        servico.setDisponivel(disponivel != null ? disponivel : true);
-
-        ServicoEntity servicoSalvo = servicoRepository.save(servico);
-
-        return new ServicoResponseDTO(servicoSalvo);
-    }
 
     // ─────────────────────────────────────────────────────────────
     // SERVIÇOS — DESTAQUE
@@ -351,39 +321,37 @@ if (dto.idCategoriasServico() != null) {
     // SERVIÇOS — ACTIVAR / DESACTIVAR
     // ─────────────────────────────────────────────────────────────
 
-    @Transactional
-    public ServicoResponseDTO alterarEstadoServico(
-            Long idServico,
-            Boolean ativo
-    ) {
-        ServicoEntity servico = buscarServicoEntityObrigatorio(idServico);
+@Transactional
+public ServicoResponseDTO alterarEstadoServico(
+        Long idServico,
+        Boolean ativo
+) {
+    ServicoEntity servico =
+            buscarServicoEntityObrigatorio(idServico);
 
-        servico.setAtivo(ativo != null ? ativo : true);
+    servico.setAtivo(
+            ativo != null ? ativo : true
+    );
 
-        if (Boolean.FALSE.equals(servico.getAtivo())) {
-            servico.setDisponivel(false);
-            servico.setDestaque(false);
-        }
+    ServicoEntity servicoSalvo =
+            servicoRepository.save(servico);
 
-        ServicoEntity servicoSalvo = servicoRepository.save(servico);
-
-        return new ServicoResponseDTO(servicoSalvo);
-    }
+    return new ServicoResponseDTO(servicoSalvo);
+}
 
     // ─────────────────────────────────────────────────────────────
     // SERVIÇOS — REMOVER LÓGICO
     // ─────────────────────────────────────────────────────────────
 
-    @Transactional
-    public void desativarServico(Long idServico) {
-        ServicoEntity servico = buscarServicoEntityObrigatorio(idServico);
+@Transactional
+public void desativarServico(Long idServico) {
+    ServicoEntity servico =
+            buscarServicoEntityObrigatorio(idServico);
 
-        servico.setAtivo(false);
-        servico.setDisponivel(false);
-        servico.setDestaque(false);
+    servico.setAtivo(false);
 
-        servicoRepository.save(servico);
-    }
+    servicoRepository.save(servico);
+}
 
     // ─────────────────────────────────────────────────────────────
     // IMAGENS — LISTAR

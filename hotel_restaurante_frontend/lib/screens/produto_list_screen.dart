@@ -1,7 +1,7 @@
 import 'package:api_compartilhado/api_compartilhado.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'dart:io';
 import '/widgets/app_sidebar.dart';
 
 const _kDark = Color(0xFF111827);
@@ -106,11 +106,11 @@ class _ProdutoListScreenState extends State<ProdutoListScreen> {
           categorias.contains(termo) ||
           ingredientes.contains(termo);
     }).toList()
-      ..sort(
-        (a, b) => a.nome.toLowerCase().compareTo(
-              b.nome.toLowerCase(),
-            ),
-      );
+  ..sort(
+    (a, b) => a.nome.toLowerCase().compareTo(
+          b.nome.toLowerCase(),
+        ),
+  );
   }
 
   Future<void> _abrirCadastro() async {
@@ -136,53 +136,7 @@ class _ProdutoListScreenState extends State<ProdutoListScreen> {
     }
   }
 
-  Future<void> _alterarDisponibilidade(
-    ProdutoModel produto,
-  ) async {
-    final id = produto.idProduto;
 
-    if (id == null) {
-      _snack('Produto inválido.', erro: true);
-      return;
-    }
-
-    final novoEstado = !produto.disponivel;
-
-    final confirmado = await _confirmar(
-      titulo: novoEstado
-          ? 'Tornar produto disponível?'
-          : 'Tornar produto indisponível?',
-      mensagem: novoEstado
-          ? 'A disponibilidade manual será activada. A disponibilidade real ainda poderá depender do estoque.'
-          : 'O produto será marcado como indisponível manualmente.',
-      textoConfirmar: novoEstado ? 'Disponibilizar' : 'Indisponibilizar',
-      corConfirmar: novoEstado ? _kGreen : _kRed,
-    );
-
-    if (!confirmado || !mounted) return;
-
-    final provider = context.read<ProdutoProvider>();
-
-    final sucesso = await provider.alterarDisponibilidadeProduto(
-      id,
-      novoEstado,
-    );
-
-    if (!mounted) return;
-
-    if (sucesso) {
-      _snack(
-        novoEstado
-            ? 'Produto marcado como disponível.'
-            : 'Produto marcado como indisponível.',
-      );
-    } else {
-      _snack(
-        provider.erro ?? 'Não foi possível alterar a disponibilidade.',
-        erro: true,
-      );
-    }
-  }
 
   Future<void> _alterarDestaque(
     ProdutoModel produto,
@@ -430,15 +384,11 @@ class _ProdutoListScreenState extends State<ProdutoListScreen> {
                     ...produtos.map((produto) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: _ProdutoCard(
-                          produto: produto,
-                          onEditar: () => _abrirEdicao(produto),
-                          onAlterarEstado: () => _alterarEstado(produto),
-                          onAlterarDisponibilidade: () =>
-                              _alterarDisponibilidade(produto),
-                          onAlterarDestaque: () => _alterarDestaque(produto),
-                          onDesativar: () => _desativarProduto(produto),
-                        ),
+                     child: _ProdutoCard(
+                        produto: produto,
+                        onEditar: () => _abrirEdicao(produto),
+                        onAlterarEstado: () => _alterarEstado(produto),
+                      ),
                       );
                     }),
                 ],
@@ -704,17 +654,11 @@ class _ProdutoCard extends StatelessWidget {
   final ProdutoModel produto;
   final VoidCallback onEditar;
   final VoidCallback onAlterarEstado;
-  final VoidCallback onAlterarDisponibilidade;
-  final VoidCallback onAlterarDestaque;
-  final VoidCallback onDesativar;
 
   const _ProdutoCard({
     required this.produto,
     required this.onEditar,
     required this.onAlterarEstado,
-    required this.onAlterarDisponibilidade,
-    required this.onAlterarDestaque,
-    required this.onDesativar,
   });
 
   @override
@@ -722,7 +666,14 @@ class _ProdutoCard extends StatelessWidget {
     final realmenteDisponivel = produto.disponivelCalculado;
     final motivo = produto.motivoIndisponibilidade?.trim();
 
-    return Container(
+    
+    
+return Material(
+  color: Colors.transparent,
+  child: InkWell(
+    onTap: onEditar,
+    borderRadius: BorderRadius.circular(18), // Garante que o efeito do clique respeite os cantos arredondados
+    child: Container(
       decoration: _cardDecoration(),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -760,98 +711,58 @@ class _ProdutoCard extends StatelessWidget {
                   ],
                 ),
               ),
-              PopupMenuButton<String>(
-                tooltip: 'Opções',
-                onSelected: (value) {
-                  switch (value) {
-                    case 'editar':
-                      onEditar();
-                      break;
-                    case 'disponibilidade':
-                      onAlterarDisponibilidade();
-                      break;
-                    case 'destaque':
-                      onAlterarDestaque();
-                      break;
-                    case 'estado':
-                      onAlterarEstado();
-                      break;
-                    case 'desativar':
-                      onDesativar();
-                      break;
-                  }
-                },
-                itemBuilder: (context) {
-                  return [
-                    const PopupMenuItem(
-                      value: 'editar',
-                      child: ListTile(
-                        dense: true,
-                        leading: Icon(Icons.edit_outlined),
-                        title: Text('Editar'),
+              const SizedBox(width: 10),
+
+              Tooltip(
+                message: produto.ativo
+                    ? 'Desactivar produto'
+                    : 'Activar produto',
+                child: Container(
+                  height: 42,
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  decoration: BoxDecoration(
+                    color: produto.ativo
+                        ? _kGreen.withOpacity(0.08)
+                        : _kRed.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: produto.ativo
+                          ? _kGreen.withOpacity(0.20)
+                          : _kRed.withOpacity(0.20),
+                    ),
+                  ),
+                  child: Switch(
+                    value: produto.ativo,
+                    activeColor: _kGreen,
+                    inactiveThumbColor: _kRed,
+                    inactiveTrackColor: _kRed.withOpacity(0.20),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    onChanged: (_) => onAlterarEstado(),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 8),
+
+              Tooltip(
+                message: 'Editar produto',
+                child: Material(
+                  color: _kOrange.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: onEditar,
+                    child: const SizedBox(
+                      width: 42,
+                      height: 42,
+                      child: Icon(
+                        Icons.edit_outlined,
+                        color: _kOrange,
+                        size: 21,
                       ),
                     ),
-                    PopupMenuItem(
-                      value: 'disponibilidade',
-                      child: ListTile(
-                        dense: true,
-                        leading: Icon(
-                          produto.disponivel
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                        ),
-                        title: Text(
-                          produto.disponivel
-                              ? 'Tornar indisponível'
-                              : 'Tornar disponível',
-                        ),
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'destaque',
-                      child: ListTile(
-                        dense: true,
-                        leading: Icon(
-                          produto.destaque ? Icons.star_border : Icons.star,
-                        ),
-                        title: Text(
-                          produto.destaque
-                              ? 'Remover destaque'
-                              : 'Marcar destaque',
-                        ),
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'estado',
-                      child: ListTile(
-                        dense: true,
-                        leading: Icon(
-                          produto.ativo
-                              ? Icons.toggle_off_outlined
-                              : Icons.toggle_on_outlined,
-                        ),
-                        title: Text(
-                          produto.ativo ? 'Desactivar' : 'Activar',
-                        ),
-                      ),
-                    ),
-                    if (produto.ativo)
-                      const PopupMenuItem(
-                        value: 'desativar',
-                        child: ListTile(
-                          dense: true,
-                          leading: Icon(
-                            Icons.delete_outline,
-                            color: _kRed,
-                          ),
-                          title: Text(
-                            'Desactivar produto',
-                            style: TextStyle(color: _kRed),
-                          ),
-                        ),
-                      ),
-                  ];
-                },
+                  ),
+                ),
               ),
             ],
           ),
@@ -864,12 +775,7 @@ class _ProdutoCard extends StatelessWidget {
                 label: produto.ativo ? 'Activo' : 'Inactivo',
                 color: produto.ativo ? _kGreen : _kRed,
               ),
-              _StatusBadge(
-                label: produto.disponivel
-                    ? 'Manual: disponível'
-                    : 'Manual: indisponível',
-                color: produto.disponivel ? _kBlue : _kRed,
-              ),
+             
               _StatusBadge(
                 label: realmenteDisponivel
                     ? 'Disponível real'
@@ -963,7 +869,9 @@ class _ProdutoCard extends StatelessWidget {
           _IngredientesProduto(ingredientes: produto.ingredientes),
         ],
       ),
-    );
+    ),
+  ),
+);
   }
 
   static String _fmt(double? value) {
@@ -1140,38 +1048,69 @@ class _ImagemProduto extends StatelessWidget {
     final imagem = url?.trim();
 
     if (imagem == null || imagem.isEmpty) {
-      return Container(
-        width: 62,
-        height: 62,
-        decoration: BoxDecoration(
-          color: _kOrange.withOpacity(0.10),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Icon(
-          Icons.restaurant_menu_rounded,
-          color: _kOrange,
-        ),
+      return _placeholder();
+    }
+
+    final uri = Uri.tryParse(imagem);
+    final imagemRemota =
+        uri != null && (uri.scheme == 'http' || uri.scheme == 'https');
+
+    final imagemLocal = File(imagem);
+
+    Widget child;
+
+    if (imagemRemota) {
+      child = Image.network(
+        imagem,
+        width: 72,
+        height: 72,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _erro(),
       );
+    } else if (imagemLocal.existsSync()) {
+      child = Image.file(
+        imagemLocal,
+        width: 72,
+        height: 72,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _erro(),
+      );
+    } else {
+      child = _erro();
     }
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
-      child: Image.network(
-        imagem,
-        width: 62,
-        height: 62,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) {
-          return Container(
-            width: 62,
-            height: 62,
-            color: _kOrange.withOpacity(0.10),
-            child: const Icon(
-              Icons.broken_image_outlined,
-              color: _kOrange,
-            ),
-          );
-        },
+      child: child,
+    );
+  }
+
+  Widget _placeholder() {
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        color: _kOrange.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Icon(
+        Icons.restaurant_menu_rounded,
+        color: _kOrange,
+      ),
+    );
+  }
+
+  Widget _erro() {
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        color: _kOrange.withOpacity(0.10),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Icon(
+        Icons.broken_image_outlined,
+        color: _kOrange,
       ),
     );
   }

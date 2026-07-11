@@ -203,14 +203,12 @@ class ProdutoService {
 
   Future<List<ProdutoModel>> listarProdutos({
     bool somenteAtivos = false,
-    bool somenteDisponiveis = false,
     bool somenteDestaques = false,
     int? idCategoriaProduto,
   }) async {
     final uri = Uri.parse(_produtosUrl).replace(
       queryParameters: {
         if (somenteAtivos) 'somenteAtivos': 'true',
-        if (somenteDisponiveis) 'somenteDisponiveis': 'true',
         if (somenteDestaques) 'somenteDestaques': 'true',
         if (idCategoriaProduto != null)
           'idCategoriaProduto': idCategoriaProduto.toString(),
@@ -220,7 +218,6 @@ class ProdutoService {
     debugPrint(
       '[ProdutoService] LISTAR_PRODUTOS_INICIO — '
       'somenteAtivos=$somenteAtivos, '
-      'somenteDisponiveis=$somenteDisponiveis, '
       'somenteDestaques=$somenteDestaques, '
       'idCategoriaProduto=$idCategoriaProduto',
     );
@@ -348,40 +345,7 @@ Future<ProdutoModel> editarProduto(
     return produtoEditado;
   }
 
-  Future<ProdutoModel> alterarDisponibilidadeProduto(
-    int idProduto,
-    bool disponivel,
-  ) async {
-    final uri = Uri.parse(
-      '$_produtosUrl/$idProduto/disponibilidade',
-    );
 
-    debugPrint(
-      '[ProdutoService] ALTERAR_DISPONIBILIDADE_PRODUTO_INICIO — '
-      'id=$idProduto disponivel=$disponivel',
-    );
-
-    final response = await http
-        .patch(
-          uri,
-          headers: ApiConfig.authHeaders,
-          body: jsonEncode({
-            'disponivel': disponivel,
-          }),
-        )
-        .timeout(ApiConfig.timeout);
-
-    final data = _tratarRespostaObjeto(response);
-
-    final produto = ProdutoModel.fromJson(data);
-
-    debugPrint(
-      '[ProdutoService] ALTERAR_DISPONIBILIDADE_PRODUTO_SUCESSO — '
-      'id=$idProduto disponivel=${produto.disponivel}',
-    );
-
-    return produto;
-  }
 
   Future<ProdutoModel> alterarDestaqueProduto(
     int idProduto,
@@ -445,11 +409,13 @@ Future<ProdutoModel> editarProduto(
 
     final produto = ProdutoModel.fromJson(data);
 
-    debugPrint(
-      '[ProdutoService] ALTERAR_ESTADO_PRODUTO_SUCESSO — '
-      'id=$idProduto ativo=${produto.ativo} '
-      'disponivel=${produto.disponivel} destaque=${produto.destaque}',
-    );
+      debugPrint(
+        '[ProdutoService] ALTERAR_ESTADO_PRODUTO_SUCESSO — '
+        'id=$idProduto '
+        'ativo=${produto.ativo} '
+        'disponivelCalculado=${produto.disponivelCalculado} '
+        'destaque=${produto.destaque}',
+      );
 
     return produto;
   }
